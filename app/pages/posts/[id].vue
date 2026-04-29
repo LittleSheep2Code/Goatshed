@@ -137,10 +137,27 @@ import { renderMarkdown } from "~/utils/markdown";
 
 const route = useRoute();
 const config = useRuntimeConfig();
+const auth = useAuth();
+const api = useApi();
 
-const { data: post, pending, error } = await useFetch<Post>(`/api/posts/${route.params.id}`);
-const { data: prevPost } = await useFetch<Post | null>(`/api/posts/${route.params.id}/prev`);
-const { data: nextPost } = await useFetch<Post | null>(`/api/posts/${route.params.id}/next`);
+const { data: post, pending, error } = await useAsyncData(
+  `post-${route.params.id}`,
+  () => import.meta.server
+    ? $fetch<Post>(`/api/posts/${route.params.id}`)
+    : api.fetchPost(route.params.id as string),
+);
+const { data: prevPost } = await useAsyncData(
+  `post-${route.params.id}-prev`,
+  () => import.meta.server
+    ? $fetch<Post | null>(`/api/posts/${route.params.id}/prev`)
+    : api.fetchPrevPost(route.params.id as string),
+);
+const { data: nextPost } = await useAsyncData(
+  `post-${route.params.id}-next`,
+  () => import.meta.server
+    ? $fetch<Post | null>(`/api/posts/${route.params.id}/next`)
+    : api.fetchNextPost(route.params.id as string),
+);
 
 const renderedContent = ref("");
 

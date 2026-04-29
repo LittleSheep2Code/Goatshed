@@ -1,4 +1,4 @@
-import type { PostListResponse, Post } from "~/types/post";
+import type { Post } from "~/types/post";
 import type { PublisherName } from "~/constants/publishers";
 
 export function usePosts(pub: Ref<PublisherName>, pageSize = 12) {
@@ -8,6 +8,7 @@ export function usePosts(pub: Ref<PublisherName>, pageSize = 12) {
   const loadingMore = ref(false);
   const error = ref<string | null>(null);
   const offset = ref(0);
+  const api = useApi();
 
   const hasMore = computed(() => items.value.length < total.value);
 
@@ -17,13 +18,10 @@ export function usePosts(pub: Ref<PublisherName>, pageSize = 12) {
     offset.value = 0;
 
     try {
-      const result = await $fetch<PostListResponse>("/api/posts", {
-        query: {
-          pub: pub.value,
-          type: 1,
-          take: pageSize,
-          offset: 0,
-        },
+      const result = await api.fetchPosts({
+        pub: pub.value,
+        take: pageSize,
+        offset: 0,
       });
       items.value = result.posts;
       total.value = result.total;
@@ -44,13 +42,10 @@ export function usePosts(pub: Ref<PublisherName>, pageSize = 12) {
     error.value = null;
 
     try {
-      const result = await $fetch<PostListResponse>("/api/posts", {
-        query: {
-          pub: pub.value,
-          type: 1,
-          take: pageSize,
-          offset: offset.value,
-        },
+      const result = await api.fetchPosts({
+        pub: pub.value,
+        take: pageSize,
+        offset: offset.value,
       });
       items.value = [...items.value, ...result.posts];
       total.value = result.total;

@@ -69,18 +69,25 @@ const currentPage = computed(() => {
   return Number.isFinite(raw) && raw >= 0 ? Math.floor(raw) : 0;
 });
 
-const { data, pending, error } = await useFetch<{ posts: Post[]; total: number }>(
-  "/api/posts",
-  {
-    query: computed(() => ({
-      pub: activePub.value,
-      type: 1,
-      take: pageSize,
-      offset: currentPage.value * pageSize,
-    })),
-    default: () => ({ posts: [], total: 0 }),
-    watch: [() => route.query.pub, () => route.query.page],
-  },
+const api = useApi();
+
+const { data, pending, error } = await useAsyncData(
+  `posts-list-${activePub.value}-${currentPage.value}`,
+  () => import.meta.server
+    ? $fetch<{ posts: Post[]; total: number }>("/api/posts", {
+        query: {
+          pub: activePub.value,
+          type: 1,
+          take: pageSize,
+          offset: currentPage.value * pageSize,
+        },
+      })
+    : api.fetchPosts({
+        pub: activePub.value,
+        take: pageSize,
+        offset: currentPage.value * pageSize,
+      }),
+  { watch: [() => route.query.pub, () => route.query.page] },
 );
 
 const posts = computed(() => data.value?.posts ?? []);

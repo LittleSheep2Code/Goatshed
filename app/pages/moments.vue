@@ -70,6 +70,7 @@ import { renderMarkdown } from "~/utils/markdown";
 const route = useRoute();
 const router = useRouter();
 const config = useRuntimeConfig();
+const api = useApi();
 
 const activePub = ref<PublisherName>(
   typeof route.query.pub === "string" && isPublisherName(route.query.pub)
@@ -101,7 +102,9 @@ async function loadInitial() {
   error.value = null;
   offset.value = 0;
   try {
-    const result = await $fetch<PostListResponse>("/api/posts", { query: queryParams(0) });
+    const result = import.meta.server
+      ? await $fetch<PostListResponse>("/api/posts", { query: queryParams(0) })
+      : await api.fetchPosts({ pub: activePub.value, type: 0, take: 12, offset: 0 });
     moments.value = result.posts;
     total.value = result.total;
     offset.value = result.posts.length;
@@ -120,7 +123,9 @@ async function loadMore() {
   loadingMore.value = true;
   error.value = null;
   try {
-    const result = await $fetch<PostListResponse>("/api/posts", { query: queryParams(offset.value) });
+    const result = import.meta.server
+      ? await $fetch<PostListResponse>("/api/posts", { query: queryParams(offset.value) })
+      : await api.fetchPosts({ pub: activePub.value, type: 0, take: 12, offset: offset.value });
     moments.value = [...moments.value, ...result.posts];
     total.value = result.total;
     offset.value += result.posts.length;
