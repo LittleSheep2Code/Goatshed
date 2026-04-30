@@ -1,5 +1,5 @@
 <template>
-  <article class="post-tile min-w-0" @mousemove="onMove">
+  <article class="post-tile min-w-0" :style="{ viewTransitionName: `post-${post.id}` }" @mousemove="onMove">
     <NuxtLink
       v-if="coverImage"
       :to="`/posts/${postIdentifier}`"

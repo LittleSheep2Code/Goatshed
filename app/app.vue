@@ -44,6 +44,20 @@ useHead({
   animation-name: breadcrumb-in;
 }
 
+::view-transition-old(post-card),
+::view-transition-new(post-card) {
+  animation-duration: 0.35s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(post-card) {
+  animation-name: post-card-out;
+}
+
+::view-transition-new(post-card) {
+  animation-name: post-card-in;
+}
+
 @keyframes blur-out {
   from {
     opacity: 1;
@@ -85,6 +99,28 @@ useHead({
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@keyframes post-card-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes post-card-in {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 </style>

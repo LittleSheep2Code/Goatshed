@@ -1,80 +1,80 @@
 <template>
   <main class="page-shell mx-auto py-8" data-pagefind-body>
-    <ShellBreadcrumb :path="`/posts/${postIdentifier}`" />
+    <ShellBreadcrumb :path="`/posts/${activePub}/${postIdentifier}`" />
 
-    <section class="post-header relative mb-10 mt-8 text-center">
-      <div class="post-hero-bg" :style="heroBackgroundStyle" />
-      <div
-        class="relative z-10 rounded-3xl border border-base-300/30 bg-base-200/30 px-6 py-8 backdrop-blur-md sm:px-10 sm:py-12"
+    <section class="post-header relative mb-10 mt-8">
+      <article
+        v-if="post"
+        class="post-tile post-tile-detail min-w-0"
+        :style="{ viewTransitionName: `post-${post.id}` }"
+        @mousemove="onTileMove"
       >
-        <h1
-          class="post-title wrap-break-word text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-[2.75rem]"
+        <NuxtLink
+          v-if="postPictureUrl"
+          :to="`/posts/${activePub}/${postIdentifier}`"
+          class="-mx-6 -mt-6 mb-5 block overflow-hidden rounded-t-box border-b border-base-300/40"
         >
-          {{ post?.title || "无标题文章" }}
-        </h1>
+          <img
+            :src="postPictureUrl"
+            :alt="post?.title || '文章配图'"
+            class="aspect-video w-full object-cover"
+            loading="lazy"
+          >
+        </NuxtLink>
 
-        <div
-          v-if="post?.tags.length"
-          class="mt-4 flex flex-wrap justify-center gap-2"
-        >
-          <span
-            v-for="tag in post.tags"
-            :key="tag.id"
-            class="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-0.5 text-xs text-primary"
-          >
-            <span class="opacity-50">#</span>
-            {{ tag.slug }}
-          </span>
-        </div>
+        <div class="relative flex min-w-0 flex-col gap-3">
+          <div v-if="heroBackgroundStyle" class="post-hero-bg" :style="heroBackgroundStyle" />
 
-        <div
-          class="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm"
-        >
-          <div
-            class="inline-flex items-center gap-1.5 rounded-lg border border-base-300/40 bg-base-100/40 px-2.5 py-1"
-          >
-            <img
-              v-if="publisherPictureUrl"
-              :src="publisherPictureUrl"
-              :alt="post?.publisher?.name || '发布者'"
-              class="h-5 w-5 rounded-full object-cover"
-              loading="lazy"
-            />
-            <span class="opacity-70">{{
-              post?.publisher?.nick || post?.publisher?.name
-            }}</span>
+          <div class="relative z-10 flex flex-wrap items-center gap-2 text-xs text-base-content/70">
+            <div class="inline-flex items-center gap-1.5">
+              <img
+                v-if="publisherPictureUrl"
+                :src="publisherPictureUrl"
+                :alt="post?.publisher?.name || '发布者'"
+                class="h-4 w-4 rounded-full object-cover"
+                loading="lazy"
+              >
+              <span class="opacity-70">{{ post?.publisher?.nick || post?.publisher?.name }}</span>
+            </div>
+            <span>{{ publishedAt }}</span>
+            <span v-if="post?.viewsUnique">{{ post.viewsUnique }} 次阅读</span>
           </div>
-          <div
-            class="inline-flex items-center gap-1.5 rounded-lg border border-base-300/40 bg-base-100/40 px-2.5 py-1"
-          >
-            <span class="opacity-70">{{ publishedAt }}</span>
-          </div>
-          <a
-            :href="`https://solian.app/posts/${post?.id}`"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1 text-primary transition-colors hover:bg-primary/10"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+
+          <h1 class="relative z-10 text-xl font-bold leading-tight sm:text-2xl lg:text-3xl">
+            {{ post?.title || "无标题文章" }}
+          </h1>
+
+          <p v-if="post?.description" class="relative z-10 text-sm text-base-content/70 line-clamp-3">
+            {{ post.description }}
+          </p>
+
+          <div v-if="post?.tags.length" class="relative z-10 flex flex-wrap gap-1">
+            <span
+              v-for="tag in post.tags"
+              :key="tag.id"
+              class="badge badge-ghost badge-sm"
             >
-              <path
-                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
-              />
-              <polyline points="15 3 21 3 21 9" />
-              <line x1="10" y1="14" x2="21" y2="3" />
-            </svg>
-            <span class="text-xs">在 Solian 查看</span>
-          </a>
+              #{{ tag.slug }}
+            </span>
+          </div>
+
+          <div class="relative z-10 flex items-center gap-2 pt-1">
+            <a
+              :href="`https://solian.app/posts/${post?.id}`"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1.5 text-xs text-primary transition-colors hover:underline"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+              在 Solian 查看
+            </a>
+          </div>
         </div>
-      </div>
+      </article>
     </section>
 
     <div v-if="pending" class="flex justify-center py-16">
@@ -104,86 +104,53 @@
     </div>
 
     <section
-      v-if="postPictureUrl || (!isArticle && postAttachments.length)"
-      class="mt-5 space-y-3"
+      v-else-if="!isArticle && postAttachments.length"
+      class="mt-5"
       data-pagefind-ignore
     >
-      <img
-        v-if="postPictureUrl"
-        :src="postPictureUrl"
-        :alt="post?.title || '文章配图'"
-        class="w-full rounded-2xl border border-base-300/40 object-cover"
-        loading="lazy"
-      />
-
-      <div
-        v-if="!isArticle && postAttachments.length"
-        class="grid grid-cols-2 gap-3 sm:grid-cols-3"
-      >
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <a
           v-for="file in postAttachments"
           :key="file.id"
           :href="file.url"
           target="_blank"
           rel="noreferrer"
-          class="block overflow-hidden rounded-xl border border-base-300/40"
+          class="block overflow-hidden rounded-xl border border-base-300/40 transition-transform hover:scale-[1.02]"
         >
           <img
             :src="file.url"
             :alt="file.name || '文章附件'"
             class="h-32 w-full object-cover"
             loading="lazy"
-          />
+          >
         </a>
       </div>
     </section>
 
-    <div
-      class="relative mb-8 mt-12 flex items-center justify-center gap-4"
-      aria-hidden="true"
-    >
-      <div
-        class="relative h-px flex-1 bg-linear-to-r from-transparent via-base-300/40 to-primary/30"
-      >
-        <div
-          class="absolute inset-0 bg-linear-to-r from-transparent via-primary/35 to-primary/35 blur-[2px]"
-        />
+    <div class="post-divider relative mb-8 mt-12 flex items-center justify-center gap-4" aria-hidden="true">
+      <div class="relative h-px flex-1 bg-linear-to-r from-transparent via-base-300/40 to-primary/30">
+        <div class="absolute inset-0 bg-linear-to-r from-transparent via-primary/35 to-primary/35 blur-[2px]" />
       </div>
-
-      <div
-        class="relative z-10 flex items-center gap-2 text-[10px] uppercase tracking-widest text-primary/50 select-none"
-      >
-        <span
-          class="h-1.5 w-1.5 rounded-full bg-primary/60 shadow-[0_0_8px_var(--color-primary)]"
-        />
+      <div class="relative z-10 flex items-center gap-2 text-[10px] uppercase tracking-widest text-primary/50 select-none">
+        <span class="h-1.5 w-1.5 rounded-full bg-primary/60 shadow-[0_0_8px_var(--color-primary)]" />
         结束
       </div>
-
-      <div
-        class="relative h-px flex-1 bg-linear-to-l from-transparent via-base-300/40 to-primary/30"
-      >
-        <div
-          class="absolute inset-0 bg-linear-to-l from-transparent via-primary/35 to-primary/35 blur-[2px]"
-        />
+      <div class="relative h-px flex-1 bg-linear-to-l from-transparent via-base-300/40 to-primary/30">
+        <div class="absolute inset-0 bg-linear-to-l from-transparent via-primary/35 to-primary/35 blur-[2px]" />
       </div>
     </div>
 
     <div class="grid grid-cols-2 gap-3 mt-10" data-pagefind-ignore>
       <NuxtLink
         v-if="prevPost"
-        :to="`/posts/${prevPostIdentifier}`"
+        :to="`/posts/${activePub}/${prevPostIdentifier}`"
         class="post-nav-link group relative flex flex-col gap-1 rounded-2xl border border-base-300/30 px-5 py-4 transition-all duration-300 hover:border-primary/40"
       >
         <div class="post-nav-bg" />
         <div class="flex items-center gap-1.5">
-          <span
-            class="text-[10px] uppercase tracking-wider text-base-content/45"
-            >上一篇</span
-          >
+          <span class="text-[10px] uppercase tracking-wider text-base-content/45">上一篇</span>
         </div>
-        <span
-          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary"
-        >
+        <span class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary">
           {{ prevPost.title || "无标题文章" }}
         </span>
       </NuxtLink>
@@ -191,19 +158,14 @@
 
       <NuxtLink
         v-if="nextPost"
-        :to="`/posts/${nextPostIdentifier}`"
+        :to="`/posts/${activePub}/${nextPostIdentifier}`"
         class="post-nav-link group relative col-start-2 flex flex-col items-end gap-1 rounded-2xl border border-base-300/30 px-5 py-4 text-end transition-all duration-300 hover:border-primary/40"
       >
         <div class="post-nav-bg" />
         <div class="flex items-center gap-1.5">
-          <span
-            class="text-[10px] uppercase tracking-wider text-base-content/45"
-            >下一篇</span
-          >
+          <span class="text-[10px] uppercase tracking-wider text-base-content/45">下一篇</span>
         </div>
-        <span
-          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary"
-        >
+        <span class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary">
           {{ nextPost.title || "无标题文章" }}
         </span>
       </NuxtLink>
@@ -220,28 +182,40 @@ import { extractToc, injectHeadingIds, type TocItem } from "~/utils/toc";
 const route = useRoute();
 const config = useRuntimeConfig();
 
+const activePub = computed(() => {
+  const pub = route.params.pub;
+  return typeof pub === "string" ? pub : "littlesheep";
+});
+
 const postSlug = computed(() => {
   const slug = route.params.slug;
   return Array.isArray(slug) ? slug.join("/") : slug;
+});
+
+const postApiId = computed(() => {
+  const pub = activePub.value;
+  const slug = postSlug.value;
+  return `${pub}/${slug}`;
 });
 
 const {
   data: post,
   pending,
   error,
-} = await useAsyncData(`post-${postSlug.value}`, () =>
-  $fetch<Post>(`/api/posts/${postSlug.value}`),
+} = await useAsyncData(`post-${postApiId.value}`, () =>
+  $fetch<Post>(`/api/posts/${postApiId.value}`),
 );
 const { data: prevPost } = await useAsyncData(
-  `post-${postSlug.value}-prev`,
-  () => $fetch<Post | null>(`/api/posts/${postSlug.value}/prev`),
+  `post-${postApiId.value}-prev`,
+  () => $fetch<Post | null>(`/api/posts/${postApiId.value}/prev`),
 );
 const { data: nextPost } = await useAsyncData(
-  `post-${postSlug.value}-next`,
-  () => $fetch<Post | null>(`/api/posts/${postSlug.value}/next`),
+  `post-${postApiId.value}-next`,
+  () => $fetch<Post | null>(`/api/posts/${postApiId.value}/next`),
 );
 
 const renderedContent = ref("");
+const tocItems = ref<TocItem[]>([]);
 
 watch(
   () => post.value?.content,
@@ -257,8 +231,6 @@ watch(
   },
   { immediate: true },
 );
-
-const tocItems = ref<TocItem[]>([]);
 
 const publishedAt = computed(() => {
   if (!post.value) return "";
@@ -280,7 +252,7 @@ const nextPostIdentifier = computed(() =>
 );
 
 const postPictureUrl = computed(() => {
-  const pic = post.value?.picture;
+  const pic = post.value?.picture || post.value?.attachments?.[0];
   if (!pic?.id) return null;
   return (
     pic.url ||
@@ -289,16 +261,13 @@ const postPictureUrl = computed(() => {
 });
 
 const heroBackgroundStyle = computed(() => {
-  const bg =
-    post.value?.background ||
-    post.value?.picture ||
-    post.value?.attachments?.[0];
-  if (!bg?.id) return undefined;
+  const bg = post.value?.background;
+  if (!bg?.id) return null;
   const url =
     bg.url ||
     `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`;
   return {
-    backgroundImage: `linear-gradient(rgba(0,0,0,0.08), rgba(0,0,0,0.08)), url(${url})`,
+    backgroundImage: `linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.05)), url(${url})`,
   };
 });
 
@@ -325,6 +294,14 @@ const postAttachments = computed(() => {
     }));
 });
 
+function onTileMove(event: MouseEvent) {
+  const element = event.currentTarget as HTMLElement | null;
+  if (!element) return;
+  const rect = element.getBoundingClientRect();
+  element.style.setProperty("--mouse-x", `${event.clientX - rect.left}px`);
+  element.style.setProperty("--mouse-y", `${event.clientY - rect.top}px`);
+}
+
 const postOgImage = computed(() => {
   const pic = post.value?.picture;
   if (pic?.id) {
@@ -337,7 +314,7 @@ const postOgImage = computed(() => {
   if (bg?.id) {
     return (
       bg.url ||
-      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`
+      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}}`
     );
   }
   const attach = post.value?.attachments?.[0];
@@ -365,7 +342,7 @@ useHead(() => ({
     { property: "og:type", content: "article" },
     {
       property: "og:url",
-      content: `https://littlesheep.me/posts/${postIdentifier.value}`,
+      content: `https://littlesheep.me/posts/${activePub.value}/${postIdentifier.value}`,
     },
     { property: "og:image", content: postOgImage.value },
     {
@@ -389,44 +366,39 @@ useHead(() => ({
   link: [
     {
       rel: "canonical",
-      href: `https://littlesheep.me/posts/${postIdentifier.value}`,
+      href: `https://littlesheep.me/posts/${activePub.value}/${postIdentifier.value}`,
     },
   ],
 }));
 </script>
 
 <style scoped>
-.post-title {
-  background: linear-gradient(
-    135deg,
-    var(--color-primary) 0%,
-    color-mix(in oklab, var(--color-primary) 60%, var(--color-base-content)) 25%,
-    var(--color-base-content) 50%,
-    var(--color-base-content) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+.post-header {
+  position: relative;
+}
+
+.post-tile-detail {
+  padding: 1.5rem;
 }
 
 .post-hero-bg {
   position: absolute;
-  inset: -2px;
-  opacity: 0.6;
+  inset: -1.5rem;
+  opacity: 0.35;
   background:
     radial-gradient(
-      circle at 20% 5%,
-      color-mix(in oklab, var(--color-primary) 12%, transparent) 0%,
-      transparent 45%
+      circle at 15% 10%,
+      color-mix(in oklab, var(--color-primary) 18%, transparent) 0%,
+      transparent 35%
     ),
     radial-gradient(
-      ellipse 80% 60% at 80% 95%,
-      color-mix(in oklab, var(--color-primary) 8%, transparent) 0%,
-      transparent 55%
+      ellipse 70% 50% at 85% 85%,
+      color-mix(in oklab, var(--color-primary) 12%, transparent) 0%,
+      transparent 45%
     );
   pointer-events: none;
   z-index: 0;
-  border-radius: 1.5rem;
+  border-radius: var(--radius-box, 0.9rem);
 }
 
 .post-content-grid {
@@ -470,6 +442,11 @@ useHead(() => ({
     border: 1px solid color-mix(in srgb, var(--color-base-300) 70%, transparent);
     background-color: var(--color-base-100);
   }
+}
+
+.post-divider {
+  max-width: 52rem;
+  margin-inline: auto;
 }
 
 .post-nav-link {

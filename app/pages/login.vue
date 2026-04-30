@@ -14,7 +14,7 @@
               src="/favicon.png"
               alt="Goatshed"
               class="h-12 w-12 rounded-full"
-            />
+            >
             <h1 class="mt-4 text-3xl font-black leading-tight">欢迎回来</h1>
             <p class="mt-3 max-w-sm text-sm text-base-content/70">
               使用你的 Solarpass 登录 Goatshed。本站维护独立会话。

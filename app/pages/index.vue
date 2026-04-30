@@ -57,7 +57,7 @@
 
               <div class="mb-4 mt-8 flex w-full justify-center">
                 <NuxtLink
-                  :to="`/posts?pub=${activePub}&page=0`"
+                  :to="`/posts/${activePub}`"
                   class="group inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-8 py-4 text-base font-bold text-primary transition-all duration-300 hover:-translate-y-0.5 hover:border-primary hover:bg-primary/20 sm:w-auto"
                 >
                   浏览全部文章
