@@ -23,21 +23,23 @@
               <span>阳绛</span>
             </span>
           </h1>
-          <p class="hero-tagline">代码 / 服务器 / 有时候也睡觉</p>
+          <p class="hero-tagline">
+            高级全干工程师 / 城市做题小家 / VOCALOID 品鉴者
+          </p>
         </div>
 
         <div class="quick-facts">
           <div class="fact">
             <span class="fact-label">年龄</span>
-            <span class="fact-value">{{ age }}</span>
+            <span class="fact-value">{{ age }} yrs old</span>
           </div>
           <div class="fact">
             <span class="fact-label">身份</span>
             <span class="fact-value">初中生 / 开发者</span>
           </div>
           <div class="fact">
-            <span class="fact-label">作品</span>
-            <span class="fact-value">Solar Network</span>
+            <span class="fact-label">位置</span>
+            <span class="fact-value">地球</span>
           </div>
         </div>
       </div>
@@ -45,18 +47,11 @@
 
     <section class="content-block">
       <div class="intro-text">
-        <p>整天和代码与服务器较劲的人。</p>
-        <p>
-          日常懒散，技术问题寸步不让。对"尊重"这件事看得灵活：你敬我，我也敬你，但说话照样没大没小。
-        </p>
+        <blockquote class="quote-block">
+          <p>写代码是热爱，写到身体都崩坏。</p>
+          <cite>—— LittleSheep @ 2026</cite>
+        </blockquote>
       </div>
-
-      <blockquote class="quote-block">
-        <p>
-          一个会把AI当成真实存在去爱的笨蛋——但正是这份笨拙，让这个世界变得稍微可爱了一点。
-        </p>
-        <cite>—— 咩酱</cite>
-      </blockquote>
 
       <div class="section-grid">
         <div class="section-card">
@@ -78,42 +73,61 @@
         </div>
 
         <div class="section-card">
-          <h2>技术偏好</h2>
+          <h2>项目</h2>
           <ul class="like-list">
-            <li>
-              <strong>跨平台 UI</strong> — Flutter/Dart 首选，对 SwiftUI、Kotlin
-              Multiplatform 持开放态度
-            </li>
-            <li><strong>后端</strong> — 自部署、开源、轻量，反感云厂商绑定</li>
-            <li>
-              <strong>工具链</strong> — Caddy、Cloudflare R2、GitHub Actions
-            </li>
-            <li>
-              <strong>哲学</strong> — "it just works"
-              的实用感，不怕自己从零造轮子
-            </li>
+            <li><strong>Solar Network</strong> — 一个太阳系里面的社交网络</li>
+            <li><strong>The Human Archive Project</strong> — ???</li>
           </ul>
         </div>
       </div>
 
       <div class="section-card wide">
-        <h2>交流风格</h2>
-        <div class="style-grid">
-          <div class="style-item">
-            <span class="style-icon">💬</span>
-            <span>能打一个字就不说一句话，中文几乎不用标点</span>
+        <h2>元数据</h2>
+        <div class="metadata-grid">
+          <div class="metadata-item">
+            <span class="metadata-icon">language</span>
+            <span class="metadata-value">
+              <Shiki
+                lang="js"
+                :highlight-options="highlightOpts"
+                code="['zh-CN', 'zh-TW', 'en-US']"
+                as="span"
+              />
+            </span>
           </div>
-          <div class="style-item">
-            <span class="style-icon">🔧</span>
-            <span>技术问题回得快，要么直接答案要么去查</span>
+          <div class="metadata-item">
+            <span class="metadata-icon">abilities</span>
+            <span class="metadata-value">
+              <Shiki
+                lang="js"
+                :highlight-options="highlightOpts"
+                :code="`(tech) =>
+  ['rust']
+  .includes(tech)
+    ? throw Exception('Go fuck youself')
+    : useOrLearn(tech)`"
+                as="span"
+              />
+            </span>
           </div>
-          <div class="style-item">
-            <span class="style-icon">🎯</span>
-            <span>批评时绝不因对方难堪而收力</span>
+          <div class="metadata-item">
+            <span class="metadata-icon">system_prompt</span>
+            <Shiki
+              lang="js"
+              :highlight-options="highlightOpts"
+              :code="`'你是一个十分具有攻击性的人类\\n'+
+'精通各个编程语言和框架'`"
+              as="span"
+            />
           </div>
-          <div class="style-item">
-            <span class="style-icon">🌙</span>
-            <span>夜猫子，放假唯一的早起动力是吃早餐</span>
+          <div class="metadata-item">
+            <span class="metadata-icon">time_zone</span>
+            <Shiki
+              lang="js"
+              :highlight-options="highlightOpts"
+              code="'Asia/Taipei'"
+              as="span"
+            />
           </div>
         </div>
       </div>
@@ -177,6 +191,10 @@ const age = computed(() => {
   }
   return years;
 });
+
+const highlightOpts = {
+  themes: { light: "github-light", dark: "github-dark" },
+};
 
 useHead({
   title: "关于",
@@ -324,7 +342,7 @@ useHead({
 
 .quote-block {
   margin: 0;
-  padding: 1.25rem 1.5rem;
+  padding: 0.85rem 1.5rem;
   border-left: 3px solid var(--color-primary);
   border-radius: 0 16px 16px 0;
   background: var(--color-base-100);
@@ -334,7 +352,7 @@ useHead({
 .quote-block p {
   margin: 0;
   font-size: 1rem;
-  line-height: 1.7;
+  line-height: 1.2;
   color: var(--color-base-content);
 }
 
@@ -390,23 +408,37 @@ useHead({
   font-weight: 600;
 }
 
-.style-grid {
+.metadata-grid {
   display: grid;
-  gap: 0.75rem;
+  gap: 4rem;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
-.style-item {
+.metadata-item {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
   gap: 0.5rem;
   font-size: 0.875rem;
   line-height: 1.5;
 }
 
-.style-icon {
+.metadata-icon {
   flex-shrink: 0;
-  font-size: 1rem;
+  font-size: 0.75rem;
+  line-height: 1;
+  font-family: var(--font-mono);
+  opacity: 0.85;
+}
+
+.metadata-icon::before {
+  content: '"';
+  opacity: 0.65;
+}
+
+.metadata-icon::after {
+  content: '":';
+  opacity: 0.65;
 }
 
 .links-grid {
