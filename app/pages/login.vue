@@ -1,24 +1,79 @@
 <template>
-  <main class="page-shell py-12">
-    <section class="mx-auto max-w-xl rounded-box border border-base-300 bg-base-100 p-8">
-      <h1 class="text-3xl font-extrabold">登录</h1>
-      <p class="mt-2 text-base-content/70">
-        使用你的 FloatingIsland 身份登录。本站维护独立会话。
-      </p>
+  <main
+    class="min-h-screen bg-base-200 flex items-center justify-center px-4 py-8"
+  >
+    <div
+      class="w-full max-w-4xl overflow-hidden rounded-3xl shadow-2xl backdrop-blur-xl"
+    >
+      <div class="grid md:grid-cols-[1fr_1.15fr]">
+        <section
+          class="flex flex-col justify-between rounded-t-3xl bg-base-100/50 p-6 backdrop-blur-2xl md:rounded-l-3xl md:rounded-tr-none md:p-8"
+        >
+          <div>
+            <img
+              src="/favicon.png"
+              alt="Goatshed"
+              class="h-12 w-12 rounded-full"
+            />
+            <h1 class="mt-4 text-3xl font-black leading-tight">欢迎回来</h1>
+            <p class="mt-3 max-w-sm text-sm text-base-content/70">
+              使用你的 Solarpass 登录 Goatshed。本站维护独立会话。
+            </p>
+          </div>
+          <div class="mt-6">
+            <p class="text-sm text-base-content/60">
+              这是
+              <a
+                href="https://littlesheep.me"
+                class="link link-primary font-semibold"
+                target="_blank"
+                >littlesheep</a
+              >
+              的个人博客。
+            </p>
+          </div>
+        </section>
 
-      <div class="mt-6 space-y-3">
-        <button class="btn btn-primary w-full" @click="startLogin">
-          使用 {{ providerName }} 继续
-        </button>
-        <p class="text-xs text-base-content/60">
-          OAuth 客户端配置来自环境变量。
-        </p>
+        <section
+          class="rounded-b-2xl bg-base-100/90 p-6 md:rounded-r-2xl md:rounded-bl-none md:p-8"
+        >
+          <div class="space-y-6">
+            <div class="space-y-1">
+              <h2 class="text-xl font-bold">登录</h2>
+              <p class="text-sm text-base-content/60">
+                点击下方按钮通过 {{ providerName }} 登录
+              </p>
+            </div>
+
+            <button class="btn btn-primary w-full gap-2" @click="startLogin">
+              <LogIn class="h-4 w-4" />
+              使用 {{ providerName }} 继续
+            </button>
+
+            <div class="divider text-base-content/40 text-sm">安全说明</div>
+
+            <div class="space-y-3 text-xs text-base-content/60">
+              <p>
+                登录后，你的访问令牌将安全存储在服务器端会话中，用于访问受保护的内容。
+              </p>
+              <p>
+                本站使用 OAuth 2.0 授权码流程，你的密码永远不会经过本站服务器。
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
-    </section>
+    </div>
   </main>
 </template>
 
 <script setup lang="ts">
+import { LogIn } from "lucide-vue-next";
+
+definePageMeta({
+  layout: false,
+});
+
 const route = useRoute();
 const auth = useAuth();
 const config = useRuntimeConfig();

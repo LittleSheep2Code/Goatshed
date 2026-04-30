@@ -10,16 +10,20 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Missing post id" });
   }
 
-  const post = await floatingFetch<Post>(event, `/sphere/posts/${encodeURIComponent(id)}`);
+  const session = readSession(event);
+  const token = session?.accessToken;
 
-  if (post?.publisher?.name && LOCKED_PUBLISHERS.has(post.publisher.name)) {
-    const session = readSession(event);
-    if (!session) {
-      throw createError({
-        statusCode: 401,
-        message: "Unauthorized: this post requires authentication",
-      });
-    }
+  const post = await floatingFetch<Post>(
+    event,
+    `/sphere/posts/${encodeURIComponent(id)}`,
+    { token },
+  );
+
+  if (post?.publisher?.name && LOCKED_PUBLISHERS.has(post.publisher.name) && !session) {
+    throw createError({
+      statusCode: 401,
+      message: "Unauthorized: this post requires authentication",
+    });
   }
 
   return post;

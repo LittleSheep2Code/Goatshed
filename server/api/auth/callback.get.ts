@@ -13,6 +13,7 @@ import { oauthLog, redact } from "../../utils/oauth-log";
 interface TokenResponse {
   token?: string;
   access_token?: string;
+  refresh_token?: string;
   expiresIn?: number;
   expires_in?: number;
 }
@@ -210,6 +211,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const expiresIn = tokenData.expiresIn ?? tokenData.expires_in ?? 60 * 60 * 24 * 7;
+  const refreshToken = tokenData.refresh_token || "";
+  
   const session: SessionData = {
     user: {
       id: userId,
@@ -217,6 +220,8 @@ export default defineEventHandler(async (event) => {
       nick: userNick,
       username: accountUsername,
     },
+    accessToken,
+    refreshToken,
     expiresAt: Date.now() + expiresIn * 1000,
   };
   setSessionCookie(event, session);
@@ -226,6 +231,7 @@ export default defineEventHandler(async (event) => {
   oauthLog(event, "login success", {
     userId: redact(userId),
     redirectPath,
+    hasRefreshToken: Boolean(refreshToken),
   });
   return sendRedirect(event, redirectPath);
 });

@@ -97,11 +97,10 @@ const activePub = ref<PublisherName>(
 
 const { data: recentResponse, pending: loading, error } = await useAsyncData(
   "posts-home",
-  () => process.server
-    ? $fetch<{ posts: Post[]; total: number }>("/api/posts", {
-        query: { pub: activePub.value, type: 1, take: 6, offset: 0 },
-      })
-    : fetchPostsDirect({ pub: activePub.value, take: 6, offset: 0 }),
+  () =>
+    $fetch<{ posts: Post[]; total: number }>("/api/posts", {
+      query: { pub: activePub.value, type: 1, take: 6, offset: 0 },
+    }),
   {
     watch: [activePub],
     default: () => ({ posts: [], total: 0 }),

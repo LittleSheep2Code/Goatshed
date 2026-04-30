@@ -101,9 +101,7 @@ async function loadInitial() {
   error.value = null;
   offset.value = 0;
   try {
-    const result = process.server
-      ? await $fetch<PostListResponse>("/api/posts", { query: queryParams(0) })
-      : await fetchPostsDirect({ pub: activePub.value, type: 0, take: 12, offset: 0 });
+    const result = await $fetch<PostListResponse>("/api/posts", { query: queryParams(0) });
     moments.value = result.posts;
     total.value = result.total;
     offset.value = result.posts.length;
@@ -122,9 +120,7 @@ async function loadMore() {
   loadingMore.value = true;
   error.value = null;
   try {
-    const result = process.server
-      ? await $fetch<PostListResponse>("/api/posts", { query: queryParams(offset.value) })
-      : await fetchPostsDirect({ pub: activePub.value, type: 0, take: 12, offset: offset.value });
+    const result = await $fetch<PostListResponse>("/api/posts", { query: queryParams(offset.value) });
     moments.value = [...moments.value, ...result.posts];
     total.value = result.total;
     offset.value += result.posts.length;

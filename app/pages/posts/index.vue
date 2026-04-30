@@ -94,20 +94,15 @@ const currentPage = computed(() => {
 
 const { data, pending, error } = await useAsyncData(
   "posts-list",
-  () => process.server
-    ? $fetch<{ posts: Post[]; total: number }>("/api/posts", {
-        query: {
-          pub: activePub.value,
-          type: 1,
-          take: pageSize,
-          offset: currentPage.value * pageSize,
-        },
-      })
-    : fetchPostsDirect({
+  () =>
+    $fetch<{ posts: Post[]; total: number }>("/api/posts", {
+      query: {
         pub: activePub.value,
+        type: 1,
         take: pageSize,
         offset: currentPage.value * pageSize,
-      }),
+      },
+    }),
   {
     watch: [activePub, currentPage],
     default: () => ({ posts: [], total: 0 }),

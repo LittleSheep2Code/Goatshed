@@ -98,7 +98,7 @@ export default defineNuxtConfig({
       oauthUserInfoUrl: "https://api.solian.app/padlock/auth/open/userinfo",
       oauthRedirectUrl: "",
       oauthScope: "openid profile email",
-      oauthProviderName: "FloatingIsland",
+      oauthProviderName: "Solarpass",
     },
   },
   nitro: {

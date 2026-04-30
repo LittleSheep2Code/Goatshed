@@ -14,14 +14,14 @@ export default defineEventHandler(async (event) => {
   const requestedType = Number(query.type);
   const type = requestedType === 0 ? 0 : 1;
 
-  if (LOCKED_PUBLISHERS.has(pub)) {
-    const session = readSession(event);
-    if (!session) {
-      throw createError({
-        statusCode: 401,
-        message: "Unauthorized: this publisher requires authentication",
-      });
-    }
+  const session = readSession(event);
+  const token = session?.accessToken;
+
+  if (LOCKED_PUBLISHERS.has(pub) && !session) {
+    throw createError({
+      statusCode: 401,
+      message: "Unauthorized: this publisher requires authentication",
+    });
   }
 
   const params = new URLSearchParams({
@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
   const result = await floatingFetchWithTotal<Post[]>(
     event,
     `/sphere/posts?${params.toString()}`,
+    { token },
   );
 
   return {

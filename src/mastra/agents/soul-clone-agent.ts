@@ -1,6 +1,6 @@
 import {Agent, type DynamicArgument} from "@mastra/core/agent";
 import type {OpenAICompatibleConfig} from "@mastra/core/llm";
-import {RequestContext} from "@mastra/core/request-context";
+import type {RequestContext} from "@mastra/core/request-context";
 import {Memory} from "@mastra/memory";
 import {solarGetPostsTool, solarGetProfileTool} from "../tools/solar-tools";
 

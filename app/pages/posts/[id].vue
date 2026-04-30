@@ -2,12 +2,19 @@
   <main class="page-shell mx-auto max-w-4xl pb-12" data-pagefind-body>
     <section class="post-header relative mb-10 mt-8 text-center">
       <div class="post-hero-bg" :style="heroBackgroundStyle" />
-      <div class="relative z-10 rounded-3xl border border-base-300/30 bg-base-200/30 px-6 py-8 backdrop-blur-md sm:px-10 sm:py-12">
-        <h1 class="post-title break-words text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-[2.75rem]">
+      <div
+        class="relative z-10 rounded-3xl border border-base-300/30 bg-base-200/30 px-6 py-8 backdrop-blur-md sm:px-10 sm:py-12"
+      >
+        <h1
+          class="post-title wrap-break-word text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-[2.75rem]"
+        >
           {{ post?.title || "无标题文章" }}
         </h1>
 
-        <div v-if="post?.tags.length" class="mt-4 flex flex-wrap justify-center gap-2">
+        <div
+          v-if="post?.tags.length"
+          class="mt-4 flex flex-wrap justify-center gap-2"
+        >
           <span
             v-for="tag in post.tags"
             :key="tag.id"
@@ -18,18 +25,26 @@
           </span>
         </div>
 
-        <div class="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm">
-          <div class="inline-flex items-center gap-1.5 rounded-lg border border-base-300/40 bg-base-100/40 px-2.5 py-1">
+        <div
+          class="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm"
+        >
+          <div
+            class="inline-flex items-center gap-1.5 rounded-lg border border-base-300/40 bg-base-100/40 px-2.5 py-1"
+          >
             <img
               v-if="publisherPictureUrl"
               :src="publisherPictureUrl"
               :alt="post?.publisher?.name || '发布者'"
               class="h-5 w-5 rounded-full object-cover"
               loading="lazy"
-            >
-            <span class="opacity-70">{{ post?.publisher?.nick || post?.publisher?.name }}</span>
+            />
+            <span class="opacity-70">{{
+              post?.publisher?.nick || post?.publisher?.name
+            }}</span>
           </div>
-          <div class="inline-flex items-center gap-1.5 rounded-lg border border-base-300/40 bg-base-100/40 px-2.5 py-1">
+          <div
+            class="inline-flex items-center gap-1.5 rounded-lg border border-base-300/40 bg-base-100/40 px-2.5 py-1"
+          >
             <span class="opacity-70">{{ publishedAt }}</span>
           </div>
           <a
@@ -38,7 +53,22 @@
             rel="noopener noreferrer"
             class="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1 text-primary transition-colors hover:bg-primary/10"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+              />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
             <span class="text-xs">在 Solian 查看</span>
           </a>
         </div>
@@ -58,18 +88,25 @@
       id="article"
       class="prose-goatshed app-panel min-w-0 p-6 sm:p-7"
       v-html="renderedContent"
-    ></article>
+    />
 
-    <section v-if="postPictureUrl || (!isArticle && postAttachments.length)" class="mt-5 space-y-3" data-pagefind-ignore>
+    <section
+      v-if="postPictureUrl || (!isArticle && postAttachments.length)"
+      class="mt-5 space-y-3"
+      data-pagefind-ignore
+    >
       <img
         v-if="postPictureUrl"
         :src="postPictureUrl"
         :alt="post?.title || '文章配图'"
         class="w-full rounded-2xl border border-base-300/40 object-cover"
         loading="lazy"
-      >
+      />
 
-      <div v-if="!isArticle && postAttachments.length" class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div
+        v-if="!isArticle && postAttachments.length"
+        class="grid grid-cols-2 gap-3 sm:grid-cols-3"
+      >
         <a
           v-for="file in postAttachments"
           :key="file.id"
@@ -78,23 +115,43 @@
           rel="noreferrer"
           class="block overflow-hidden rounded-xl border border-base-300/40"
         >
-          <img :src="file.url" :alt="file.name || '文章附件'" class="h-32 w-full object-cover" loading="lazy">
+          <img
+            :src="file.url"
+            :alt="file.name || '文章附件'"
+            class="h-32 w-full object-cover"
+            loading="lazy"
+          />
         </a>
       </div>
     </section>
 
-    <div class="relative mb-8 mt-12 flex items-center justify-center gap-4" aria-hidden="true">
-      <div class="relative h-px flex-1 bg-gradient-to-r from-transparent via-base-300/40 to-primary/30">
-        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-primary/35 to-primary/35 blur-[2px]" />
+    <div
+      class="relative mb-8 mt-12 flex items-center justify-center gap-4"
+      aria-hidden="true"
+    >
+      <div
+        class="relative h-px flex-1 bg-linear-to-r from-transparent via-base-300/40 to-primary/30"
+      >
+        <div
+          class="absolute inset-0 bg-linear-to-r from-transparent via-primary/35 to-primary/35 blur-[2px]"
+        />
       </div>
 
-      <div class="relative z-10 flex items-center gap-2 text-[10px] uppercase tracking-widest text-primary/50 select-none">
-        <span class="h-1.5 w-1.5 rounded-full bg-primary/60 shadow-[0_0_8px_var(--color-primary)]" />
+      <div
+        class="relative z-10 flex items-center gap-2 text-[10px] uppercase tracking-widest text-primary/50 select-none"
+      >
+        <span
+          class="h-1.5 w-1.5 rounded-full bg-primary/60 shadow-[0_0_8px_var(--color-primary)]"
+        />
         结束
       </div>
 
-      <div class="relative h-px flex-1 bg-gradient-to-l from-transparent via-base-300/40 to-primary/30">
-        <div class="absolute inset-0 bg-gradient-to-l from-transparent via-primary/35 to-primary/35 blur-[2px]" />
+      <div
+        class="relative h-px flex-1 bg-linear-to-l from-transparent via-base-300/40 to-primary/30"
+      >
+        <div
+          class="absolute inset-0 bg-linear-to-l from-transparent via-primary/35 to-primary/35 blur-[2px]"
+        />
       </div>
     </div>
 
@@ -106,9 +163,14 @@
       >
         <div class="post-nav-bg" />
         <div class="flex items-center gap-1.5">
-          <span class="text-[10px] uppercase tracking-wider text-base-content/45">上一篇</span>
+          <span
+            class="text-[10px] uppercase tracking-wider text-base-content/45"
+            >上一篇</span
+          >
         </div>
-        <span class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary">
+        <span
+          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary"
+        >
           {{ prevPost.title || "无标题文章" }}
         </span>
       </NuxtLink>
@@ -121,9 +183,14 @@
       >
         <div class="post-nav-bg" />
         <div class="flex items-center gap-1.5">
-          <span class="text-[10px] uppercase tracking-wider text-base-content/45">下一篇</span>
+          <span
+            class="text-[10px] uppercase tracking-wider text-base-content/45"
+            >下一篇</span
+          >
         </div>
-        <span class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary">
+        <span
+          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary"
+        >
           {{ nextPost.title || "无标题文章" }}
         </span>
       </NuxtLink>
@@ -138,23 +205,20 @@ import { renderMarkdown } from "~/utils/markdown";
 const route = useRoute();
 const config = useRuntimeConfig();
 
-const { data: post, pending, error } = await useAsyncData(
-  `post-${route.params.id}`,
-  () => process.server
-    ? $fetch<Post>(`/api/posts/${route.params.id}`)
-    : fetchPostDirect(route.params.id as string),
+const {
+  data: post,
+  pending,
+  error,
+} = await useAsyncData(`post-${route.params.id}`, () =>
+  $fetch<Post>(`/api/posts/${route.params.id}`),
 );
 const { data: prevPost } = await useAsyncData(
   `post-${route.params.id}-prev`,
-  () => process.server
-    ? $fetch<Post | null>(`/api/posts/${route.params.id}/prev`)
-    : fetchPrevPostDirect(route.params.id as string),
+  () => $fetch<Post | null>(`/api/posts/${route.params.id}/prev`),
 );
 const { data: nextPost } = await useAsyncData(
   `post-${route.params.id}-next`,
-  () => process.server
-    ? $fetch<Post | null>(`/api/posts/${route.params.id}/next`)
-    : fetchNextPostDirect(route.params.id as string),
+  () => $fetch<Post | null>(`/api/posts/${route.params.id}/next`),
 );
 
 const renderedContent = ref("");
@@ -169,7 +233,9 @@ watch(
 
 const publishedAt = computed(() => {
   if (!post.value) return "";
-  return new Date(post.value.publishedAt || post.value.createdAt).toLocaleString();
+  return new Date(
+    post.value.publishedAt || post.value.createdAt,
+  ).toLocaleString();
 });
 
 const isArticle = computed(() => post.value?.type === 1);
@@ -177,20 +243,33 @@ const isArticle = computed(() => post.value?.type === 1);
 const postPictureUrl = computed(() => {
   const pic = post.value?.picture;
   if (!pic?.id) return null;
-  return pic.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`;
+  return (
+    pic.url ||
+    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`
+  );
 });
 
 const heroBackgroundStyle = computed(() => {
-  const bg = post.value?.background || post.value?.picture || post.value?.attachments?.[0];
+  const bg =
+    post.value?.background ||
+    post.value?.picture ||
+    post.value?.attachments?.[0];
   if (!bg?.id) return undefined;
-  const url = bg.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`;
-  return { backgroundImage: `linear-gradient(rgba(0,0,0,0.08), rgba(0,0,0,0.08)), url(${url})` };
+  const url =
+    bg.url ||
+    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`;
+  return {
+    backgroundImage: `linear-gradient(rgba(0,0,0,0.08), rgba(0,0,0,0.08)), url(${url})`,
+  };
 });
 
 const publisherPictureUrl = computed(() => {
   const pic = post.value?.publisher?.picture;
   if (!pic?.id) return null;
-  return pic.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`;
+  return (
+    pic.url ||
+    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`
+  );
 });
 
 const postAttachments = computed(() => {
@@ -201,22 +280,33 @@ const postAttachments = computed(() => {
     .map((file) => ({
       id: file.id,
       name: file.name,
-      url: file.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(file.id)}`,
+      url:
+        file.url ||
+        `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(file.id)}`,
     }));
 });
 
 const postOgImage = computed(() => {
   const pic = post.value?.picture;
   if (pic?.id) {
-    return pic.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`;
+    return (
+      pic.url ||
+      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`
+    );
   }
   const bg = post.value?.background;
   if (bg?.id) {
-    return bg.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`;
+    return (
+      bg.url ||
+      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`
+    );
   }
   const attach = post.value?.attachments?.[0];
   if (attach?.id) {
-    return attach.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(attach.id)}`;
+    return (
+      attach.url ||
+      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(attach.id)}`
+    );
   }
   return "https://littlesheep.me/og-image.png";
 });
@@ -229,18 +319,39 @@ useHead(() => ({
       content: post.value?.description || "在 Goatshed 阅读这篇文章。",
     },
     { property: "og:title", content: post.value?.title || "文章" },
-    { property: "og:description", content: post.value?.description || "在 Goatshed 阅读这篇文章。" },
+    {
+      property: "og:description",
+      content: post.value?.description || "在 Goatshed 阅读这篇文章。",
+    },
     { property: "og:type", content: "article" },
-    { property: "og:url", content: `https://littlesheep.me/posts/${route.params.id}` },
+    {
+      property: "og:url",
+      content: `https://littlesheep.me/posts/${route.params.id}`,
+    },
     { property: "og:image", content: postOgImage.value },
-    { property: "article:published_time", content: post.value?.publishedAt || post.value?.createdAt },
-    { property: "article:author", content: post.value?.publisher?.nick || post.value?.publisher?.name || "littlesheep" },
+    {
+      property: "article:published_time",
+      content: post.value?.publishedAt || post.value?.createdAt,
+    },
+    {
+      property: "article:author",
+      content:
+        post.value?.publisher?.nick ||
+        post.value?.publisher?.name ||
+        "littlesheep",
+    },
     { name: "twitter:title", content: post.value?.title || "文章" },
-    { name: "twitter:description", content: post.value?.description || "在 Goatshed 阅读这篇文章。" },
+    {
+      name: "twitter:description",
+      content: post.value?.description || "在 Goatshed 阅读这篇文章。",
+    },
     { name: "twitter:image", content: postOgImage.value },
   ],
   link: [
-    { rel: "canonical", href: `https://littlesheep.me/posts/${route.params.id}` },
+    {
+      rel: "canonical",
+      href: `https://littlesheep.me/posts/${route.params.id}`,
+    },
   ],
 }));
 </script>

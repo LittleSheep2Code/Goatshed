@@ -45,9 +45,19 @@ export async function floatingFetch<T>(
 export async function floatingFetchWithTotal<T>(
   event: Parameters<typeof useRuntimeConfig>[0],
   path: string,
+  options: ApiFetchOptions = {},
 ): Promise<{ data: T; total: number }> {
   const config = useRuntimeConfig(event);
-  const response = await fetch(`${config.public.apiBaseUrl}${path}`);
+  const headers = new Headers(options.headers || {});
+
+  if (options.token) {
+    headers.set("authorization", `Bearer ${options.token}`);
+  }
+
+  const response = await fetch(`${config.public.apiBaseUrl}${path}`, {
+    ...options,
+    headers,
+  });
 
   if (!response.ok) {
     const text = await response.text();
