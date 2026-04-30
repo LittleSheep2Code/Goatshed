@@ -2,10 +2,16 @@
   <main class="page-shell min-w-0 py-8">
     <section class="mb-6">
       <h1 class="text-3xl font-extrabold tracking-tight">文章</h1>
-      <p class="mt-2 text-sm text-base-content/70">按页浏览所选发布者的文章列表。</p>
+      <p class="mt-2 text-sm text-base-content/70">
+        按页浏览所选发布者的文章列表。
+      </p>
 
       <div class="mt-5 max-w-xl">
-        <PublisherSwitcher :publishers="PUBLISHERS" :active="activePub" @change="setPublisher" />
+        <PublisherSwitcher
+          :publishers="PUBLISHERS"
+          :active="activePub"
+          @change="setPublisher"
+        />
       </div>
     </section>
 
@@ -22,7 +28,11 @@
         <PostCard v-for="post in posts" :key="post.id" :post="post" />
 
         <div class="mt-8 flex flex-wrap items-center justify-center gap-2">
-          <button class="btn btn-sm btn-outline" :disabled="currentPage <= 0" @click="setPage(currentPage - 1)">
+          <button
+            class="btn btn-sm btn-outline"
+            :disabled="currentPage <= 0"
+            @click="setPage(currentPage - 1)"
+          >
             <ChevronLeft class="h-4 w-4" />
             上一页
           </button>
@@ -37,21 +47,32 @@
             {{ n }}
           </button>
 
-          <button class="btn btn-sm btn-outline" :disabled="currentPage >= maxPage" @click="setPage(currentPage + 1)">
+          <button
+            class="btn btn-sm btn-outline"
+            :disabled="currentPage >= maxPage"
+            @click="setPage(currentPage + 1)"
+          >
             下一页
             <ChevronRight class="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      <PublisherSidebar :publisher-name="activePub" class="h-fit min-w-0 lg:sticky lg:top-24" />
+      <PublisherSidebar
+        :publisher-name="activePub"
+        class="h-fit min-w-0 lg:sticky lg:top-24"
+      />
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight } from "lucide-vue-next";
-import { PUBLISHERS, isPublisherName, type PublisherName } from "~/constants/publishers";
+import {
+  PUBLISHERS,
+  isPublisherName,
+  type PublisherName,
+} from "~/constants/publishers";
 import type { Post } from "~/types/post";
 
 const route = useRoute();
@@ -61,7 +82,9 @@ const pageSize = 12;
 
 const activePub = computed<PublisherName>(() => {
   const value = route.query.pub;
-  return typeof value === "string" && isPublisherName(value) ? value : "littlesheep";
+  return typeof value === "string" && isPublisherName(value)
+    ? value
+    : "littlesheep";
 });
 
 const currentPage = computed(() => {
@@ -69,11 +92,9 @@ const currentPage = computed(() => {
   return Number.isFinite(raw) && raw >= 0 ? Math.floor(raw) : 0;
 });
 
-const api = useApi();
-
 const { data, pending, error } = await useAsyncData(
-  `posts-list-${activePub.value}-${currentPage.value}`,
-  () => import.meta.server
+  "posts-list",
+  () => process.server
     ? $fetch<{ posts: Post[]; total: number }>("/api/posts", {
         query: {
           pub: activePub.value,
@@ -82,17 +103,22 @@ const { data, pending, error } = await useAsyncData(
           offset: currentPage.value * pageSize,
         },
       })
-    : api.fetchPosts({
+    : fetchPostsDirect({
         pub: activePub.value,
         take: pageSize,
         offset: currentPage.value * pageSize,
       }),
-  { watch: [() => route.query.pub, () => route.query.page] },
+  {
+    watch: [activePub, currentPage],
+    default: () => ({ posts: [], total: 0 }),
+  },
 );
 
 const posts = computed(() => data.value?.posts ?? []);
 const total = computed(() => data.value?.total ?? 0);
-const maxPage = computed(() => Math.max(Math.ceil(total.value / pageSize) - 1, 0));
+const maxPage = computed(() =>
+  Math.max(Math.ceil(total.value / pageSize) - 1, 0),
+);
 
 const visiblePages = computed(() => {
   const start = Math.max(currentPage.value - 2, 0);
@@ -107,15 +133,23 @@ async function setPublisher(next: PublisherName) {
 
 async function setPage(next: number) {
   const page = Math.min(Math.max(next, 0), maxPage.value);
-  await router.replace({ query: { ...route.query, pub: activePub.value, page } });
+  await router.replace({
+    query: { ...route.query, pub: activePub.value, page },
+  });
 }
 
 useHead({
   title: "文章",
   meta: [
-    { name: "description", content: "分页浏览 littlesheep 的所有技术博客文章。" },
+    {
+      name: "description",
+      content: "分页浏览 littlesheep 的所有技术博客文章。",
+    },
     { property: "og:title", content: "文章 - Goatshed" },
-    { property: "og:description", content: "分页浏览 littlesheep 的所有技术博客文章。" },
+    {
+      property: "og:description",
+      content: "分页浏览 littlesheep 的所有技术博客文章。",
+    },
     { property: "og:type", content: "website" },
   ],
 });

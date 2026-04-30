@@ -24,5 +24,6 @@ logs
 !.env.example
 
 mastra.db*
+*.lock
 
 SOUL.md

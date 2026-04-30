@@ -8,7 +8,6 @@ export function usePosts(pub: Ref<PublisherName>, pageSize = 12) {
   const loadingMore = ref(false);
   const error = ref<string | null>(null);
   const offset = ref(0);
-  const api = useApi();
 
   const hasMore = computed(() => items.value.length < total.value);
 
@@ -18,7 +17,7 @@ export function usePosts(pub: Ref<PublisherName>, pageSize = 12) {
     offset.value = 0;
 
     try {
-      const result = await api.fetchPosts({
+      const result = await fetchPostsDirect({
         pub: pub.value,
         take: pageSize,
         offset: 0,
@@ -42,7 +41,7 @@ export function usePosts(pub: Ref<PublisherName>, pageSize = 12) {
     error.value = null;
 
     try {
-      const result = await api.fetchPosts({
+      const result = await fetchPostsDirect({
         pub: pub.value,
         take: pageSize,
         offset: offset.value,

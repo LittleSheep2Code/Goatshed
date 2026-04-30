@@ -88,7 +88,6 @@ import type { Post } from "~/types/post";
 
 const route = useRoute();
 const router = useRouter();
-const api = useApi();
 
 const activePub = ref<PublisherName>(
   typeof route.query.pub === "string" && isPublisherName(route.query.pub)
@@ -97,13 +96,16 @@ const activePub = ref<PublisherName>(
 );
 
 const { data: recentResponse, pending: loading, error } = await useAsyncData(
-  `posts-${activePub.value}`,
-  () => import.meta.server
+  "posts-home",
+  () => process.server
     ? $fetch<{ posts: Post[]; total: number }>("/api/posts", {
         query: { pub: activePub.value, type: 1, take: 6, offset: 0 },
       })
-    : api.fetchPosts({ pub: activePub.value, take: 6, offset: 0 }),
-  { watch: [activePub] },
+    : fetchPostsDirect({ pub: activePub.value, take: 6, offset: 0 }),
+  {
+    watch: [activePub],
+    default: () => ({ posts: [], total: 0 }),
+  },
 );
 
 const recentPosts = computed(() => recentResponse.value?.posts ?? []);

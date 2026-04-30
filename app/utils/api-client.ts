@@ -54,11 +54,20 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
   return snakeToCamel<T>(data);
 }
 
-async function apiFetchWithTotal<T>(
-  path: string,
-  options: ApiFetchOptions = {},
-): Promise<T> {
-  const url = buildUrl(path, options.query);
+export async function fetchPostsDirect(params: {
+  pub: PublisherName;
+  type?: number;
+  take?: number;
+  offset?: number;
+}): Promise<PostListResponse> {
+  const url = buildUrl("/sphere/posts", {
+    pub: params.pub,
+    type: params.type ?? 1,
+    take: params.take ?? 12,
+    offset: params.offset ?? 0,
+    replies: false,
+    orderDesc: true,
+  });
 
   const response = await fetch(url, { credentials: "include" });
 
@@ -67,36 +76,21 @@ async function apiFetchWithTotal<T>(
     throw new Error(text || `Request failed: ${response.status}`);
   }
 
+  const total = Number.parseInt(response.headers.get("x-total") || "0", 10);
   const raw = await response.json();
-  return snakeToCamel<T>(raw);
+  const posts = snakeToCamel<Post[]>(raw);
+
+  return { posts, total: total || posts.length };
 }
 
-export function useApi() {
-  return {
-    fetchPosts: (params: {
-      pub: PublisherName;
-      type?: number;
-      take?: number;
-      offset?: number;
-    }) =>
-      apiFetchWithTotal<PostListResponse>("/sphere/posts", {
-        query: {
-          pub: params.pub,
-          type: params.type ?? 1,
-          take: params.take ?? 12,
-          offset: params.offset ?? 0,
-          replies: false,
-          orderDesc: true,
-        },
-      }),
+export async function fetchPostDirect(id: string): Promise<Post> {
+  return apiFetch<Post>(`/sphere/posts/${encodeURIComponent(id)}`);
+}
 
-    fetchPost: (id: string) =>
-      apiFetch<Post>(`/sphere/posts/${encodeURIComponent(id)}`),
+export async function fetchPrevPostDirect(id: string): Promise<Post | null> {
+  return apiFetch<Post | null>(`/sphere/posts/${encodeURIComponent(id)}/prev`);
+}
 
-    fetchPrevPost: (id: string) =>
-      apiFetch<Post | null>(`/sphere/posts/${encodeURIComponent(id)}/prev`),
-
-    fetchNextPost: (id: string) =>
-      apiFetch<Post | null>(`/sphere/posts/${encodeURIComponent(id)}/next`),
-  };
+export async function fetchNextPostDirect(id: string): Promise<Post | null> {
+  return apiFetch<Post | null>(`/sphere/posts/${encodeURIComponent(id)}/next`);
 }
