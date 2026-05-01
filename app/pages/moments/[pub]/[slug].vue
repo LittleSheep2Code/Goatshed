@@ -385,12 +385,14 @@ useHead(() => ({
   flex: 1 1 60%;
   min-height: 0;
   background: var(--color-base-200);
-  overflow: hidden;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .moment-media-inner {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .moment-img {
