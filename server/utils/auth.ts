@@ -14,7 +14,6 @@ export const auth = betterAuth({
           clientSecret: process.env.SOLIAN_CLIENT_SECRET as string,
           discoveryUrl: "https://solian.app/.well-known/openid-configuration",
           scopes: ["openid", "profile", "email", "account.connections"],
-          pkce: false,
         },
       ],
     }),
