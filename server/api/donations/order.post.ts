@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
   const amount = String(orderResponse.amount);
   const currency = orderResponse.currency;
 
-  await db.insert(orders).values({
+  const [saved] = await db.insert(orders).values({
     orderId,
     userId: session.user.id,
     productType,
@@ -57,11 +57,12 @@ export default defineEventHandler(async (event) => {
     quantity,
     remarks: message || null,
     status: "待支付",
-  });
+  }).returning({ id: orders.id });
 
   const profile = await getCachedSolarProfile(session.user.id);
 
   return {
+    id: saved.id,
     orderId,
     amount,
     currency,

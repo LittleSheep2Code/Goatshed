@@ -114,31 +114,41 @@
             </p>
         </div>
 
-        <dialog ref="confirmDialog" class="modal">
+        <dialog ref="payDialog" class="modal">
             <div class="modal-box max-w-sm">
                 <h3 class="text-lg font-bold">完成支付了吗？</h3>
                 <p class="py-4 text-sm text-base-content/70">
-                    请在弹出的窗口中完成支付，完成后点击确认。
+                    请在弹出的窗口中完成支付。页面每 30 秒自动从远端同步支付状态。
                 </p>
+                <div class="flex items-center gap-2 rounded-lg bg-base-200 p-3">
+                    <div :class="['h-3 w-3 rounded-full', payStatus === '已支付' ? 'bg-success' : 'bg-warning animate-pulse']" />
+                    <span class="text-sm font-medium">
+                        {{ payStatus === '已支付' ? '已支付' : '等待支付' }}
+                    </span>
+                </div>
                 <div class="modal-action">
-                    <form method="dialog">
-                        <button class="btn btn-ghost" :disabled="isChecking">
-                            取消
-                        </button>
-                    </form>
                     <button
-                        class="btn btn-primary"
-                        :disabled="isChecking"
+                        class="btn btn-ghost"
+                        title="手动从远端同步状态"
                         @click="confirmPayment"
                     >
-                        <Loader2 v-if="isChecking" class="h-4 w-4 animate-spin" />
-                        <Check v-else class="h-4 w-4" />
-                        确认
+                        <RefreshCw class="h-4 w-4" />
                     </button>
+                    <button
+                        class="btn btn-ghost"
+                        @click="retryPayment"
+                    >
+                        重新跳转钱包
+                    </button>
+                    <form method="dialog">
+                        <button class="btn btn-ghost" @click="closePayDialog">
+                            关闭
+                        </button>
+                    </form>
                 </div>
             </div>
             <form method="dialog" class="modal-backdrop">
-                <button>关闭</button>
+                <button @click="closePayDialog">关闭</button>
             </form>
         </dialog>
 
@@ -190,7 +200,7 @@
 </template>
 
 <script setup lang="ts">
-import { Heart, Ticket, Plus, Minus, Loader2, Check, Clock, ShoppingCart } from "lucide-vue-next";
+import { Heart, Ticket, Plus, Minus, Loader2, Check, Clock, ShoppingCart, RefreshCw } from "lucide-vue-next";
 import type { Component } from "vue";
 
 const route = useRoute();
@@ -250,12 +260,17 @@ const { data: product } = await useFetch<Record<string, any> | null>(
 const quantity = ref(1);
 const message = ref("");
 const isSubmitting = ref(false);
-const isChecking = ref(false);
 const error = ref("");
-const orderId = ref<string | null>(null);
-const confirmDialog = ref<HTMLDialogElement>();
+const orderDbId = ref<string | null>(null);
+const orderExternalId = ref<string | null>(null);
+const payDialog = ref<HTMLDialogElement>();
 const resultDialog = ref<HTMLDialogElement>();
 const paymentResult = ref<"已支付" | "待支付">("待支付");
+const payStatus = ref<"待支付" | "待支付">("待支付");
+
+const POLL_INTERVAL = 30000;
+
+let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 const totalAmount = computed(() => {
     if (!product.value) return 0;
@@ -267,7 +282,7 @@ async function submitOrder() {
     isSubmitting.value = true;
     error.value = "";
     try {
-        const result = await $fetch<{ orderId: string; payUrl: string }>(
+        const result = await $fetch<{ id: string; orderId: string; payUrl: string }>(
             "/api/donations/order",
             {
                 method: "POST",
@@ -278,9 +293,12 @@ async function submitOrder() {
                 },
             },
         );
-        orderId.value = result.orderId;
+        orderDbId.value = result.id;
+        orderExternalId.value = result.orderId;
+        payStatus.value = "待支付";
         window.open(result.payUrl, "_blank", "width=480,height=720");
-        confirmDialog.value?.showModal();
+        payDialog.value?.showModal();
+        startPolling();
     } catch (e: any) {
         error.value = e.data?.message || "创建订单失败，请稍后重试";
     } finally {
@@ -288,22 +306,71 @@ async function submitOrder() {
     }
 }
 
-async function confirmPayment() {
-    if (!orderId.value) return;
-    isChecking.value = true;
+function closePayDialog() {
+    orderDbId.value = null;
+    orderExternalId.value = null;
+    payDialog.value?.close();
+}
+
+function retryPayment() {
+    if (orderExternalId.value) {
+        window.open(`https://solian.app/orders/${orderExternalId.value}`, "_blank", "width=480,height=720");
+    }
+}
+
+async function syncSingleOrder() {
+    if (!orderDbId.value) return;
     try {
         const result = await $fetch<{ status: string }>(
-            `/api/donations/order/${orderId.value}`,
+            `/api/donations/order/${orderDbId.value}`,
         );
-        paymentResult.value = result.status === "已支付" ? "已支付" as any : "待支付" as any;
+
+        if (result.status === "已支付") {
+            payStatus.value = "已支付";
+            stopPolling();
+            paymentResult.value = "已支付";
+            payDialog.value?.close();
+            resultDialog.value?.showModal();
+        }
     } catch {
-        paymentResult.value = "unpaid";
-    } finally {
-        isChecking.value = false;
-        confirmDialog.value?.close();
-        resultDialog.value?.showModal();
+        // silently fail
+    }
+}
+
+function startPolling() {
+    stopPolling();
+    syncSingleOrder();
+    pollTimer = setInterval(() => syncSingleOrder(), POLL_INTERVAL);
+}
+
+function stopPolling() {
+    if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+    }
+}
+
+async function confirmPayment() {
+    if (!orderDbId.value) return;
+    try {
+        const result = await $fetch<{ status: string }>(
+            `/api/donations/order/${orderDbId.value}`,
+        );
+        if (result.status === "已支付") {
+            payStatus.value = "已支付";
+            stopPolling();
+            paymentResult.value = "已支付";
+            payDialog.value?.close();
+            resultDialog.value?.showModal();
+        }
+    } catch {
+        // silently fail
     }
 }
 
 useHead({ title: productTitle });
+
+onUnmounted(() => {
+    stopPolling();
+});
 </script>

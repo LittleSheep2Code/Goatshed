@@ -244,6 +244,23 @@ function closeMenu() {
   if (userMenu.value) userMenu.value.open = false;
 }
 
+function onDocumentClick(e: MouseEvent) {
+  if (!userMenu.value) return
+  const target = e.target as HTMLElement | null
+  if (!target) return
+  if (!userMenu.value.contains(target)) {
+    closeMenu()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("click", onDocumentClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener("click", onDocumentClick)
+})
+
 async function handleLogout() {
   closeMenu();
   await auth.logout();

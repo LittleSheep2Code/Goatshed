@@ -76,61 +76,48 @@
                 <div
                     class="mt-4 rounded-box border border-base-300 bg-base-100 p-4"
                 >
-                    <p
-                        v-if="profile?.profile?.bio"
-                        class="text-sm text-base-content/80"
-                    >
-                        {{ profile.profile.bio }}
-                    </p>
+                        <p
+                            v-if="profile?.profile?.bio"
+                            class="whitespace-pre-line text-sm text-base-content/80"
+                        >
+                            {{ profile.profile.bio }}
+                        </p>
                     <p v-else class="text-sm text-base-content/50 italic">
                         暂无简介。
                     </p>
                 </div>
 
-                <div class="rounded-box border border-base-300 bg-base-100">
+                <div class="mt-4 rounded-box border border-base-300 bg-base-100">
                     <div class="p-2">
                         <NuxtLink
                             to="/orders"
                             class="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-base-200"
                         >
                             <Receipt class="h-5 w-5 text-primary" />
-                            <span class="flex-1 text-primary font-medium">我的订单</span>
-                            <ChevronRight class="h-4 w-4 text-base-content/50" />
+                            <span class="flex-1 text-primary font-medium"
+                                >我的订单</span
+                            >
+                            <ChevronRight
+                                class="h-4 w-4 text-base-content/50"
+                            />
+                        </NuxtLink>
+                        <NuxtLink
+                            v-if="isAdmin"
+                            to="/admin"
+                            class="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-base-200"
+                        >
+                            <Shield class="h-5 w-5 text-primary" />
+                            <span class="flex-1 text-primary font-medium"
+                                >管理面板</span
+                            >
+                            <ChevronRight
+                                class="h-4 w-4 text-base-content/50"
+                            />
                         </NuxtLink>
                     </div>
                 </div>
 
                 <div class="mt-4 space-y-3">
-                    <div v-if="isAdmin" class="rounded-box border border-base-300 bg-base-100">
-                        <div class="p-2">
-                            <NuxtLink
-                                to="/admin"
-                                class="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-base-200"
-                            >
-                                <Shield class="h-5 w-5 text-primary" />
-                                <span class="flex-1 text-primary font-medium">管理面板</span>
-                                <ChevronRight
-                                    class="h-4 w-4 text-base-content/50"
-                                />
-                            </NuxtLink>
-                        </div>
-                    </div>
-
-                    <div class="rounded-box border border-base-300 bg-base-100">
-                        <div class="p-2">
-                            <NuxtLink
-                                :to="`https://solian.app/accounts/${profile?.name || session.user.name}`"
-                                class="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-base-200"
-                            >
-                                <User class="h-5 w-5 text-base-content/70" />
-                                <span class="flex-1">查看公开主页</span>
-                                <ChevronRight
-                                    class="h-4 w-4 text-base-content/50"
-                                />
-                            </NuxtLink>
-                        </div>
-                    </div>
-
                     <div class="rounded-box border border-base-300 bg-base-100">
                         <div class="p-2">
                             <button
