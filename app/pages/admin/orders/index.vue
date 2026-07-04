@@ -78,6 +78,14 @@
                                 </button>
                                 <button
                                     class="btn btn-ghost btn-xs"
+                                    title="同步远程状态"
+                                    :disabled="syncingId === order.id"
+                                    @click="syncStatus(order)"
+                                >
+                                    <RefreshCw :class="['h-3 w-3', { 'animate-spin': syncingId === order.id }]" />
+                                </button>
+                                <button
+                                    class="btn btn-ghost btn-xs"
                                     title="详情"
                                     @click="viewOrder(order)"
                                 >
@@ -178,7 +186,7 @@
 </template>
 
 <script setup lang="ts">
-import { Receipt, CheckCheck, Eye } from "lucide-vue-next";
+import { Receipt, CheckCheck, Eye, RefreshCw } from "lucide-vue-next";
 
 definePageMeta({
     layout: "admin",
@@ -192,6 +200,7 @@ const page = ref(1);
 const activeStatus = ref("");
 const selectedOrder = ref<any>(null);
 const detailDialog = ref<HTMLDialogElement>();
+const syncingId = ref<string | null>(null);
 
 const statusFilters = [
     { value: "", label: "全部" },
@@ -230,6 +239,20 @@ async function markFinished(order: any) {
 async function updateDelivery(order: any, deliveryStatus: string) {
     await $fetch(`/api/admin/orders/${order.id}`, { method: "PATCH", body: { deliveryStatus } });
     order.deliveryStatus = deliveryStatus;
+}
+
+async function syncStatus(order: any) {
+    syncingId.value = order.id;
+    try {
+        const result = await $fetch(`/api/admin/orders/${order.id}/sync`, { method: "POST" });
+        order.status = result.status;
+        order.deliveryStatus = result.deliveryStatus;
+        order.paidAt = result.paidAt;
+    } catch {
+        // silently fail
+    } finally {
+        syncingId.value = null;
+    }
 }
 
 function getStatusBadge(status: string) {
