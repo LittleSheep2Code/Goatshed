@@ -1,59 +1,82 @@
 <template>
-  <div class="reaction-bar flex items-center gap-1.5 flex-wrap">
-    <div
+  <div class="flex items-center gap-1.5 flex-wrap">
+    <ClientOnly>
+      <PopoverRoot v-if="authenticated" v-model:open="pickerOpen">
+        <PopoverTrigger
+          class="btn btn-glass btn-xs gap-1 h-7 px-2"
+        >
+          <SmilePlus class="h-3.5 w-3.5" />
+          <span class="text-xs">React</span>
+        </PopoverTrigger>
+
+        <PopoverPortal>
+          <PopoverContent
+            class="bg-base-100 rounded-2xl border border-base-300/40 shadow-xl p-4 z-50"
+            :side-offset="8"
+            align="center"
+            :collision-padding="16"
+          >
+            <div class="grid grid-cols-3 gap-3">
+              <button
+                v-for="opt in availableReactions"
+                :key="opt.symbol"
+                class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-base-200 transition-colors"
+                @click.stop="addReaction(opt.symbol)"
+              >
+                <span class="text-2xl">{{ opt.emoji }}</span>
+                <span class="text-xs font-medium text-base-content/70">
+                  {{ opt.label }}
+                </span>
+              </button>
+            </div>
+          </PopoverContent>
+        </PopoverPortal>
+      </PopoverRoot>
+    </ClientOnly>
+
+    <button
       v-for="reaction in displayReactions"
       :key="reaction.symbol"
-      class="reaction-chip"
+      class="inline-flex items-center gap-1 h-7 px-2 rounded-full text-xs font-medium transition-colors"
+      :class="reaction.reacted
+        ? 'bg-primary/20 text-primary border border-primary/30'
+        : 'bg-base-200 text-base-content/70 border border-base-300 hover:bg-base-300'"
+      :disabled="toggling"
+      @click.stop="toggleReaction(reaction)"
     >
-      <button
-        class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-all duration-150"
-        :class="reaction.reacted
-          ? 'border-primary/40 bg-primary/10 text-primary'
-          : 'border-base-300/40 bg-base-100 text-base-content/70 hover:border-primary/30 hover:bg-primary/5'"
-        :disabled="toggling"
-        @click="toggleReaction(reaction)"
-      >
-        <span>{{ symbolToEmoji(reaction.symbol) }}</span>
-        <span class="font-medium">{{ reaction.count }}</span>
-      </button>
-    </div>
+      <span class="text-sm leading-none">{{ symbolToEmoji(reaction.symbol) }}</span>
+      <span>{{ reaction.count }}</span>
+    </button>
 
-    <div v-if="authenticated" class="relative reaction-picker-wrap">
-      <button
-        class="inline-flex items-center justify-center rounded-full border border-base-300/40 bg-base-100 px-2 py-1 text-base-content/50 transition-colors hover:border-primary/30 hover:text-primary"
-        :class="{ 'border-primary/40 text-primary': pickerOpen }"
-        @click="pickerOpen = !pickerOpen"
-      >
-        <Plus class="h-3.5 w-3.5" />
-      </button>
-
-      <div
-        v-if="pickerOpen"
-        class="absolute bottom-full left-0 mb-2 z-50 rounded-xl border border-base-300/40 bg-base-100 p-2 shadow-lg"
-      >
-        <div class="grid grid-cols-3 gap-1">
-          <button
-            v-for="opt in availableReactions"
-            :key="opt.symbol"
-            class="flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 transition-colors hover:bg-base-200"
-            :title="opt.label"
-            @click="addReaction(opt.symbol); pickerOpen = false"
-          >
-            <span class="text-lg leading-none">{{ opt.emoji }}</span>
-          </button>
-        </div>
-      </div>
-    </div>
+    <button
+      v-if="reactions.length > maxVisible"
+      class="inline-flex items-center h-7 px-2 rounded-full text-xs font-medium bg-base-200 text-base-content/70 border border-base-300 hover:bg-base-300"
+      @click.stop="showAll = !showAll"
+    >
+      +{{ reactions.length - maxVisible }}
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { ReactionSummary } from "~/types/comment";
-import { Plus } from "lucide-vue-next";
+import { SmilePlus } from "lucide-vue-next";
+import {
+  PopoverContent,
+  PopoverPortal,
+  PopoverRoot,
+  PopoverTrigger,
+} from "reka-ui";
 
-const props = defineProps<{
-  postId: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    postId: string;
+    maxVisible?: number;
+  }>(),
+  {
+    maxVisible: 5,
+  },
+);
 
 const { authenticated } = useAuth();
 
@@ -61,6 +84,7 @@ const reactions = ref<ReactionSummary[]>([]);
 const total = ref(0);
 const toggling = ref(false);
 const pickerOpen = ref(false);
+const showAll = ref(false);
 
 const availableReactions = [
   { symbol: "thumb_up", emoji: "👍", label: "赞" },
@@ -74,9 +98,11 @@ const availableReactions = [
   { symbol: "pray", emoji: "🙏", label: "祈祷" },
 ];
 
-const displayReactions = computed(() =>
-  reactions.value.filter((r) => r.count > 0),
-);
+const displayReactions = computed(() => {
+  const filtered = reactions.value.filter((r) => r.count > 0);
+  if (showAll.value) return filtered;
+  return filtered.slice(0, props.maxVisible);
+});
 
 function symbolToEmoji(symbol: string): string {
   const found = availableReactions.find((r) => r.symbol === symbol);
@@ -116,8 +142,9 @@ async function addReaction(symbol: string) {
     );
     reactions.value = data.reactions;
     total.value = data.total;
+    pickerOpen.value = false;
   } catch (e: unknown) {
-    const err = e as { statusCode?: number }
+    const err = e as { statusCode?: number };
     if (err.statusCode === 409) {
       await fetchReactions();
     } else if (err.statusCode !== 401 && err.statusCode !== 403) {
@@ -139,19 +166,7 @@ async function removeReaction(symbol: string) {
   }
 }
 
-function handleClickOutside(event: MouseEvent) {
-  const target = event.target as HTMLElement
-  if (!target.closest('.reaction-picker-wrap')) {
-    pickerOpen.value = false
-  }
-}
-
 onMounted(() => {
-  fetchReactions()
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+  fetchReactions();
+});
 </script>

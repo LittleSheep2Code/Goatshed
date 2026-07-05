@@ -125,8 +125,18 @@
         />
       </div>
 
-      <aside v-if="tocItems.length" class="post-toc hidden xl:block">
-        <PostToc :items="tocItems" />
+      <aside class="post-sidebar hidden xl:flex xl:flex-col xl:gap-5">
+        <PostToc v-if="tocItems.length" :items="tocItems" />
+
+        <div class="post-sidebar-card" data-pagefind-ignore>
+          <h4 class="mb-3 text-xs font-semibold text-base-content/70 uppercase tracking-wider">Reactions</h4>
+          <ReactionBar :post-id="post.id" />
+        </div>
+
+        <div class="post-sidebar-card" data-pagefind-ignore>
+          <h4 class="mb-3 text-xs font-semibold text-base-content/70 uppercase tracking-wider">Comments</h4>
+          <CommentSection :post-id="post.id" />
+        </div>
       </aside>
     </div>
 
@@ -181,13 +191,6 @@
         />
       </div>
     </div>
-
-    <section class="mt-8" data-pagefind-ignore>
-      <div class="flex items-center gap-4 mb-6">
-        <ReactionBar :post-id="post.id" v-if="post?.id" />
-      </div>
-      <CommentSection :post-id="post.id" v-if="post?.id" />
-    </section>
 
     <div class="grid grid-cols-2 gap-3 mt-10" data-pagefind-ignore>
       <NuxtLink
@@ -477,8 +480,8 @@ useHead(() => ({
 
 @media (min-width: 1280px) {
   .post-content-grid {
-    grid-template-columns: 1fr 16rem;
-    max-width: 72rem;
+    grid-template-columns: 1fr 20rem;
+    max-width: 76rem;
     gap: 1.5rem;
   }
 }
@@ -489,6 +492,50 @@ useHead(() => ({
 
 .post-toc-mobile {
   position: relative;
+}
+
+.post-sidebar {
+  position: sticky;
+  top: calc(var(--spacing) * 24);
+  align-self: start;
+  max-height: calc(100vh - calc(var(--spacing) * 28));
+  overflow-y: auto;
+}
+
+.post-sidebar :deep(.toc-wrapper) {
+  position: static;
+  top: auto;
+  max-height: none;
+  overflow-y: visible;
+}
+
+@media (min-width: 1280px) {
+  .post-sidebar :deep(.toc-header) {
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .post-sidebar :deep(.toc-chevron) {
+    display: block;
+  }
+
+  .post-sidebar :deep(.toc-list) {
+    max-height: 500px;
+  }
+
+  .post-sidebar :deep(.toc-list.toc-collapsed) {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    overflow: hidden;
+  }
+}
+
+.post-sidebar-card {
+  padding: 1rem;
+  border-radius: var(--radius-box, 0.9rem);
+  border: 1px solid color-mix(in srgb, var(--color-base-300) 40%, transparent);
+  background-color: var(--color-base-100);
 }
 
 .post-toc-mobile :deep(.toc-wrapper) {

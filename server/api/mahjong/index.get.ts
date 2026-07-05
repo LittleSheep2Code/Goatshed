@@ -2,9 +2,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import { db } from "~~/server/utils/db";
 import { mahjongSession, mahjongParticipant } from "~~/server/db/index";
 
-export default defineEventHandler(async (event) => {
-  const session = event.context.session;
-  if (!session) throw createError({ statusCode: 401 });
+export default defineEventHandler(async () => {
 
   const sessions = await db
     .select({

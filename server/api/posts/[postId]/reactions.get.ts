@@ -1,11 +1,4 @@
-import { snakeToCamel } from "~/utils/case";
 import { getSolarToken } from "~~/server/utils/solarToken";
-
-interface SolarReaction {
-  symbol: string;
-  attitude: number;
-  count: number;
-}
 
 export default defineEventHandler(async (event) => {
   const postId = getRouterParam(event, "postId");
@@ -37,7 +30,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const raw = await response.json();
-  const solarReactions = snakeToCamel<SolarReaction[]>(raw);
+  const solarReactions: { symbol: string }[] = Array.isArray(raw) ? raw : [];
 
   let userReactions: string[] = [];
   if (token) {
@@ -47,15 +40,20 @@ export default defineEventHandler(async (event) => {
     );
     if (mineResponse.ok) {
       const mineRaw = await mineResponse.json();
-      const mineData = snakeToCamel<{ symbol: string }[]>(mineRaw);
-      userReactions = mineData.map((r) => r.symbol);
+      const mineData = Array.isArray(mineRaw) ? mineRaw : [];
+      userReactions = mineData.map((r: { symbol: string }) => r.symbol);
     }
   }
 
-  const reactions = solarReactions.map((r) => ({
-    symbol: r.symbol,
-    count: r.count,
-    reacted: userReactions.includes(r.symbol),
+  const countMap = new Map<string, number>();
+  for (const r of solarReactions) {
+    countMap.set(r.symbol, (countMap.get(r.symbol) || 0) + 1);
+  }
+
+  const reactions = Array.from(countMap.entries()).map(([symbol, count]) => ({
+    symbol,
+    count,
+    reacted: userReactions.includes(symbol),
   }));
 
   const total = reactions.reduce((sum, r) => sum + r.count, 0);

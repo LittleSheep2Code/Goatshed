@@ -29,81 +29,143 @@
                 </div>
 
                 <div class="lg:col-span-2">
-                    <div class="sticky top-24 rounded-2xl border border-base-300 bg-base-100 p-6">
-                        <div class="mb-6">
-                            <span class="text-3xl font-black text-primary">{{ product?.price || 0 }}</span>
-                            <span class="ml-1 text-lg text-base-content/50">{{ product?.currency || "" }}</span>
-                        </div>
+                    <div class="sticky top-24 space-y-8">
+                        <div class="rounded-2xl border border-base-300 bg-base-100 p-6">
+                            <div class="mb-6">
+                                <span class="text-3xl font-black text-primary">{{ product?.price || 0 }}</span>
+                                <span class="ml-1 text-lg text-base-content/50">{{ product?.currency || "" }}</span>
+                            </div>
 
-                        <div class="space-y-5">
-                            <div>
-                                <label class="label px-0">
-                                    <span class="label-text font-semibold">数量</span>
-                                    <span class="label-text-alt text-base-content/40">
-                                        每份 {{ product?.price || "?" }} {{ product?.currency || "" }}
-                                    </span>
-                                </label>
-                                <div class="flex items-center gap-4">
-                                    <div class="join">
-                                        <button
-                                            class="btn join-item btn-square"
-                                            :disabled="quantity <= 1"
-                                            @click="quantity = Math.max(1, quantity - 1)"
-                                        >
-                                            <Minus class="h-4 w-4" />
-                                        </button>
-                                        <input
-                                            v-model.number="quantity"
-                                            type="number"
-                                            min="1"
-                                            max="100"
-                                            class="input join-item w-16 text-center" />
-                                        <button
-                                            class="btn join-item btn-square"
-                                            :disabled="quantity >= 100"
-                                            @click="quantity = Math.min(100, quantity + 1)"
-                                        >
-                                            <Plus class="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                    <div class="ml-auto text-right">
-                                        <div class="text-xs text-base-content/40">合计</div>
-                                        <div class="text-lg font-bold text-primary">
-                                            {{ totalAmount }} {{ product?.currency || "" }}
+                            <div class="space-y-5">
+                                <div>
+                                    <label class="label px-0">
+                                        <span class="label-text font-semibold">数量</span>
+                                        <span class="label-text-alt text-base-content/40">
+                                            每份 {{ product?.price || "?" }} {{ product?.currency || "" }}
+                                        </span>
+                                    </label>
+                                    <div class="flex items-center gap-4">
+                                        <div class="join">
+                                            <button
+                                                class="btn join-item btn-square"
+                                                :disabled="quantity <= 1"
+                                                @click="quantity = Math.max(1, quantity - 1)"
+                                            >
+                                                <Minus class="h-4 w-4" />
+                                            </button>
+                                            <input
+                                                v-model.number="quantity"
+                                                type="number"
+                                                min="1"
+                                                max="100"
+                                                class="input join-item w-16 text-center" />
+                                            <button
+                                                class="btn join-item btn-square"
+                                                :disabled="quantity >= 100"
+                                                @click="quantity = Math.min(100, quantity + 1)"
+                                            >
+                                                <Plus class="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                        <div class="ml-auto text-right">
+                                            <div class="text-xs text-base-content/40">合计</div>
+                                            <div class="text-lg font-bold text-primary">
+                                                {{ totalAmount }} {{ product?.currency || "" }}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div>
-                                <label class="label px-0">
-                                    <span class="label-text font-semibold">留言（可选）</span>
-                                </label>
-                                <textarea
-                                    v-model="message"
-                                    maxlength="200"
-                                    :placeholder="messagePlaceholder"
-                                    class="textarea textarea-bordered w-full resize-none"
-                                    rows="2"
-                                />
-                                <div class="mt-1 text-right text-xs text-base-content/40">
-                                    {{ message.length }}/200
+                                <div>
+                                    <label class="label px-0">
+                                        <span class="label-text font-semibold">留言（可选）</span>
+                                    </label>
+                                    <textarea
+                                        v-model="message"
+                                        maxlength="200"
+                                        :placeholder="messagePlaceholder"
+                                        class="textarea textarea-bordered w-full resize-none"
+                                        rows="2"
+                                    />
+                                    <div class="mt-1 text-right text-xs text-base-content/40">
+                                        {{ message.length }}/200
+                                    </div>
+                                </div>
+
+                                <button
+                                    class="btn btn-primary btn-block btn-lg gap-2"
+                                    :disabled="isSubmitting || !authenticated"
+                                    @click="submitOrder"
+                                >
+                                    <Loader2 v-if="isSubmitting" class="h-5 w-5 animate-spin" />
+                                    <ShoppingCart v-else class="h-5 w-5" />
+                                    {{ isSubmitting ? "创建订单中..." : authenticated ? actionLabel : "请先登录" }}
+                                </button>
+
+                                <p v-if="!authenticated" class="text-center text-xs">
+                                    <NuxtLink to="/login" class="text-primary hover:underline">登录</NuxtLink>
+                                    <span class="text-base-content/40">后即可购买</span>
+                                </p>
+                                <p v-else class="text-center text-xs text-base-content/40">
+                                    通过 Solarpass 钱包安全支付
+                                </p>
+                            </div>
+                        </div>
+
+                        <div v-if="productType === 'gaming'">
+                            <div class="mb-3 flex items-center gap-2">
+                                <Gamepad2 class="h-5 w-5 text-primary" />
+                                <h2 class="text-base font-bold">陪玩场次</h2>
+                            </div>
+                            <div v-if="gamingSessions.length > 0" class="space-y-2">
+                                <div
+                                    v-for="s in gamingSessions"
+                                    :key="s.id"
+                                    class="flex items-center justify-between rounded-xl border border-base-300 bg-base-100 p-3"
+                                >
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <div class="truncate text-sm font-semibold">{{ s.name }}</div>
+                                            <span :class="['badge badge-xs', getSessionStatusBadge(s.status)]">
+                                                {{ getSessionStatusLabel(s.status) }}
+                                            </span>
+                                        </div>
+                                        <div class="mt-0.5 text-xs text-base-content/40">{{ s.participantCount }} 人已加入</div>
+                                    </div>
+                                    <span class="badge badge-info badge-sm shrink-0 ml-2">{{ s.ticketCost }} 张票</span>
                                 </div>
                             </div>
+                            <div v-else class="rounded-xl border border-base-300 bg-base-100 p-4 text-center text-xs text-base-content/50">
+                                暂无陪玩场次
+                            </div>
 
-                            <button
-                                class="btn btn-primary btn-block btn-lg gap-2"
-                                :disabled="isSubmitting"
-                                @click="submitOrder"
-                            >
-                                <Loader2 v-if="isSubmitting" class="h-5 w-5 animate-spin" />
-                                <ShoppingCart v-else class="h-5 w-5" />
-                                {{ isSubmitting ? "创建订单中..." : actionLabel }}
-                            </button>
-
-                            <p class="text-center text-xs text-base-content/40">
-                                通过 Solarpass 钱包安全支付
-                            </p>
+                            <div class="mt-6 mb-3 flex items-center gap-2">
+                                <Dices class="h-5 w-5 text-primary" />
+                                <h2 class="text-base font-bold">麻将场次</h2>
+                            </div>
+                            <div v-if="mahjongSessions.length > 0" class="space-y-2">
+                                <div
+                                    v-for="s in mahjongSessions"
+                                    :key="s.id"
+                                    class="flex items-center justify-between rounded-xl border border-base-300 bg-base-100 p-3"
+                                >
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <div class="truncate text-sm font-semibold">{{ s.name }}</div>
+                                            <span :class="['badge badge-xs', getSessionStatusBadge(s.status)]">
+                                                {{ getSessionStatusLabel(s.status) }}
+                                            </span>
+                                        </div>
+                                        <div class="mt-0.5 text-xs text-base-content/40">
+                                            {{ s.participantCount }}/{{ s.playerCount }}人 · {{ s.multiplier }}x · {{ s.initialPoints.toLocaleString() }}点
+                                        </div>
+                                    </div>
+                                    <span class="badge badge-info badge-sm shrink-0 ml-2">{{ s.multiplier }} 张票</span>
+                                </div>
+                            </div>
+                            <div v-else class="rounded-xl border border-base-300 bg-base-100 p-4 text-center text-xs text-base-content/50">
+                                暂无麻将场次
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -112,35 +174,6 @@
             <p v-if="error" class="mt-4 text-center text-sm text-error">
                 {{ error }}
             </p>
-
-            <div v-if="productType === 'gaming'" class="mt-10">
-                <div class="mb-4 flex items-center gap-2">
-                    <Gamepad2 class="h-5 w-5 text-primary" />
-                    <h2 class="text-lg font-bold">可加入的陪玩场次</h2>
-                </div>
-                <div v-if="gamingSessions.length > 0" class="space-y-3">
-                    <div
-                        v-for="s in gamingSessions"
-                        :key="s.id"
-                        class="flex items-center justify-between rounded-xl border border-base-300 bg-base-100 p-4"
-                    >
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <div class="font-semibold">{{ s.name }}</div>
-                                <span :class="['badge badge-xs', getSessionStatusBadge(s.status)]">
-                                    {{ getSessionStatusLabel(s.status) }}
-                                </span>
-                            </div>
-                            <div v-if="s.description" class="mt-0.5 text-sm text-base-content/50">{{ s.description }}</div>
-                            <div class="mt-1 text-xs text-base-content/40">{{ s.participantCount }} 人已加入</div>
-                        </div>
-                        <span class="badge badge-info shrink-0">{{ s.ticketCost }} 张票</span>
-                    </div>
-                </div>
-                <div v-else class="rounded-xl border border-base-300 bg-base-100 p-8 text-center text-sm text-base-content/50">
-                    暂无陪玩场次，购买票后等待场次开放
-                </div>
-            </div>
         </div>
 
         <dialog ref="payDialog" class="modal">
@@ -229,7 +262,7 @@
 </template>
 
 <script setup lang="ts">
-import { Heart, Ticket, Plus, Minus, Loader2, Check, Clock, ShoppingCart, RefreshCw, Gamepad2 } from "lucide-vue-next";
+import { Heart, Ticket, Plus, Minus, Loader2, Check, Clock, ShoppingCart, RefreshCw, Gamepad2, Dices } from "lucide-vue-next";
 import type { Component } from "vue";
 
 const route = useRoute();
@@ -273,9 +306,7 @@ const successTitle = config.successTitle;
 const successMessage = config.successMessage;
 const productIcon = config.icon;
 
-definePageMeta({
-    middleware: ["auth"],
-});
+const { authenticated } = useAuth();
 
 const { data: product } = await useFetch<Record<string, any> | null>(
     "/api/donations/product",
@@ -298,6 +329,7 @@ const paymentResult = ref<"已支付" | "待支付">("待支付");
 const payStatus = ref<"待支付" | "待支付">("待支付");
 
 const gamingSessions = ref<any[]>([]);
+const mahjongSessions = ref<any[]>([]);
 
 const POLL_INTERVAL = 30000;
 
@@ -406,9 +438,10 @@ onUnmounted(() => {
 });
 
 if (productType === "gaming") {
-    $fetch("/api/sessions").then((data: any) => {
-        gamingSessions.value = data || [];
-    }).catch(() => {});
+    Promise.all([
+        $fetch("/api/sessions").then((data: any) => { gamingSessions.value = data || []; }),
+        $fetch("/api/mahjong").then((data: any) => { mahjongSessions.value = data || []; }),
+    ]).catch(() => {});
 }
 
 function getSessionStatusBadge(status: string) {
