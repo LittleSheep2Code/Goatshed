@@ -178,7 +178,7 @@
             <div class="modal-box max-w-2xl">
                 <h3 class="text-lg font-bold">看板管理 — {{ boardUser?.name }}</h3>
                 <p class="mt-1 text-sm text-base-content/60">
-                    查看 / 调整用户看板；自定义应用载荷通过应用 private API 推送
+                    仅显示本应用（Goatshed）的看板组件；定义来自 Develop private API
                 </p>
 
                 <div v-if="boardLoading" class="flex items-center justify-center py-8">
@@ -195,7 +195,11 @@
                 <div v-else class="mt-4 space-y-3">
                     <div v-if="boardItems.length === 0" class="rounded-lg border border-base-300 bg-base-50 p-8 text-center">
                         <LayoutGrid class="mx-auto h-8 w-8 text-base-content/30" />
-                        <p class="mt-2 text-sm text-base-content/50">该用户暂无看板组件</p>
+                        <p class="mt-2 text-sm text-base-content/50">该用户未安装本应用的看板组件</p>
+                        <p v-if="boardManifests.length" class="mt-1 text-xs text-base-content/40">
+                            应用已定义 {{ boardManifests.length }} 个组件
+                            <template v-if="boardTotalItems != null"> · 用户看板共 {{ boardTotalItems }} 项</template>
+                        </p>
                     </div>
 
                     <div
@@ -283,87 +287,121 @@
         <!-- Edit Payload Dialog -->
         <dialog ref="payloadEditDialog" class="modal">
             <div class="modal-box max-w-xl">
-                <h3 class="text-lg font-bold">编辑组件载荷</h3>
+                <h3 class="text-lg font-bold">
+                    {{ isMoodEditingItem ? "编辑心情" : "编辑组件载荷" }}
+                </h3>
                 <p class="mt-1 text-sm text-base-content/60">
                     {{ editingItem ? getWidgetDisplayName(editingItem) : '' }}
                 </p>
-                <p class="mt-1 text-xs text-base-content/40">
-                    字段需符合通用信封：value + label，format 可选
-                </p>
 
-                <div class="mt-3 flex items-center gap-2">
-                    <button
-                        type="button"
-                        class="btn btn-xs"
-                        :class="payloadEditMode === 'fields' ? 'btn-primary' : 'btn-ghost'"
-                        @click="payloadEditMode = 'fields'"
-                    >
-                        字段
-                    </button>
-                    <button
-                        type="button"
-                        class="btn btn-xs"
-                        :class="payloadEditMode === 'json' ? 'btn-primary' : 'btn-ghost'"
-                        @click="switchToJsonMode"
-                    >
-                        JSON
+                <!-- Mood: simple form -->
+                <div v-if="isMoodEditingItem && payloadEditMode === 'mood'" class="mt-4 space-y-4">
+                    <p class="text-sm text-base-content/60">
+                        头像 / 背景将自动取自该用户的 Solarpass 资料文件 ID，只需填写心情文案。
+                    </p>
+                    <label class="form-control w-full">
+                        <span class="label-text mb-1">心情</span>
+                        <input
+                            v-model="moodAdminDraft"
+                            type="text"
+                            maxlength="280"
+                            class="input input-bordered w-full"
+                            placeholder="今天感觉怎么样？"
+                        />
+                    </label>
+                    <button type="button" class="btn btn-ghost btn-xs" @click="payloadEditMode = 'fields'">
+                        高级字段编辑
                     </button>
                 </div>
 
-                <div v-if="payloadEditMode === 'fields'" class="mt-4 space-y-4">
-                    <div v-if="payloadFieldKeys.length === 0" class="rounded-lg border border-dashed border-base-300 p-4 text-center text-sm text-base-content/50">
-                        当前无字段，可添加字段或切换到 JSON 编辑
-                    </div>
+                <template v-else>
+                    <p class="mt-1 text-xs text-base-content/40">
+                        字段需符合通用信封：value + label，format 可选
+                    </p>
 
-                    <div v-for="key in payloadFieldKeys" :key="key" class="rounded-lg border border-base-300 p-3">
-                        <div class="mb-2 flex items-center justify-between gap-2">
-                            <span class="font-mono text-xs text-base-content/60">{{ key }}</span>
-                            <button type="button" class="btn btn-ghost btn-xs text-error" @click="removePayloadField(key)">
-                                移除
-                            </button>
-                        </div>
-                        <div class="space-y-2">
-                            <div class="form-control">
-                                <label class="label py-0"><span class="label-text text-xs">Label</span></label>
-                                <input v-model="payloadFields[key]!.label" type="text" class="input input-bordered input-sm" />
-                            </div>
-                            <div class="form-control">
-                                <label class="label py-0"><span class="label-text text-xs">Value</span></label>
-                                <input v-model="payloadFields[key]!.value" type="text" class="input input-bordered input-sm" />
-                            </div>
-                            <div class="form-control">
-                                <label class="label py-0"><span class="label-text text-xs">Format（可选）</span></label>
-                                <input
-                                    v-model="payloadFields[key]!.format"
-                                    type="text"
-                                    placeholder="boolean / number / date / currency …"
-                                    class="input input-bordered input-sm"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap items-end gap-2 rounded-lg border border-dashed border-base-300 p-3">
-                        <div class="form-control min-w-[8rem] flex-1">
-                            <label class="label py-0"><span class="label-text text-xs">新字段名</span></label>
-                            <input v-model="newFieldName" type="text" placeholder="field_key" class="input input-bordered input-sm" />
-                        </div>
-                        <button type="button" class="btn btn-outline btn-sm" @click="addPayloadField">
-                            <Plus class="h-3 w-3" />
-                            添加字段
+                    <div class="mt-3 flex items-center gap-2">
+                        <button
+                            v-if="isMoodEditingItem"
+                            type="button"
+                            class="btn btn-xs"
+                            :class="payloadEditMode === 'mood' ? 'btn-primary' : 'btn-ghost'"
+                            @click="payloadEditMode = 'mood'"
+                        >
+                            心情
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-xs"
+                            :class="payloadEditMode === 'fields' ? 'btn-primary' : 'btn-ghost'"
+                            @click="payloadEditMode = 'fields'"
+                        >
+                            字段
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-xs"
+                            :class="payloadEditMode === 'json' ? 'btn-primary' : 'btn-ghost'"
+                            @click="switchToJsonMode"
+                        >
+                            JSON
                         </button>
                     </div>
-                </div>
 
-                <div v-else class="mt-4">
-                    <textarea
-                        v-model="payloadJsonText"
-                        class="textarea textarea-bordered h-64 w-full font-mono text-xs"
-                        spellcheck="false"
-                        placeholder='{\n  "title": { "value": "…", "label": "Title" }\n}'
-                    />
-                    <p v-if="payloadJsonError" class="mt-2 text-xs text-error">{{ payloadJsonError }}</p>
-                </div>
+                    <div v-if="payloadEditMode === 'fields'" class="mt-4 space-y-4">
+                        <div v-if="payloadFieldKeys.length === 0" class="rounded-lg border border-dashed border-base-300 p-4 text-center text-sm text-base-content/50">
+                            当前无字段，可添加字段或切换到 JSON 编辑
+                        </div>
+
+                        <div v-for="key in payloadFieldKeys" :key="key" class="rounded-lg border border-base-300 p-3">
+                            <div class="mb-2 flex items-center justify-between gap-2">
+                                <span class="font-mono text-xs text-base-content/60">{{ key }}</span>
+                                <button type="button" class="btn btn-ghost btn-xs text-error" @click="removePayloadField(key)">
+                                    移除
+                                </button>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="form-control">
+                                    <label class="label py-0"><span class="label-text text-xs">Label</span></label>
+                                    <input v-model="payloadFields[key]!.label" type="text" class="input input-bordered input-sm" />
+                                </div>
+                                <div class="form-control">
+                                    <label class="label py-0"><span class="label-text text-xs">Value</span></label>
+                                    <input v-model="payloadFields[key]!.value" type="text" class="input input-bordered input-sm" />
+                                </div>
+                                <div class="form-control">
+                                    <label class="label py-0"><span class="label-text text-xs">Format（可选）</span></label>
+                                    <input
+                                        v-model="payloadFields[key]!.format"
+                                        type="text"
+                                        placeholder="boolean / number / date / currency …"
+                                        class="input input-bordered input-sm"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-end gap-2 rounded-lg border border-dashed border-base-300 p-3">
+                            <div class="form-control min-w-[8rem] flex-1">
+                                <label class="label py-0"><span class="label-text text-xs">新字段名</span></label>
+                                <input v-model="newFieldName" type="text" placeholder="field_key" class="input input-bordered input-sm" />
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm" @click="addPayloadField">
+                                <Plus class="h-3 w-3" />
+                                添加字段
+                            </button>
+                        </div>
+                    </div>
+
+                    <div v-else-if="payloadEditMode === 'json'" class="mt-4">
+                        <textarea
+                            v-model="payloadJsonText"
+                            class="textarea textarea-bordered h-64 w-full font-mono text-xs"
+                            spellcheck="false"
+                            placeholder='{\n  "title": { "value": "…", "label": "Title" }\n}'
+                        />
+                        <p v-if="payloadJsonError" class="mt-2 text-xs text-error">{{ payloadJsonError }}</p>
+                    </div>
+                </template>
 
                 <div class="modal-action">
                     <form method="dialog">
@@ -388,7 +426,9 @@ import { Users, Pencil, Trash2, Loader2, KeyRound, Copy, Check, RefreshCw, Layou
 useHead({ title: "Admin - 用户管理" });
 
 // ── Board Management ──
-// Layout: user self-board (Passport). Custom-app payload: app private API.
+// Manifests: Develop private GET .../board/widgets (this app only)
+// Instances/payloads: user self-board, filtered to this app
+// Payload push: Develop private POST .../board/payload
 // Payload envelope: { value, label, format? }
 
 interface BoardPayloadField {
@@ -397,15 +437,38 @@ interface BoardPayloadField {
     format?: string;
 }
 
+interface BoardWidgetFieldType {
+    name: string;
+    type: string;
+    label: string;
+    format?: string;
+    required?: boolean;
+}
+
+interface BoardWidgetManifest {
+    key: string;
+    is_enabled?: boolean;
+    renderer_type?: string;
+    field_types?: BoardWidgetFieldType[];
+    required_fields?: string[];
+}
+
 interface BoardItem {
     id: string;
     order: number;
-    kind: string;
+    kind: string | number;
     widget_key: string | null;
     custom_app_id: string | null;
     custom_app_widget_key: string | null;
     is_enabled: boolean;
     payload: Record<string, BoardPayloadField | unknown> | null;
+}
+
+interface BoardResponse {
+    app_id: string;
+    manifests: BoardWidgetManifest[];
+    items: BoardItem[];
+    total_board_items?: number;
 }
 
 interface EditablePayloadField {
@@ -417,6 +480,9 @@ interface EditablePayloadField {
 const boardDialog = ref<HTMLDialogElement>();
 const boardUser = ref<any>(null);
 const boardItems = ref<BoardItem[]>([]);
+const boardManifests = ref<BoardWidgetManifest[]>([]);
+const boardAppId = ref<string | null>(null);
+const boardTotalItems = ref<number | null>(null);
 const boardLoading = ref(false);
 const boardError = ref<string | null>(null);
 const boardSaving = ref(false);
@@ -424,6 +490,9 @@ const boardSaving = ref(false);
 function openBoard(user: any) {
     boardUser.value = user;
     boardItems.value = [];
+    boardManifests.value = [];
+    boardAppId.value = null;
+    boardTotalItems.value = null;
     boardError.value = null;
     boardDialog.value?.showModal();
     fetchBoard();
@@ -434,13 +503,30 @@ async function fetchBoard() {
     boardLoading.value = true;
     boardError.value = null;
     try {
-        const data = await $fetch<BoardItem[]>(`/api/admin/users/${boardUser.value.id}/board`);
-        boardItems.value = Array.isArray(data) ? data : [];
+        const data = await $fetch<BoardResponse>(`/api/admin/users/${boardUser.value.id}/board`);
+        boardItems.value = Array.isArray(data?.items) ? data.items : [];
+        boardManifests.value = Array.isArray(data?.manifests) ? data.manifests : [];
+        boardAppId.value = data?.app_id ?? null;
+        boardTotalItems.value = data?.total_board_items ?? null;
     } catch (e: any) {
         boardError.value = e.data?.message || e.message || "加载失败";
     } finally {
         boardLoading.value = false;
     }
+}
+
+function getManifestForItem(item: BoardItem): BoardWidgetManifest | undefined {
+    const key = item.custom_app_widget_key || item.widget_key;
+    if (!key) return undefined;
+    return boardManifests.value.find((m) => m.key === key);
+}
+
+function isMoodWidget(item: BoardItem | null): boolean {
+    if (!item) return false;
+    const key = (item.custom_app_widget_key || item.widget_key || "").toLowerCase();
+    if (key.includes("mood")) return true;
+    const names = new Set((getManifestForItem(item)?.field_types || []).map((f) => f.name));
+    return names.has("image") && names.has("background") && names.has("mood");
 }
 
 function isEnvelopeField(field: unknown): field is BoardPayloadField {
@@ -483,14 +569,14 @@ function hasPayloadFields(item: BoardItem): boolean {
 }
 
 function getWidgetDisplayName(item: BoardItem): string {
-    if (item.kind === "custom_app") {
-        return item.custom_app_widget_key || item.custom_app_id || "Custom Widget";
-    }
-    return item.widget_key || "Unknown";
+    const key = item.custom_app_widget_key || item.widget_key;
+    return key || item.custom_app_id || "Custom Widget";
 }
 
 function getWidgetKindLabel(item: BoardItem): string {
-    return item.kind === "custom_app" ? "应用组件" : "内置";
+    const manifest = getManifestForItem(item);
+    if (manifest?.renderer_type) return manifest.renderer_type;
+    return "应用组件";
 }
 
 function coerceFieldValue(raw: string, format?: string): unknown {
@@ -541,12 +627,14 @@ function valueToEditString(value: unknown): string {
 
 const payloadFields = reactive<Record<string, EditablePayloadField>>({});
 const payloadFieldKeys = computed(() => Object.keys(payloadFields));
-const payloadEditMode = ref<"fields" | "json">("fields");
+const payloadEditMode = ref<"mood" | "fields" | "json">("fields");
 const payloadJsonText = ref("{}");
 const payloadJsonError = ref<string | null>(null);
 const newFieldName = ref("");
+const moodAdminDraft = ref("");
 const editingItem = ref<BoardItem | null>(null);
 const payloadEditDialog = ref<HTMLDialogElement>();
+const isMoodEditingItem = computed(() => isMoodWidget(editingItem.value));
 
 function clearPayloadFields() {
     for (const key of Object.keys(payloadFields)) {
@@ -554,9 +642,13 @@ function clearPayloadFields() {
     }
 }
 
-function loadPayloadIntoEditor(payload: BoardItem["payload"]) {
+function loadPayloadIntoEditor(item: BoardItem) {
     clearPayloadFields();
-    for (const [key, field] of Object.entries(payload || {})) {
+    const payload = item.payload || {};
+    const manifest = getManifestForItem(item);
+
+    // Seed from existing payload first
+    for (const [key, field] of Object.entries(payload)) {
         if (isEnvelopeField(field)) {
             payloadFields[key] = {
                 label: String(field.label || key),
@@ -571,6 +663,17 @@ function loadPayloadIntoEditor(payload: BoardItem["payload"]) {
             };
         }
     }
+
+    // Fill missing required/schema fields from app manifest
+    for (const ft of manifest?.field_types || []) {
+        if (!ft?.name || payloadFields[ft.name]) continue;
+        payloadFields[ft.name] = {
+            label: ft.label || ft.name,
+            value: "",
+            format: ft.format || (ft.type === "boolean" || ft.type === "number" ? ft.type : ""),
+        };
+    }
+
     payloadJsonText.value = JSON.stringify(buildEnvelopePayload(), null, 2);
     payloadJsonError.value = null;
 }
@@ -592,9 +695,16 @@ function buildEnvelopePayload(): Record<string, BoardPayloadField> {
 
 function openEditPayload(item: BoardItem) {
     editingItem.value = item;
-    payloadEditMode.value = "fields";
     newFieldName.value = "";
-    loadPayloadIntoEditor(item.payload);
+    loadPayloadIntoEditor(item);
+    if (isMoodWidget(item)) {
+        payloadEditMode.value = "mood";
+        const existingMood = payloadFields.mood?.value ?? getFieldValue(item, "mood");
+        moodAdminDraft.value = existingMood == null || existingMood === "" ? "" : String(existingMood);
+    } else {
+        payloadEditMode.value = "fields";
+        moodAdminDraft.value = "";
+    }
     payloadEditDialog.value?.showModal();
 }
 
@@ -661,23 +771,40 @@ function parseJsonPayload(): Record<string, BoardPayloadField> | null {
 async function savePayload() {
     if (!editingItem.value || !boardUser.value) return;
 
-    let payload: Record<string, BoardPayloadField>;
-    if (payloadEditMode.value === "json") {
-        const parsed = parseJsonPayload();
-        if (!parsed) return;
-        payload = parsed;
-    } else {
-        for (const [key, field] of Object.entries(payloadFields)) {
-            if (!field.label?.trim()) {
-                alert(`字段 "${key}" 的 label 不能为空`);
-                return;
-            }
-        }
-        payload = buildEnvelopePayload();
-    }
-
     boardSaving.value = true;
     try {
+        // Mood shortcut: server fills image/background from user's Solarpass profile
+        if (isMoodEditingItem.value && payloadEditMode.value === "mood") {
+            const mood = moodAdminDraft.value.trim();
+            if (!mood) {
+                alert("请填写心情");
+                boardSaving.value = false;
+                return;
+            }
+            await $fetch(`/api/admin/users/${boardUser.value.id}/mood`, {
+                method: "PUT",
+                body: { mood, install: false },
+            });
+            payloadEditDialog.value?.close();
+            await fetchBoard();
+            return;
+        }
+
+        let payload: Record<string, BoardPayloadField>;
+        if (payloadEditMode.value === "json") {
+            const parsed = parseJsonPayload();
+            if (!parsed) return;
+            payload = parsed;
+        } else {
+            for (const [key, field] of Object.entries(payloadFields)) {
+                if (!field.label?.trim()) {
+                    alert(`字段 "${key}" 的 label 不能为空`);
+                    return;
+                }
+            }
+            payload = buildEnvelopePayload();
+        }
+
         await $fetch(
             `/api/admin/users/${boardUser.value.id}/board/items/${editingItem.value.id}/payload`,
             {
