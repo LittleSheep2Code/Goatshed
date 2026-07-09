@@ -1,6 +1,13 @@
 import { requireAdmin } from "~~/server/utils/admin";
-import { getUserSolarToken } from "~~/server/utils/solarAccount";
+import { boardAdminUrl, getBoardAdminContext } from "~~/server/utils/boardAdmin";
 
+/**
+ * Replace the full board layout for a user via Passport admin API.
+ *
+ * Note: custom-app widget payloads on replace are still server-owned —
+ * client-supplied custom-app payloads are ignored/preserved by Passport.
+ * Use the per-item payload endpoint for payload updates.
+ */
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
 
@@ -8,24 +15,26 @@ export default defineEventHandler(async (event) => {
   if (!id) throw createError({ statusCode: 400, statusMessage: "Missing user ID" });
 
   const body = await readBody(event);
-
-  const token = await getUserSolarToken(id);
-  if (!token) {
-    throw createError({ statusCode: 404, statusMessage: "No linked Solian account or token expired" });
-  }
-
+  const { adminToken, solarAccountId } = await getBoardAdminContext(event, id);
   const config = useRuntimeConfig(event);
-  const url = `${config.public.apiBaseUrl}/passport/accounts/me/board`;
+  const url = boardAdminUrl(config.public.apiBaseUrl, solarAccountId);
+
   const response = await fetch(url, {
     method: "PUT",
-    headers: { "content-type": "application/json", "authorization": `Bearer ${token}` },
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${adminToken}`,
+    },
     body: JSON.stringify(body),
   });
 
   if (!response.ok) {
     const text = await response.text();
     console.error("[board.put] Downstream error:", { url, status: response.status, body: text });
-    throw createError({ statusCode: response.status, message: text || `Passport API returned ${response.status}` });
+    throw createError({
+      statusCode: response.status,
+      message: text || `Passport admin board API returned ${response.status}`,
+    });
   }
 
   return await response.json();
