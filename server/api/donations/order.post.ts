@@ -20,8 +20,8 @@ export default defineEventHandler(async (event) => {
   const message = typeof body.message === "string" ? body.message.slice(0, 200) : undefined;
 
   const config = useRuntimeConfig(event);
-  const clientId = process.env.DONATION_API_KEY_CLIENT_ID;
-  const clientSecret = process.env.DONATION_API_KEY_SECRET;
+  const clientId = process.env.SOLIAN_APP_CLIENT_ID;
+  const clientSecret = process.env.SOLIAN_APP_SECRET;
 
   if (!clientId || !clientSecret) {
     throw createError({ statusCode: 500, statusMessage: "Payment API not configured" });

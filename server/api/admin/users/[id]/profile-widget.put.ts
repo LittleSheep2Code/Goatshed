@@ -1,5 +1,5 @@
 import { requireAdmin } from "~~/server/utils/admin";
-import { updateMoodForUser } from "~~/server/utils/moodWidget";
+import { updateProfileWidgetForUser } from "~~/server/utils/profileWidget";
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
@@ -9,9 +9,12 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event);
   const config = useRuntimeConfig(event);
-  return await updateMoodForUser(id, config.public.apiBaseUrl, {
-    mood: typeof body?.mood === "string" ? body.mood : "",
+  const dataRaw = body?.data ?? body?.pairs ?? {};
+
+  return await updateProfileWidgetForUser(id, config.public.apiBaseUrl, {
+    data: dataRaw,
     image: body?.image,
+    background: body?.background,
     installIfMissing: body?.install !== false,
   });
 });

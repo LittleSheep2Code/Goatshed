@@ -1,5 +1,5 @@
 import { requireAdmin } from "~~/server/utils/admin";
-import { updateMoodForUser } from "~~/server/utils/moodWidget";
+import { updateWorkingForUser } from "~~/server/utils/workingWidget";
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
@@ -9,9 +9,10 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event);
   const config = useRuntimeConfig(event);
-  return await updateMoodForUser(id, config.public.apiBaseUrl, {
-    mood: typeof body?.mood === "string" ? body.mood : "",
+  return await updateWorkingForUser(id, config.public.apiBaseUrl, {
+    tasks: body?.tasks,
     image: body?.image,
+    background: body?.background,
     installIfMissing: body?.install !== false,
   });
 });

@@ -54,12 +54,12 @@ export function selfBoardUrl(apiBaseUrl: string): string {
 
 /** Goatshed app secret for Develop private board APIs. */
 export function getAppBoardSecret(): { appId: string; secret: string } {
-  const appId = process.env.DONATION_API_KEY_CLIENT_ID;
-  const secret = process.env.DONATION_API_KEY_SECRET;
+  const appId = process.env.SOLIAN_APP_CLIENT_ID;
+  const secret = process.env.SOLIAN_APP_SECRET;
   if (!appId || !secret) {
     throw createError({
       statusCode: 500,
-      statusMessage: "DONATION_API_KEY_CLIENT_ID/SECRET not configured",
+      statusMessage: "SOLIAN_APP_CLIENT_ID/SECRET not configured",
     });
   }
   return { appId, secret };

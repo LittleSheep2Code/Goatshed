@@ -1,26 +1,27 @@
 import { getCachedSolarProfile } from "./solarProfile";
 import {
-  type BoardItem,
   type BoardWidgetManifest,
   fetchAppBoardManifests,
   fetchUserBoard,
   filterBoardItemsForApp,
-  getAppBoardSecret,
-  getBoardItemWidgetKey,
   getTargetSolarAccountId,
   getTargetUserBoardAccess,
-  isCustomAppBoardItem,
-  privateBoardPayloadUrl,
-  replaceUserBoard,
 } from "./boardAdmin";
+import {
+  ensureAppWidgetInstalled,
+  envelopeString,
+  extractProfileMediaIds,
+  isWidgetItem,
+  normalizeMediaRef,
+  pushAppBoardPayload,
+  resolveMediaOrDefault,
+} from "./boardWidgetCore";
 
 export const MOOD_FIELD_IMAGE = "image";
-export const MOOD_FIELD_BACKGROUND = "background";
 export const MOOD_FIELD_MOOD = "mood";
 
 export interface MoodPayloadEnvelope {
   image: { value: string; label: string };
-  background: { value: string; label: string };
   mood: { value: string; label: string };
 }
 
@@ -30,64 +31,24 @@ export interface MoodWidgetState {
   installed: boolean;
   board_item_id: string | null;
   mood: string;
+  /** Currently stored image (URL or file id). */
+  image: string;
   image_file_id: string | null;
-  background_file_id: string | null;
   payload: MoodPayloadEnvelope | Record<string, unknown> | null;
+  /** Solarpass default picture file id (if any). */
   profile_picture_id: string | null;
-  profile_background_id: string | null;
   can_push: boolean;
   missing: string[];
 }
 
-function asRecord(value: unknown): Record<string, any> | null {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, any>)
-    : null;
+export interface MoodUpdateInput {
+  mood: string;
+  /** Optional override: URL or file id. Empty/omit → profile picture. */
+  image?: string | null;
+  installIfMissing?: boolean;
 }
 
-function fileIdFromRef(ref: unknown): string | null {
-  const obj = asRecord(ref);
-  if (!obj) return null;
-  const id = obj.id ?? obj.Id;
-  return id != null && String(id).trim() ? String(id) : null;
-}
-
-/** Extract Solarpass picture / background cloud file ids from a profile payload. */
-export function extractProfileMediaIds(profile: Record<string, any> | null | undefined): {
-  pictureId: string | null;
-  backgroundId: string | null;
-} {
-  if (!profile) return { pictureId: null, backgroundId: null };
-
-  const nested = asRecord(profile.profile) || profile;
-  const pictureId =
-    fileIdFromRef(nested?.picture)
-    || fileIdFromRef(nested?.Picture)
-    || fileIdFromRef(profile.picture)
-    || fileIdFromRef(profile.Picture);
-
-  const backgroundId =
-    fileIdFromRef(nested?.background)
-    || fileIdFromRef(nested?.Background)
-    || fileIdFromRef(profile.background)
-    || fileIdFromRef(profile.Background);
-
-  return { pictureId, backgroundId };
-}
-
-function envelopeValue(payload: Record<string, unknown> | null | undefined, key: string): string {
-  if (!payload) return "";
-  const field = payload[key];
-  if (field && typeof field === "object" && "value" in field) {
-    const v = (field as { value: unknown }).value;
-    if (v == null) return "";
-    return typeof v === "string" ? v : String(v);
-  }
-  if (typeof field === "string") return field;
-  return "";
-}
-
-/** Prefer env, then key containing "mood", then image+background+mood fields, else first. */
+/** Prefer env, then key containing "mood", then image+mood fields. */
 export function resolveMoodManifest(manifests: BoardWidgetManifest[]): BoardWidgetManifest | null {
   if (!manifests.length) return null;
 
@@ -102,109 +63,21 @@ export function resolveMoodManifest(manifests: BoardWidgetManifest[]): BoardWidg
 
   const byFields = manifests.find((m) => {
     const names = new Set((m.field_types || []).map((f) => f.name));
-    return names.has(MOOD_FIELD_IMAGE) && names.has(MOOD_FIELD_BACKGROUND) && names.has(MOOD_FIELD_MOOD);
+    return names.has(MOOD_FIELD_IMAGE) && names.has(MOOD_FIELD_MOOD) && !names.has("tasks");
   });
   if (byFields) return byFields;
 
-  return manifests[0] ?? null;
+  return null;
 }
 
 export function buildMoodPayload(input: {
-  pictureId: string;
-  backgroundId: string;
+  image: string;
   mood: string;
 }): MoodPayloadEnvelope {
   return {
-    image: { value: input.pictureId, label: "Image" },
-    background: { value: input.backgroundId, label: "Background" },
-    mood: { value: input.mood, label: "Mood" },
+    image: { value: input.image, label: "图片" },
+    mood: { value: input.mood, label: "心情" },
   };
-}
-
-export function isMoodWidgetItem(item: BoardItem, moodKey: string): boolean {
-  if (!isCustomAppBoardItem(item)) return false;
-  const key = getBoardItemWidgetKey(item);
-  return !!key && key.toLowerCase() === moodKey.toLowerCase();
-}
-
-export async function pushAppBoardPayload(params: {
-  apiBaseUrl: string;
-  appId: string;
-  accountId: string;
-  widgetKey: string;
-  boardItemId?: string | null;
-  payload: Record<string, unknown>;
-}): Promise<unknown> {
-  const { secret } = getAppBoardSecret();
-  const url = privateBoardPayloadUrl(params.apiBaseUrl, params.appId);
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${secret}`,
-      "x-app-secret": secret,
-    },
-    body: JSON.stringify({
-      account_id: params.accountId,
-      widget_key: params.widgetKey,
-      board_item_id: params.boardItemId || null,
-      payload: params.payload,
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    console.error("[mood.push] Private payload API error:", {
-      url,
-      status: response.status,
-      body: text,
-    });
-    throw createError({
-      statusCode: response.status,
-      message: text || `Failed to push board payload (${response.status})`,
-    });
-  }
-
-  if (response.status === 204) return { success: true };
-  return await response.json();
-}
-
-/**
- * Ensure the mood widget is on the user's board (empty payload for custom_app).
- * Returns the board item after install/locate.
- */
-export async function ensureMoodWidgetInstalled(params: {
-  apiBaseUrl: string;
-  userToken: string;
-  appId: string;
-  widgetKey: string;
-  board: BoardItem[];
-}): Promise<{ item: BoardItem; board: BoardItem[] }> {
-  const existing = params.board.find((item) => isMoodWidgetItem(item, params.widgetKey));
-  if (existing) return { item: existing, board: params.board };
-
-  // Passport SnAccountBoardItemKind.CustomApp = 1 (numeric JSON without string enum converter)
-  const next: BoardItem[] = [
-    ...params.board.map((item, i) => ({ ...item, order: i })),
-    {
-      order: params.board.length,
-      kind: 1,
-      custom_app_id: params.appId,
-      custom_app_widget_key: params.widgetKey,
-      is_enabled: true,
-      payload: {},
-    } as BoardItem,
-  ];
-
-  const updated = await replaceUserBoard(params.apiBaseUrl, params.userToken, next);
-  const item = updated.find((x) => isMoodWidgetItem(x, params.widgetKey));
-  if (!item) {
-    throw createError({
-      statusCode: 500,
-      message: "Mood widget was not present after board update",
-    });
-  }
-  return { item, board: updated };
 }
 
 export async function getMoodStateForUser(
@@ -224,28 +97,27 @@ export async function getMoodStateForUser(
   const token = await getTargetUserBoardAccess(userId);
   const board = await fetchUserBoard(apiBaseUrl, token);
   const appItems = filterBoardItemsForApp(board, appId, manifests);
-  const item = appItems.find((x) => isMoodWidgetItem(x, moodManifest.key)) ?? null;
+  const item = appItems.find((x) => isWidgetItem(x, moodManifest.key)) ?? null;
 
   const profile = await getCachedSolarProfile(userId, options?.forceProfile ?? false);
-  const { pictureId, backgroundId } = extractProfileMediaIds(profile);
+  const { pictureId } = extractProfileMediaIds(profile);
   const payload = (item?.payload || null) as Record<string, unknown> | null;
+  const storedImage = envelopeString(payload, MOOD_FIELD_IMAGE);
 
   const missing: string[] = [];
-  if (!pictureId) missing.push("profile_picture");
-  if (!backgroundId) missing.push("profile_background");
+  if (!storedImage && !pictureId) missing.push("image");
 
   return {
     app_id: appId,
     widget_key: moodManifest.key,
     installed: !!item,
     board_item_id: item?.id ?? null,
-    mood: envelopeValue(payload, MOOD_FIELD_MOOD),
-    image_file_id: envelopeValue(payload, MOOD_FIELD_IMAGE) || null,
-    background_file_id: envelopeValue(payload, MOOD_FIELD_BACKGROUND) || null,
+    mood: envelopeString(payload, MOOD_FIELD_MOOD),
+    image: storedImage || pictureId || "",
+    image_file_id: storedImage || null,
     payload,
     profile_picture_id: pictureId,
-    profile_background_id: backgroundId,
-    can_push: !!pictureId && !!backgroundId,
+    can_push: !!(storedImage || pictureId),
     missing,
   };
 }
@@ -253,10 +125,9 @@ export async function getMoodStateForUser(
 export async function updateMoodForUser(
   userId: string,
   apiBaseUrl: string,
-  moodText: string,
-  options?: { installIfMissing?: boolean },
+  input: MoodUpdateInput,
 ): Promise<MoodWidgetState> {
-  const mood = moodText.trim();
+  const mood = (input.mood || "").trim();
   if (!mood) {
     throw createError({ statusCode: 400, message: "Mood text is required" });
   }
@@ -264,19 +135,10 @@ export async function updateMoodForUser(
     throw createError({ statusCode: 400, message: "Mood text is too long (max 280)" });
   }
 
-  // Fresh profile so picture/background ids are current
+  const imageOverride = normalizeMediaRef(input.image, "image");
   const profile = await getCachedSolarProfile(userId, true);
-  const { pictureId, backgroundId } = extractProfileMediaIds(profile);
-  if (!pictureId || !backgroundId) {
-    throw createError({
-      statusCode: 400,
-      message: !pictureId && !backgroundId
-        ? "请先在 Solarpass 设置头像和背景图"
-        : !pictureId
-          ? "请先在 Solarpass 设置头像"
-          : "请先在 Solarpass 设置背景图",
-    });
-  }
+  const { pictureId } = extractProfileMediaIds(profile);
+  const image = resolveMediaOrDefault(imageOverride, pictureId, "头像 image");
 
   const { appId, manifests } = await fetchAppBoardManifests(apiBaseUrl);
   const moodManifest = resolveMoodManifest(manifests);
@@ -285,15 +147,15 @@ export async function updateMoodForUser(
   }
 
   const token = await getTargetUserBoardAccess(userId);
-  let board = await fetchUserBoard(apiBaseUrl, token);
+  const board = await fetchUserBoard(apiBaseUrl, token);
   let item = filterBoardItemsForApp(board, appId, manifests)
-    .find((x) => isMoodWidgetItem(x, moodManifest.key)) ?? null;
+    .find((x) => isWidgetItem(x, moodManifest.key)) ?? null;
 
   if (!item) {
-    if (options?.installIfMissing === false) {
+    if (input.installIfMissing === false) {
       throw createError({ statusCode: 404, message: "Mood widget is not installed on the board" });
     }
-    const installed = await ensureMoodWidgetInstalled({
+    const installed = await ensureAppWidgetInstalled({
       apiBaseUrl,
       userToken: token,
       appId,
@@ -301,15 +163,10 @@ export async function updateMoodForUser(
       board,
     });
     item = installed.item;
-    board = installed.board;
   }
 
   const accountId = await getTargetSolarAccountId(userId);
-  const payload = buildMoodPayload({
-    pictureId,
-    backgroundId,
-    mood,
-  });
+  const payload = buildMoodPayload({ image, mood });
 
   await pushAppBoardPayload({
     apiBaseUrl,

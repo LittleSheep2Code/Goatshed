@@ -16,11 +16,11 @@ export async function getAdminToken(): Promise<string | null> {
     return cachedToken;
   }
 
-  const clientId = process.env.DONATION_API_KEY_CLIENT_ID;
-  const clientSecret = process.env.DONATION_API_KEY_SECRET;
+  const clientId = process.env.SOLIAN_APP_CLIENT_ID;
+  const clientSecret = process.env.SOLIAN_APP_SECRET;
 
   if (!clientId || !clientSecret) {
-    console.error("[getAdminToken] DONATION_API_KEY_CLIENT_ID/SECRET not configured");
+    console.error("[getAdminToken] SOLIAN_APP_CLIENT_ID/SECRET not configured");
     return null;
   }
 

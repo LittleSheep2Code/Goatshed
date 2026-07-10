@@ -297,7 +297,7 @@
                 <!-- Mood: simple form -->
                 <div v-if="isMoodEditingItem && payloadEditMode === 'mood'" class="mt-4 space-y-4">
                     <p class="text-sm text-base-content/60">
-                        头像 / 背景将自动取自该用户的 Solarpass 资料文件 ID，只需填写心情文案。
+                        头像将自动取自该用户的 Solarpass 资料，只需填写心情文案。
                     </p>
                     <label class="form-control w-full">
                         <span class="label-text mb-1">心情</span>
@@ -526,7 +526,7 @@ function isMoodWidget(item: BoardItem | null): boolean {
     const key = (item.custom_app_widget_key || item.widget_key || "").toLowerCase();
     if (key.includes("mood")) return true;
     const names = new Set((getManifestForItem(item)?.field_types || []).map((f) => f.name));
-    return names.has("image") && names.has("background") && names.has("mood");
+    return names.has("image") && names.has("mood") && !names.has("tasks");
 }
 
 function isEnvelopeField(field: unknown): field is BoardPayloadField {
@@ -773,7 +773,7 @@ async function savePayload() {
 
     boardSaving.value = true;
     try {
-        // Mood shortcut: server fills image/background from user's Solarpass profile
+        // Mood shortcut: server fills image from user's Solarpass profile
         if (isMoodEditingItem.value && payloadEditMode.value === "mood") {
             const mood = moodAdminDraft.value.trim();
             if (!mood) {

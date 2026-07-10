@@ -88,74 +88,6 @@
                 </div>
 
                 <div class="mt-4 rounded-2xl border border-base-300 bg-base-100 p-5">
-                    <div class="mb-4 flex items-center gap-3">
-                        <Smile class="h-5 w-5 text-primary" />
-                        <h2 class="text-lg font-bold">心情看板</h2>
-                        <span
-                            v-if="moodState?.installed"
-                            class="badge badge-ghost badge-sm"
-                        >已安装</span>
-                    </div>
-
-                    <p class="mb-3 text-sm text-base-content/60">
-                        头像与背景使用你的 Solarpass 资料；这里只需要填写心情文案。
-                    </p>
-
-                    <div v-if="moodLoading" class="flex justify-center py-6">
-                        <Loader2 class="h-5 w-5 animate-spin text-base-content/40" />
-                    </div>
-
-                    <div v-else-if="moodError" class="alert alert-warning text-sm">
-                        <AlertCircle class="h-4 w-4" />
-                        <span>{{ moodError }}</span>
-                    </div>
-
-                    <div v-else class="space-y-3">
-                        <div class="flex items-center gap-3">
-                            <div class="avatar">
-                                <div class="h-12 w-12 rounded-full bg-base-200">
-                                    <img v-if="avatarUrl" :src="avatarUrl" :alt="displayName" />
-                                </div>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-xs text-base-content/50">当前心情</p>
-                                <p class="truncate text-sm">
-                                    {{ moodState?.mood || "还没有设置" }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div v-if="moodState && !moodState.can_push" class="rounded-lg bg-base-200 px-3 py-2 text-xs text-base-content/60">
-                            <template v-if="moodState.missing.includes('profile_picture')">缺少 Solarpass 头像。 </template>
-                            <template v-if="moodState.missing.includes('profile_background')">缺少 Solarpass 背景图。</template>
-                            请先在 Solarpass 完善资料后再保存。
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <input
-                                v-model="moodDraft"
-                                type="text"
-                                maxlength="280"
-                                class="input input-bordered min-w-0 flex-1"
-                                placeholder="今天感觉怎么样？"
-                                :disabled="moodSaving"
-                                @keydown.enter.prevent="saveMood"
-                            />
-                            <button
-                                class="btn btn-primary shrink-0"
-                                :disabled="moodSaving || !moodDraft.trim() || (moodState != null && !moodState.can_push)"
-                                @click="saveMood"
-                            >
-                                <Loader2 v-if="moodSaving" class="h-4 w-4 animate-spin" />
-                                <span v-else>{{ moodState?.installed ? "更新" : "设置" }}</span>
-                            </button>
-                        </div>
-                        <p v-if="moodSaveError" class="text-xs text-error">{{ moodSaveError }}</p>
-                        <p v-else-if="moodSavedAt" class="text-xs text-base-content/40">已保存 · {{ moodSavedAt }}</p>
-                    </div>
-                </div>
-
-                <div class="mt-4 rounded-2xl border border-base-300 bg-base-100 p-5">
                     <div class="flex items-center gap-3 mb-4">
                         <Ticket class="h-5 w-5 text-primary" />
                         <h2 class="text-lg font-bold">陪玩票</h2>
@@ -183,16 +115,20 @@
                 <div class="mt-4 rounded-box border border-base-300 bg-base-100">
                     <div class="p-2">
                         <NuxtLink
+                            to="/me/widgets"
+                            class="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-base-200"
+                        >
+                            <LayoutGrid class="h-5 w-5 text-primary" />
+                            <span class="flex-1 font-medium text-primary">看板组件</span>
+                            <ChevronRight class="h-4 w-4 text-base-content/50" />
+                        </NuxtLink>
+                        <NuxtLink
                             to="/orders"
                             class="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-base-200"
                         >
                             <Receipt class="h-5 w-5 text-primary" />
-                            <span class="flex-1 text-primary font-medium"
-                                >我的订单</span
-                            >
-                            <ChevronRight
-                                class="h-4 w-4 text-base-content/50"
-                            />
+                            <span class="flex-1 font-medium text-primary">我的订单</span>
+                            <ChevronRight class="h-4 w-4 text-base-content/50" />
                         </NuxtLink>
                         <NuxtLink
                             v-if="isAdmin"
@@ -200,12 +136,8 @@
                             class="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-base-200"
                         >
                             <Shield class="h-5 w-5 text-primary" />
-                            <span class="flex-1 text-primary font-medium"
-                                >管理面板</span
-                            >
-                            <ChevronRight
-                                class="h-4 w-4 text-base-content/50"
-                            />
+                            <span class="flex-1 font-medium text-primary">管理面板</span>
+                            <ChevronRight class="h-4 w-4 text-base-content/50" />
                         </NuxtLink>
                     </div>
                 </div>
@@ -359,8 +291,7 @@ import {
     RefreshCw,
     Receipt,
     Ticket,
-    Smile,
-    AlertCircle,
+    LayoutGrid,
 } from "lucide-vue-next";
 definePageMeta({
     middleware: ["auth"],
@@ -374,65 +305,6 @@ const showLogoutConfirm = ref(false);
 const isLoggingOut = ref(false);
 const isRefreshing = ref(false);
 const ticketBalance = ref({ total: 0, used: 0, available: 0 });
-
-interface MoodState {
-    app_id: string;
-    widget_key: string;
-    installed: boolean;
-    board_item_id: string | null;
-    mood: string;
-    image_file_id: string | null;
-    background_file_id: string | null;
-    profile_picture_id: string | null;
-    profile_background_id: string | null;
-    can_push: boolean;
-    missing: string[];
-}
-
-const moodState = ref<MoodState | null>(null);
-const moodDraft = ref("");
-const moodLoading = ref(false);
-const moodSaving = ref(false);
-const moodError = ref<string | null>(null);
-const moodSaveError = ref<string | null>(null);
-const moodSavedAt = ref<string | null>(null);
-
-async function loadMood() {
-    moodLoading.value = true;
-    moodError.value = null;
-    try {
-        const data = await $fetch<MoodState>("/api/me/mood");
-        moodState.value = data;
-        moodDraft.value = data.mood || "";
-    } catch (e: any) {
-        moodError.value = e.data?.message || e.message || "无法加载心情看板";
-        moodState.value = null;
-    } finally {
-        moodLoading.value = false;
-    }
-}
-
-async function saveMood() {
-    moodSaving.value = true;
-    moodSaveError.value = null;
-    moodSavedAt.value = null;
-    try {
-        const data = await $fetch<MoodState>("/api/me/mood", {
-            method: "PUT",
-            body: { mood: moodDraft.value },
-        });
-        moodState.value = data;
-        moodDraft.value = data.mood || moodDraft.value;
-        moodSavedAt.value = new Date().toLocaleTimeString("zh-CN", {
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    } catch (e: any) {
-        moodSaveError.value = e.data?.message || e.message || "保存失败";
-    } finally {
-        moodSaving.value = false;
-    }
-}
 
 const { data: session } = await auth.useSession(useFetch);
 const { data: profile } = await useFetch<Record<string, any> | null>(
@@ -523,7 +395,6 @@ onMounted(async () => {
     } catch {
         // silently fail
     }
-    loadMood();
 });
 
 useHead({ title: "我的账户" });
