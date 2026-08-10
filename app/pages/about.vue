@@ -35,7 +35,7 @@
                     </div>
                     <div class="fact">
                         <span class="fact-label">身份</span>
-                        <span class="fact-value">初中生 / 开发者</span>
+                        <span class="fact-value">高中生 / 开发者</span>
                     </div>
                     <div class="fact">
                         <span class="fact-label">位置</span>
