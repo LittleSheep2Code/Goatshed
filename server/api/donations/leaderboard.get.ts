@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
     leaderboard: leaderboard.map((entry) => ({
       id: entry.userId,
       name: entry.solarNick || entry.solarName || entry.userName,
-      avatarUrl: entry.userImage || (entry.solarName ? `${config.public.apiBaseUrl}/passport/accounts/${encodeURIComponent(entry.solarName)}/picture` : ""),
+      avatarUrl: entry.userImage || (entry.solarName ? `${config.public.apiBaseUrl}/stargate/accounts/${encodeURIComponent(entry.solarName)}/picture` : ""),
       totalAmount: entry.totalAmount,
       currency: entry.currency,
       count: entry.count,

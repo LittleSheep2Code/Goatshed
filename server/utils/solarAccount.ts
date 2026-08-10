@@ -34,7 +34,7 @@ export async function getAdminToken(): Promise<string | null> {
       client_secret: clientSecret,
     });
 
-    const response = await fetch(`${config.public.apiBaseUrl}/padlock/auth/open/token`, {
+    const response = await fetch(`${config.public.apiBaseUrl}/stargate/auth/open/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: body.toString(),
@@ -66,7 +66,7 @@ export async function getAdminToken(): Promise<string | null> {
 }
 
 /**
- * Get the user's own solar OAuth token (for Passport API calls).
+ * Get the user's own solar OAuth token (for stargate API calls).
  * Refreshes if expired.
  */
 export async function getUserSolarToken(userId: string): Promise<string | null> {
@@ -108,7 +108,7 @@ async function refreshUserSolarToken(
     if (process.env.SOLIAN_CLIENT_SECRET) body.set("client_secret", process.env.SOLIAN_CLIENT_SECRET);
 
     const response = await fetch(
-      `${config.public.apiBaseUrl}/padlock/auth/open/token`,
+      `${config.public.apiBaseUrl}/stargate/auth/open/token`,
       {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },

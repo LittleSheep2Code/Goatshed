@@ -122,7 +122,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
 ### 设计
 
-Solar Network API (`/passport/accounts/me`) 每次调用都有网络开销。在 `account` 表的 `solar_profile` (jsonb) 列中缓存完整响应，TTL 24h。
+Solar Network API (`/stargate/accounts/me`) 每次调用都有网络开销。在 `account` 表的 `solar_profile` (jsonb) 列中缓存完整响应，TTL 24h。
 
 ```typescript
 // server/db/schema.ts

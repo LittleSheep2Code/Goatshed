@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
     sponsors: sponsors.map((s) => ({
       id: s.id,
       name: s.userName,
-      avatarUrl: s.userImage || `${config.public.apiBaseUrl}/passport/accounts/${encodeURIComponent(s.userName)}/picture`,
+      avatarUrl: s.userImage || `${config.public.apiBaseUrl}/stargate/accounts/${encodeURIComponent(s.userName)}/picture`,
       amount: s.amount,
       currency: s.currency,
       quantity: s.quantity,

@@ -418,7 +418,7 @@ const { data: profile } = await useFetch<Record<string, any> | null>(
 const avatarUrl = computed(() => {
     const name = profile.value?.name || session.value?.user?.name;
     if (!name) return "";
-    return `${config.public.apiBaseUrl}/passport/accounts/${encodeURIComponent(name)}/picture`;
+    return `${config.public.apiBaseUrl}/stargate/accounts/${encodeURIComponent(name)}/picture`;
 });
 
 const pageLoading = ref(true);

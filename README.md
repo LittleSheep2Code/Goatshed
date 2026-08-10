@@ -31,7 +31,7 @@ Server routes under `server/api` call Solar endpoints such as:
 
 - `/sphere/publishers/...`
 - `/sphere/posts...`
-- `/passport/accounts/...`
+- `/stargate/accounts/...`
 - `/drive/files/...`
 
 The helper in `server/utils/floating-api.ts` adds a bearer token when a user session exists, then converts API payloads from snake_case to camelCase for the app.

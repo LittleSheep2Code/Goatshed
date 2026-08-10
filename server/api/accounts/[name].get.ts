@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
 
   return snFetch<Record<string, any>>(
     event,
-    `/passport/accounts/${encodeURIComponent(name)}`,
+    `/stargate/accounts/${encodeURIComponent(name)}`,
     { token: token ?? undefined },
   );
 });

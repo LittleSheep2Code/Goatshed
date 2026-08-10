@@ -38,7 +38,7 @@ export async function getCachedSolarProfile(userId: string, force = false) {
   if (!token) return record?.solarProfile as Record<string, any> | null;
 
   const config = useRuntimeConfig();
-  const response = await fetch(`${config.public.apiBaseUrl}/passport/accounts/me`, {
+  const response = await fetch(`${config.public.apiBaseUrl}/stargate/accounts/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) return record?.solarProfile as Record<string, any> | null;

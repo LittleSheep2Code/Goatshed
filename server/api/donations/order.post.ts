@@ -71,7 +71,7 @@ export default defineEventHandler(async (event) => {
     payUrl: `https://solian.app/orders/${orderId}`,
     donorName: profile?.profile?.nick || profile?.name || session.user.name,
     donorAvatar: profile?.name
-      ? `${config.public.apiBaseUrl}/passport/accounts/${encodeURIComponent(profile.name)}/picture`
+      ? `${config.public.apiBaseUrl}/stargate/accounts/${encodeURIComponent(profile.name)}/picture`
       : null,
   };
 });

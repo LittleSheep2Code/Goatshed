@@ -45,7 +45,7 @@ async function refreshSolarToken(
     }
 
     const response = await fetch(
-      `${config.public.apiBaseUrl}/padlock/auth/open/token`,
+      `${config.public.apiBaseUrl}/stargate/auth/open/token`,
       {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },

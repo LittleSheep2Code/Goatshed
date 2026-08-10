@@ -11,8 +11,8 @@ services:
       - NUXT_PUBLIC_OAUTH_CLIENT_ID=${NUXT_PUBLIC_OAUTH_CLIENT_ID}
       - NUXT_OAUTH_CLIENT_SECRET=${NUXT_OAUTH_CLIENT_SECRET}
       - NUXT_PUBLIC_OAUTH_AUTHORIZE_URL=${NUXT_PUBLIC_OAUTH_AUTHORIZE_URL:-https://id.solian.app/auth/authorize}
-      - NUXT_PUBLIC_OAUTH_TOKEN_URL=${NUXT_PUBLIC_OAUTH_TOKEN_URL:-https://api.solian.app/padlock/auth/open/token}
-      - NUXT_PUBLIC_OAUTH_USER_INFO_URL=${NUXT_PUBLIC_OAUTH_USER_INFO_URL:-https://api.solian.app/padlock/auth/open/userinfo}
+      - NUXT_PUBLIC_OAUTH_TOKEN_URL=${NUXT_PUBLIC_OAUTH_TOKEN_URL:-https://api.solian.app/stargate/auth/open/token}
+      - NUXT_PUBLIC_OAUTH_USER_INFO_URL=${NUXT_PUBLIC_OAUTH_USER_INFO_URL:-https://api.solian.app/stargate/auth/open/userinfo}
       - NUXT_PUBLIC_OAUTH_REDIRECT_URL=${NUXT_PUBLIC_OAUTH_REDIRECT_URL}
     volumes:
       - goatshed-data:/data

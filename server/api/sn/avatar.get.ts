@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig();
   return {
-    avatarUrl: `${config.public.apiBaseUrl}/passport/accounts/${encodeURIComponent(name)}/picture`,
+    avatarUrl: `${config.public.apiBaseUrl}/stargate/accounts/${encodeURIComponent(name)}/picture`,
     name,
   };
 });

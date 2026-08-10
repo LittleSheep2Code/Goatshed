@@ -89,7 +89,7 @@ export async function getCachedSolarProfile(userId: string, force = false) {
 
   // 4. 调用 Solar Network API
   const response = await fetch(
-    `${config.public.apiBaseUrl}/passport/accounts/me`,
+    `${config.public.apiBaseUrl}/stargate/accounts/me`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   if (!response.ok) return record?.solarProfile ?? null;
@@ -118,8 +118,8 @@ Authorization: Bearer <access_token>
 
 | 端点 | 用途 | 需要认证 |
 |------|------|---------|
-| `/passport/accounts/me` | 当前用户完整 Profile | ✅ |
-| `/passport/accounts/{name}` | 公开账户信息 | 可选 |
+| `/stargate/accounts/me` | 当前用户完整 Profile | ✅ |
+| `/stargate/accounts/{name}` | 公开账户信息 | 可选 |
 | `/sphere/posts` | 文章列表 | 可选（锁定内容需要） |
 | `/sphere/posts/{id}` | 单篇文章 | 可选（锁定内容需要） |
 | `/sphere/publishers/{name}` | 发布者信息 | ❌ |
@@ -161,7 +161,7 @@ export async function floatingFetch<T>(
 const token = await getSolarToken(userId);
 const profile = await floatingFetch<Profile>(
   event,
-  `/passport/accounts/${encodeURIComponent(name)}`,
+  `/stargate/accounts/${encodeURIComponent(name)}`,
   { token: token ?? undefined }
 );
 ```
@@ -214,7 +214,7 @@ export default defineEventHandler(async (event) => {
   if (!name) return { avatarUrl: null, name: session.user.name };
 
   return {
-    avatarUrl: `${config.public.apiBaseUrl}/passport/accounts/${encodeURIComponent(name)}/picture`,
+    avatarUrl: `${config.public.apiBaseUrl}/stargate/accounts/${encodeURIComponent(name)}/picture`,
     name,
   };
 });
@@ -228,7 +228,7 @@ export default defineEventHandler(async (event) => {
 export default defineEventHandler(async (event) => {
   const name = getRouterParam(event, "name");
   const token = await getSolarTokenFromSession(event);
-  return floatingFetch(event, `/passport/accounts/${name}`, { token });
+  return floatingFetch(event, `/stargate/accounts/${name}`, { token });
 });
 ```
 
