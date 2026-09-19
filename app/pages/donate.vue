@@ -3,7 +3,7 @@
         <div class="mx-auto max-w-3xl">
             <div class="rounded-2xl border border-base-300 bg-base-100 p-8 text-center">
                 <Trophy class="mx-auto h-10 w-10 text-primary" />
-                <h1 class="mt-4 text-2xl font-black">打赏排行榜</h1>
+                <h1 class="mt-4 text-2xl font-bold">打赏排行榜</h1>
                 <p class="mt-2 text-sm text-base-content/60">
                     感谢所有支持我的朋友 ❤️
                 </p>

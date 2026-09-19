@@ -21,7 +21,7 @@
                     </div>
 
                     <div class="mt-6">
-                        <h1 class="text-2xl font-black">{{ product?.displayName || productTitle }}</h1>
+                        <h1 class="text-2xl font-bold">{{ product?.displayName || productTitle }}</h1>
                         <p class="mt-3 leading-relaxed text-base-content/60">
                             {{ product?.description || productDescription }}
                         </p>
@@ -32,7 +32,7 @@
                     <div class="sticky top-24 space-y-8">
                         <div class="rounded-2xl border border-base-300 bg-base-100 p-6">
                             <div class="mb-6">
-                                <span class="text-3xl font-black text-primary">{{ product?.price || 0 }}</span>
+                                <span class="text-3xl font-bold text-primary">{{ product?.price || 0 }}</span>
                                 <span class="ml-1 text-lg text-base-content/50">{{ product?.currency || "" }}</span>
                             </div>
 

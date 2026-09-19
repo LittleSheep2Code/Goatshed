@@ -1,15 +1,10 @@
 <template>
   <div
-    class="breadcrumb-shell mb-3 inline-flex flex-col items-start gap-0.5 rounded-lg border border-base-300/60 bg-base-200/50 px-3.5 py-1.5 text-xs sm:rounded-full sm:flex-row sm:items-center sm:gap-2 sm:text-sm"
+    class="breadcrumb-shell mb-3 inline-flex flex-col items-start gap-0.5 rounded-lg border border-base-300/50 bg-base-200/40 px-3.5 py-1.5 text-xs sm:rounded-full sm:flex-row sm:items-center sm:gap-2 sm:text-sm"
   >
     <div class="flex items-center gap-2">
-      <span class="relative flex h-2 w-2">
-        <span
-          class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60"
-        />
-        <span class="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-      </span>
-      <span class="text-primary">{{ username }}@goatshed</span>
+      <span class="relative inline-flex h-2 w-2 rounded-full bg-primary/60" />
+      <span class="text-primary/80">{{ username }}@goatshed</span>
     </div>
     <div class="flex items-center">
       <span class="sm:hidden opacity-40 me-2">$</span>

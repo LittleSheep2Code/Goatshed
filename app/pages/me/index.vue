@@ -51,7 +51,7 @@
                         <div class="min-w-0 flex-1 max-lg:-mt-10 lg:pt-20">
                             <div class="flex flex-wrap items-center gap-2">
                                 <h1
-                                    class="truncate text-xl font-black sm:text-2xl"
+                                    class="truncate text-xl font-bold sm:text-2xl"
                                 >
                                     {{ displayName }}
                                 </h1>

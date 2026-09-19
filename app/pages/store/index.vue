@@ -2,7 +2,7 @@
     <main class="page-shell py-8">
         <div class="mx-auto max-w-5xl">
             <div class="mb-8 text-center">
-                <h1 class="text-3xl font-black">小羊的商店</h1>
+                <h1 class="text-3xl font-bold tracking-tight font-display">小羊的商店</h1>
                 <p class="mt-2 text-sm text-base-content/60">
                     支持小羊，购买小羊的服务和产品
                 </p>
@@ -33,7 +33,7 @@
                         </p>
                         <div class="mt-4 flex items-center justify-between">
                             <div>
-                                <span class="text-2xl font-black text-primary">{{ product.price }}</span>
+                                <span class="text-2xl font-bold text-primary">{{ product.price }}</span>
                                 <span class="ml-1 text-sm text-base-content/50">{{ product.currency }}</span>
                             </div>
                             <NuxtLink

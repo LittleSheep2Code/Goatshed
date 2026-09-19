@@ -2,7 +2,6 @@
   <article
     class="post-tile min-w-0"
     :style="{ viewTransitionName: `post-${post.id}` }"
-    @mousemove="onMove"
   >
     <NuxtLink
       v-if="coverImage"
@@ -36,7 +35,7 @@
       </div>
 
       <NuxtLink :to="postUrl" class="min-w-0 hover:no-underline">
-        <h2 class="text-xl font-bold leading-tight">
+        <h2 class="text-xl font-semibold leading-tight">
           {{ post.title || "无标题文章" }}
         </h2>
       </NuxtLink>
@@ -119,11 +118,5 @@ const publisherPictureUrl = computed(() => {
   );
 });
 
-function onMove(event: MouseEvent) {
-  const element = event.currentTarget as HTMLElement | null;
-  if (!element) return;
-  const rect = element.getBoundingClientRect();
-  element.style.setProperty("--mouse-x", `${event.clientX - rect.left}px`);
-  element.style.setProperty("--mouse-y", `${event.clientY - rect.top}px`);
-}
+
 </script>

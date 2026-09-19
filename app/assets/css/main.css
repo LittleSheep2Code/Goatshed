@@ -1,3 +1,4 @@
+@import "./hybrid-fonts.css";
 @import "tailwindcss";
 @plugin "daisyui" {
   themes: false;
@@ -7,37 +8,47 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-sans: "Nunito", "Avenir Next", sans-serif;
+  --font-display: "Goatshed Serif", "Noto Serif", "Noto Serif SC", "Songti SC",
+    "STSong", serif;
+  --font-body: "Goatshed Serif", "Noto Serif", "Noto Serif SC", "Songti SC",
+    "STSong", serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", "Menlo", Consolas, monospace;
 }
 
+/* ---------- Light: morning in the shed ---------- */
 @plugin "daisyui/theme" {
   name: "goatshed";
   default: true;
   prefersdark: false;
   color-scheme: light;
-  --color-base-100: #f2f5ec;
-  --color-base-200: #e7ecd9;
-  --color-base-300: #d8dfc4;
-  --color-base-content: #353538;
-  --color-primary: #1158d1;
-  --color-primary-content: #f8fbff;
-  --color-secondary: #3e78d8;
-  --color-secondary-content: #eef4ff;
-  --color-accent: #0f8ad6;
-  --color-accent-content: #f4fcff;
-  --color-neutral: #364049;
-  --color-neutral-content: #f2f6fa;
-  --color-info: #2563eb;
-  --color-info-content: #eff6ff;
-  --color-success: #2f8f5b;
-  --color-success-content: #ecfdf3;
-  --color-warning: #c27e23;
-  --color-warning-content: #fff7e8;
-  --color-error: #bf3f3f;
-  --color-error-content: #fff1f1;
+
+  --color-base-100: #eef0e7;
+  --color-base-200: #e3e5d7;
+  --color-base-300: #c9cdbb;
+  --color-base-content: #26251f;
+
+  --color-primary: #0a7de0;
+  --color-primary-content: #eff7ff;
+  --color-secondary: #556b40;
+  --color-secondary-content: #f1f4ea;
+  --color-accent: #41627a;
+  --color-accent-content: #eaf1f6;
+
+  --color-neutral: #3a3e36;
+  --color-neutral-content: #eceee7;
+
+  --color-info: #4a7a9c;
+  --color-info-content: #edf4fa;
+  --color-success: #5a8a4e;
+  --color-success-content: #eef6e9;
+  --color-warning: #b98a38;
+  --color-warning-content: #fbf3e3;
+  --color-error: #b8544a;
+  --color-error-content: #fbecea;
+
   --radius-selector: 0.5rem;
   --radius-field: 0.5rem;
-  --radius-box: 0.9rem;
+  --radius-box: 1rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
@@ -45,34 +56,40 @@
   --noise: 0;
 }
 
+/* ---------- Dark: the cold hut at night ---------- */
 @plugin "daisyui/theme" {
   name: "goatshed-dark";
   default: false;
   prefersdark: true;
   color-scheme: dark;
-  --color-base-100: #10131a;
-  --color-base-200: #161b24;
-  --color-base-300: #212f3f;
-  --color-base-content: #f6f7f8;
-  --color-primary: #008fec;
-  --color-primary-content: #e9f8ff;
-  --color-secondary: #2b76e5;
-  --color-secondary-content: #eef5ff;
-  --color-accent: #39abff;
-  --color-accent-content: #ecf9ff;
-  --color-neutral: #222a33;
-  --color-neutral-content: #e8eef3;
-  --color-info: #60a5fa;
-  --color-info-content: #eaf3ff;
-  --color-success: #47b37a;
-  --color-success-content: #edfff7;
-  --color-warning: #d49a40;
-  --color-warning-content: #fff8ea;
-  --color-error: #e26767;
-  --color-error-content: #fff0f0;
+
+  --color-base-100: #13171f;
+  --color-base-200: #1b2130;
+  --color-base-300: #2a3344;
+  --color-base-content: #ecebe0;
+
+  --color-primary: #0a93fc;
+  --color-primary-content: #eaf5ff;
+  --color-secondary: #92ad76;
+  --color-secondary-content: #1c2412;
+  --color-accent: #7aadc4;
+  --color-accent-content: #11202a;
+
+  --color-neutral: #2a313b;
+  --color-neutral-content: #e7e9e4;
+
+  --color-info: #6aacde;
+  --color-info-content: #11202a;
+  --color-success: #7bb369;
+  --color-success-content: #16240f;
+  --color-warning: #d4a84b;
+  --color-warning-content: #2a1f06;
+  --color-error: #d9786e;
+  --color-error-content: #2a100d;
+
   --radius-selector: 0.5rem;
   --radius-field: 0.5rem;
-  --radius-box: 0.9rem;
+  --radius-box: 1rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
@@ -80,68 +97,107 @@
   --noise: 0;
 }
 
+/* ---------- Base ---------- */
 @layer base {
   html {
     @apply overflow-y-auto;
   }
 
   body {
-    @apply bg-base-100 text-base-content antialiased;
+    @apply bg-base-100 text-base-content font-body antialiased;
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+    /* CJK never slants: real Latin italics still apply. */
+    font-synthesis: none;
+  }
+
+  /* The lamplight: one warm pool of light in a cool room.
+     Static and low-alpha so it reads as atmosphere, not animation. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      120% 80% at 50% -5%,
+      color-mix(in oklab, var(--color-primary) 12%, transparent) 0%,
+      transparent 55%
+    );
   }
 
   a {
     @apply transition-colors;
   }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-primary) 22%, transparent);
+  }
+
+  :where(a, button, input, [tabindex]):focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--color-primary) 70%, transparent);
+    outline-offset: 2px;
+  }
 }
 
+/* ---------- Components ---------- */
 @layer components {
   .page-shell {
     @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
   }
 
   .app-panel {
-    @apply rounded-box border border-base-300/70 bg-base-100;
+    @apply rounded-box border border-base-300/60 bg-base-100/70 backdrop-blur-sm;
   }
 
   .nav-link {
-    @apply rounded-md px-3 py-2 text-sm font-semibold text-base-content/75 hover:bg-base-200 hover:text-primary;
+    @apply rounded-md px-3 py-2 text-sm font-medium text-base-content/70 hover:bg-base-200 hover:text-primary;
   }
 
   .nav-link-active {
     @apply bg-base-200 text-primary;
   }
 
+  /* Post cards: calm surface, quiet hover. No mouse-follow glow. */
   .post-tile {
-    @apply relative overflow-hidden rounded-box border border-base-300/70 bg-base-100 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/45;
-  }
-
-  .post-tile::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(
-      380px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-      color-mix(in oklab, var(--color-primary) 9%, transparent) 0%,
-      color-mix(in oklab, var(--color-primary) 4%, transparent) 34%,
-      transparent 70%
-    );
-    opacity: 0;
-    transition: opacity 200ms ease;
-  }
-
-  .post-tile:hover::before {
-    opacity: 1;
+    @apply relative overflow-hidden rounded-box border border-base-300/50 bg-base-100/60 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-base-100;
   }
 
   .prose-goatshed {
-    @apply prose max-w-none prose-headings:text-base-content prose-p:text-base-content/90 prose-a:text-primary prose-code:text-primary prose-blockquote:border-primary/50 prose-pre:overflow-x-auto prose-pre:max-w-full;
+    @apply prose max-w-none font-body prose-headings:font-display prose-headings:text-base-content prose-headings:font-medium prose-p:text-base-content/90 prose-a:text-primary prose-code:font-mono prose-code:text-primary prose-blockquote:border-primary/40 prose-pre:overflow-x-auto prose-pre:max-w-full;
+    font-size: 1.0625rem;
     overflow-wrap: anywhere;
     word-break: break-word;
   }
 
+  .prose-goatshed h1 {
+    @apply text-3xl tracking-tight;
+  }
+  .prose-goatshed h2 {
+    @apply mt-10 border-t border-base-300/50 pt-6 text-2xl tracking-tight;
+  }
+  .prose-goatshed h3 {
+    @apply mt-7 text-xl;
+  }
+  .prose-goatshed p,
+  .prose-goatshed li {
+    @apply leading-[1.8];
+  }
+  .prose-goatshed blockquote {
+    @apply italic text-base-content/75;
+  }
+  .prose-goatshed a {
+    @apply underline-offset-2 hover:underline;
+  }
+  .prose-goatshed code {
+    @apply rounded-md bg-base-200/80 px-1.5 py-0.5 text-[0.85em];
+  }
+  .prose-goatshed pre code {
+    @apply bg-transparent p-0 text-inherit;
+  }
+
   .prose-goatshed pre.shiki {
-    @apply rounded-xl border border-base-300/60 p-4 text-sm;
+    @apply rounded-xl border border-base-300/50 bg-base-200/40 p-4 text-sm;
     white-space: pre;
     overflow-x: auto;
   }
@@ -156,6 +212,7 @@
   }
 }
 
+/* ---------- Shiki code highlighting ---------- */
 .shiki {
   background-color: transparent !important;
 }

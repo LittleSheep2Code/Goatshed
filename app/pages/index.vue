@@ -1,29 +1,29 @@
 <template>
   <main class="page-shell relative min-w-0 py-8">
-    <section id="hero" class="relative pb-14 pt-10 sm:pb-20 sm:pt-14">
+    <section id="hero" class="relative pb-16 pt-12 sm:pb-24 sm:pt-20">
       <div class="relative z-10">
         <ShellBreadcrumb no-link :path="`/blog/${activePub}`" />
 
-        <h1
-          class="hero-title mb-3 text-5xl font-bold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl"
-        >
-          Goatshed
+        <h1 class="hero-title mb-1 mt-4 text-5xl font-bold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl">
+          <span class="text-base-content">山羊寒舍</span>
           <a
             href="/rss.xml"
-            class="ml-1 inline-block align-middle"
+            class="ml-2 inline-block align-middle"
             aria-label="RSS feed"
             title="RSS feed"
           >
-            <Rss
-              class="h-5 w-5 opacity-40 transition-opacity duration-300 hover:opacity-100"
-            />
+            <Rss class="h-5 w-5 text-base-content/30 transition-opacity duration-300 hover:text-primary" />
           </a>
         </h1>
+
+        <p class="hero-subtitle mt-2 text-lg text-base-content/60 font-display italic sm:text-xl">
+          Goatshed &mdash; little sheep's quiet shed
+        </p>
 
         <CodeBlock
           :code="introCode"
           lang="cpp"
-          container-class="max-w-xl opacity-75 sm:text-lg"
+          container-class="mt-6 max-w-xl sm:text-base"
         />
 
         <div class="mt-6 max-w-xl">
@@ -47,13 +47,10 @@
     <section v-else>
       <section v-if="pinnedPosts.length" id="featured" class="pb-6">
         <div class="mb-6 flex items-center gap-3">
-          <h2
-            class="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-primary"
-          >
-            <Sparkles class="h-4 w-4" />
+          <h2 class="text-sm font-medium uppercase tracking-widest text-base-content/50">
             精选
           </h2>
-          <div class="h-px flex-1 bg-base-300/50" />
+          <div class="h-px flex-1 bg-base-300/40" />
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
@@ -63,9 +60,11 @@
 
       <section id="recent-posts" class="pb-6 pt-6">
         <div class="mb-6 flex items-center gap-3">
-          <h2 class="text-sm font-bold uppercase tracking-widest">最新</h2>
-          <div class="h-px flex-1 bg-base-300/50" />
-          <span class="select-none text-xs text-primary/50"
+          <h2 class="text-sm font-medium uppercase tracking-widest text-base-content/50">
+            最新
+          </h2>
+          <div class="h-px flex-1 bg-base-300/40" />
+          <span class="select-none text-xs text-base-content/40"
             >[{{ recentPosts.length }}/{{ total }}]</span
           >
         </div>
@@ -77,11 +76,11 @@
             <div class="mb-4 mt-8 flex w-full justify-center">
               <NuxtLink
                 :to="`/posts/${activePub}`"
-                class="group inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-8 py-4 text-base font-bold text-primary transition-all duration-300 hover:-translate-y-0.5 hover:border-primary hover:bg-primary/20 sm:w-auto"
+                class="group inline-flex w-full items-center justify-center gap-2 rounded-xl border border-base-300/60 bg-base-200/40 px-8 py-4 text-base font-medium text-base-content transition-all duration-300 hover:border-primary/30 hover:bg-base-200 sm:w-auto"
               >
                 浏览全部文章
                 <ArrowRight
-                  class="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                  class="h-4 w-4 text-base-content/40 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-primary"
                 />
               </NuxtLink>
             </div>
@@ -193,29 +192,10 @@ useHead({
 
 <style scoped>
 .hero-title {
-  background: linear-gradient(
-    135deg,
-    var(--color-primary) 0%,
-    color-mix(in oklab, var(--color-primary) 50%, var(--color-base-content)) 20%,
-    var(--color-base-content) 35%,
-    var(--color-base-content) 65%,
-    color-mix(in oklab, var(--color-primary) 50%, var(--color-base-content)) 80%,
-    var(--color-primary) 100%
-  );
-  background-size: 250% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 6s ease-in-out infinite;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
 }
-
-@keyframes shimmer {
-  0%,
-  100% {
-    background-position: 0% center;
-  }
-  50% {
-    background-position: 100% center;
-  }
+.hero-subtitle {
+  font-family: var(--font-display);
 }
 </style>

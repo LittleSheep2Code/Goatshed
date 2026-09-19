@@ -23,7 +23,7 @@
 
         <div class="min-w-0 flex-1">
           <div class="flex flex-wrap items-center gap-2">
-            <h1 class="truncate text-2xl font-extrabold tracking-tight sm:text-3xl">{{ sectionTitle }}</h1>
+            <h1 class="truncate text-2xl font-bold tracking-tight sm:text-3xl">{{ sectionTitle }}</h1>
             <span v-if="publisher?.verification?.title" class="badge badge-soft badge-primary gap-1">
               <BadgeCheck class="h-3.5 w-3.5" />
               {{ publisher.verification.title }}

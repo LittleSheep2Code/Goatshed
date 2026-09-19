@@ -3,7 +3,7 @@
     <ShellBreadcrumb :path="`/moments/${activePub}`" />
 
     <section class="mb-6">
-      <h1 class="text-3xl font-extrabold tracking-tight">动态</h1>
+      <h1 class="text-3xl font-bold tracking-tight font-display">动态</h1>
       <p class="mt-2 text-sm text-base-content/70">
         来自所选发布者的短内容更新。
       </p>

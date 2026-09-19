@@ -3,8 +3,8 @@
     <ShellBreadcrumb :path="`/posts/${activePub}`" />
 
     <section class="mb-6">
-      <h1 class="text-3xl font-extrabold tracking-tight">文章</h1>
-      <p class="mt-2 text-sm text-base-content/70">
+      <h1 class="text-3xl font-bold tracking-tight font-display">文章</h1>
+      <p class="mt-2 text-sm text-base-content/60">
         按页浏览所选发布者的文章列表。
       </p>
 
