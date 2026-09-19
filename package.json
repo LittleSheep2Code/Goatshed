@@ -7,13 +7,14 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare && node -e \"require('fs').cpSync('node_modules/@solsynth/sunken-land/dist/stickers','public/stickers',{recursive:true})\""
   },
   "dependencies": {
     "@nuxt/eslint": "1.15.2",
     "@nuxt/image": "2.0.0",
     "@pinia/nuxt": "^0.11.3",
     "@shikijs/markdown-it": "^3.23.0",
+    "@solsynth/sunken-land": "^0.1.0",
     "@yeger/vue-masonry-wall": "^6.1.1",
     "better-auth": "^1.6.23",
     "drizzle-orm": "^0.45.2",

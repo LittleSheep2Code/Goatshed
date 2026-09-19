@@ -24,3 +24,6 @@ logs
 !.env.example
 
 *.lock
+
+# Copied from @solsynth/sunken-land by the postinstall step
+public/stickers

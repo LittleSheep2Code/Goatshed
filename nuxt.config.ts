@@ -8,11 +8,16 @@ export default defineNuxtConfig({
   modules: ["@pinia/nuxt", "@nuxt/image", "@nuxt/eslint", "nuxt-shiki"],
   shiki: {
     dynamic: true,
-    bundledLangs: ["cpp"],
+    bundledLangs: ["cpp", "rust", "go", "python", "typescript", "javascript"],
     bundledThemes: ["github-light", "github-dark", "ayu-light", "ayu-mirage"],
   },
   experimental: {
     viewTransition: true,
+  },
+  vue: {
+    compilerOptions: {
+      isCustomElement: (tag: string) => tag.startsWith("sk-"),
+    },
   },
   css: ["~/assets/css/main.css"],
   site: {
@@ -41,7 +46,7 @@ export default defineNuxtConfig({
           content: "littlesheep, blog, developer, Solar Network",
         },
         { name: "author", content: "littlesheep" },
-        { name: "theme-color", content: "#6366f1" },
+        { name: "theme-color", content: "#eef0e7" },
         { property: "og:type", content: "website" },
         { property: "og:site_name", content: "Goatshed" },
         {
@@ -90,7 +95,7 @@ export default defineNuxtConfig({
         },
         {
           rel: "stylesheet",
-          href: "https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap",
+          href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;500;600&display=swap",
         },
         { rel: "icon", type: "image/png", href: "/favicon.png" },
         {
