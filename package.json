@@ -14,7 +14,7 @@
     "@nuxt/image": "2.0.0",
     "@pinia/nuxt": "^0.11.3",
     "@shikijs/markdown-it": "^3.23.0",
-    "@solsynth/sunken-land": "^0.1.0",
+    "@solsynth/sunken-land": "file:vendor/solsynth-sunken-land-0.1.0.tgz",
     "@yeger/vue-masonry-wall": "^6.1.1",
     "better-auth": "^1.6.23",
     "drizzle-orm": "^0.45.2",

@@ -2,8 +2,8 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json .npmrc ./
-ARG NODE_AUTH_TOKEN
+COPY package.json ./
+COPY vendor ./vendor/
 RUN npm install
 
 ENV NITRO_DATA_DIR=/data/nitro
