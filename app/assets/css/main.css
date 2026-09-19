@@ -183,6 +183,13 @@
   .prose-goatshed li {
     @apply leading-[1.8];
   }
+  /* Prose strong defaults to the typography plugin's 600 — same as the
+     body weight, so bold CJK looked regular. Bump to 700 (heaviest
+     loaded Goatshed Serif face). Headings keep the plugin's escalation
+     (h1 900 / h2 800 / h3-4 700). */
+  .prose-goatshed :where(strong):not(:where(h1 strong, h2 strong, h3 strong, h4 strong)) {
+    @apply font-bold;
+  }
   .prose-goatshed blockquote {
     @apply italic text-base-content/75;
   }
@@ -212,25 +219,21 @@
   }
 }
 
-/* ---------- Shiki code highlighting ---------- */
+/* ---------- Shiki code highlighting ----------
+   Shiki dual-theme output: light colors are literal hex inline, dark
+   colors ride on per-token --shiki-dark variables Shiki emits inline.
+   The inline light background is hard-coded #fff, so force it off in
+   favor of the prose surface. */
 .shiki {
   background-color: transparent !important;
 }
 
-.shiki,
-.shiki span {
-  color: var(--shiki-light) !important;
-  background-color: transparent !important;
-}
-
 @media (prefers-color-scheme: dark) {
-  .shiki,
   .shiki span {
     color: var(--shiki-dark) !important;
   }
 }
 
-[data-theme="goatshed-dark"] .shiki,
 [data-theme="goatshed-dark"] .shiki span {
   color: var(--shiki-dark) !important;
 }
