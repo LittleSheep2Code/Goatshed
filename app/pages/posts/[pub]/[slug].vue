@@ -7,6 +7,7 @@
         v-if="post"
         class="post-tile post-tile-detail min-w-0"
         :style="{ viewTransitionName: `post-${post.id}` }"
+        @mousemove="onTileMove"
       >
         <NuxtLink
           v-if="postPictureUrl"
@@ -23,7 +24,13 @@
 
         <div class="relative flex min-w-0 flex-col gap-3">
           <div
-            class="relative z-10 flex flex-wrap items-center gap-2 text-xs text-base-content/60"
+            v-if="heroBackgroundStyle"
+            class="post-hero-bg"
+            :style="heroBackgroundStyle"
+          />
+
+          <div
+            class="relative z-10 flex flex-wrap items-center gap-2 text-xs text-base-content/70"
           >
             <div class="inline-flex items-center gap-1.5">
               <img
@@ -42,14 +49,14 @@
           </div>
 
           <h1
-            class="relative z-10 text-2xl font-medium leading-tight font-display tracking-tight sm:text-3xl lg:text-4xl"
+            class="relative z-10 text-xl font-bold leading-tight sm:text-2xl lg:text-3xl"
           >
             {{ post?.title || "无标题文章" }}
           </h1>
 
           <p
             v-if="post?.description"
-            class="relative z-10 text-sm text-base-content/60 leading-relaxed"
+            class="relative z-10 text-sm text-base-content/70 line-clamp-3"
           >
             {{ post.description }}
           </p>
@@ -115,7 +122,7 @@
           id="article"
           class="prose-goatshed post-article min-w-0 p-0 sm:p-6 lg:p-7"
           v-html="renderedContent"
-        ></article>
+        />
       </div>
 
       <aside class="post-sidebar hidden xl:flex xl:flex-col xl:gap-5">
@@ -161,49 +168,65 @@
       class="post-divider relative mb-8 mt-12 flex items-center justify-center gap-4"
       aria-hidden="true"
     >
-      <div class="h-px flex-1 bg-base-300/40" />
       <div
-        class="relative z-10 flex items-center gap-2 text-[10px] uppercase tracking-widest text-base-content/35 select-none"
+        class="relative h-px flex-1 bg-linear-to-r from-transparent via-base-300/40 to-primary/30"
       >
-        <span class="h-1.5 w-1.5 rounded-full bg-base-content/25" />
+        <div
+          class="absolute inset-0 bg-linear-to-r from-transparent via-primary/35 to-primary/35 blur-[2px]"
+        />
+      </div>
+      <div
+        class="relative z-10 flex items-center gap-2 text-[10px] uppercase tracking-widest text-primary/50 select-none"
+      >
+        <span
+          class="h-1.5 w-1.5 rounded-full bg-primary/60 shadow-[0_0_8px_var(--color-primary)]"
+        />
         结束
       </div>
-      <div class="h-px flex-1 bg-base-300/40" />
+      <div
+        class="relative h-px flex-1 bg-linear-to-l from-transparent via-base-300/40 to-primary/30"
+      >
+        <div
+          class="absolute inset-0 bg-linear-to-l from-transparent via-primary/35 to-primary/35 blur-[2px]"
+        />
+      </div>
     </div>
 
     <div class="grid grid-cols-2 gap-3 mt-10" data-pagefind-ignore>
       <NuxtLink
         v-if="prevPost"
         :to="`/posts/${prevPostIdentifier}`"
-        class="group relative flex flex-col gap-1 rounded-2xl border border-base-300/40 bg-base-100/40 px-5 py-4 transition-all duration-300 hover:border-primary/30 hover:bg-base-100"
+        class="post-nav-link group relative flex flex-col gap-1 rounded-2xl border border-base-300/30 px-5 py-4 transition-all duration-300 hover:border-primary/40"
       >
+        <div class="post-nav-bg" />
         <div class="flex items-center gap-1.5">
           <span
-            class="text-[10px] uppercase tracking-wider text-base-content/40"
+            class="text-[10px] uppercase tracking-wider text-base-content/45"
             >上一篇</span
-          />
+          >
         </div>
         <span
-          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/70 transition-colors duration-200 group-hover:text-primary"
+          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary"
         >
           {{ prevPost.title || "无标题文章" }}
         </span>
       </NuxtLink>
-      <div v-else></div>
+      <div v-else />
 
       <NuxtLink
         v-if="nextPost"
         :to="`/posts/${nextPostIdentifier}`"
-        class="group relative col-start-2 flex flex-col items-end gap-1 rounded-2xl border border-base-300/40 bg-base-100/40 px-5 py-4 text-end transition-all duration-300 hover:border-primary/30 hover:bg-base-100"
+        class="post-nav-link group relative col-start-2 flex flex-col items-end gap-1 rounded-2xl border border-base-300/30 px-5 py-4 text-end transition-all duration-300 hover:border-primary/40"
       >
+        <div class="post-nav-bg" />
         <div class="flex items-center gap-1.5">
           <span
-            class="text-[10px] uppercase tracking-wider text-base-content/40"
+            class="text-[10px] uppercase tracking-wider text-base-content/45"
             >下一篇</span
-          />
+          >
         </div>
         <span
-          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/70 transition-colors duration-200 group-hover:text-primary"
+          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary"
         >
           {{ nextPost.title || "无标题文章" }}
         </span>
@@ -219,8 +242,8 @@ import { getPostIdentifier } from "~/utils/post";
 import { extractToc, injectHeadingIds, type TocItem } from "~/utils/toc";
 
 const route = useRoute();
-const config = useRuntimeConfig();
 const router = useRouter();
+const config = useRuntimeConfig();
 
 const activePub = computed(() => {
   const pub = route.params.pub;
@@ -341,7 +364,13 @@ const postAttachments = computed(() => {
     }));
 });
 
-
+function onTileMove(event: MouseEvent) {
+  const element = event.currentTarget as HTMLElement | null;
+  if (!element) return;
+  const rect = element.getBoundingClientRect();
+  element.style.setProperty("--mouse-x", `${event.clientX - rect.left}px`);
+  element.style.setProperty("--mouse-y", `${event.clientY - rect.top}px`);
+}
 
 const postOgImage = computed(() => {
   const pic = post.value?.picture;
@@ -422,7 +451,25 @@ useHead(() => ({
   padding: 1.5rem;
 }
 
-
+.post-hero-bg {
+  position: absolute;
+  inset: -1.5rem;
+  opacity: 0.35;
+  background:
+    radial-gradient(
+      circle at 15% 10%,
+      color-mix(in oklab, var(--color-primary) 18%, transparent) 0%,
+      transparent 35%
+    ),
+    radial-gradient(
+      ellipse 70% 50% at 85% 85%,
+      color-mix(in oklab, var(--color-primary) 12%, transparent) 0%,
+      transparent 45%
+    );
+  pointer-events: none;
+  z-index: 0;
+  border-radius: var(--radius-box, 0.9rem);
+}
 
 .post-content-grid {
   display: grid;
@@ -516,5 +563,34 @@ useHead(() => ({
   margin-inline: auto;
 }
 
+.post-nav-link {
+  background: color-mix(in srgb, var(--color-base-300) 8%, transparent);
+  position: relative;
+}
 
+.post-nav-bg {
+  position: absolute;
+  inset: -1px;
+  opacity: 0.4;
+  transition: opacity 0.35s ease;
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 20% 80%,
+      color-mix(in oklab, var(--color-primary) 12%, transparent) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 60% 70% at 80% 20%,
+      color-mix(in oklab, var(--color-primary) 8%, transparent) 0%,
+      transparent 60%
+    );
+  filter: blur(16px);
+  pointer-events: none;
+  z-index: -1;
+  border-radius: inherit;
+}
+
+.post-nav-link:hover .post-nav-bg {
+  opacity: 1;
+}
 </style>
