@@ -23,58 +23,30 @@
       </div>
 
       <div class="navbar-center hidden md:flex">
-        <ul class="flex items-center gap-1 px-1">
-          <li>
-            <NuxtLink
-              to="/"
-              class="nav-link inline-flex items-center gap-1.5"
-              active-class="nav-link-active"
-            >
-              <House class="h-4 w-4" />
-              博客
-            </NuxtLink>
-          </li>
-          <li>
-            <NuxtLink
-              to="/posts"
-              class="nav-link inline-flex items-center gap-1.5"
-              active-class="nav-link-active"
-            >
-              <FileText class="h-4 w-4" />
-              文章
-            </NuxtLink>
-          </li>
-          <li>
-            <NuxtLink
-              to="/moments"
-              class="nav-link inline-flex items-center gap-1.5"
-              active-class="nav-link-active"
-            >
-              <MessageCircle class="h-4 w-4" />
-              动态
-            </NuxtLink>
-          </li>
-          <li>
-            <NuxtLink
-              to="/store"
-              class="nav-link inline-flex items-center gap-1.5"
-              active-class="nav-link-active"
-            >
-              <ShoppingBag class="h-4 w-4" />
-              商店
-            </NuxtLink>
-          </li>
-          <li>
-            <NuxtLink
-              to="/about"
-              class="nav-link inline-flex items-center gap-1.5"
-              active-class="nav-link-active"
-            >
-              <Info class="h-4 w-4" />
-              关于
-            </NuxtLink>
-          </li>
-        </ul>
+        <nav
+          ref="navRef"
+          class="relative isolate"
+          @pointerleave="navIntent = null"
+          @focusout="onNavFocusOut"
+        >
+          <span ref="navIndicator" aria-hidden="true" class="nav-indicator" />
+          <ul class="flex items-center gap-1 px-1">
+            <li v-for="item in navItems" :key="item.to">
+              <NuxtLink
+                :to="item.to"
+                class="nav-link inline-flex items-center gap-1.5"
+                :class="{ 'nav-link-active': activeNavKey === item.to }"
+                :data-glide-key="item.to"
+                :aria-current="activeNavKey === item.to ? 'page' : undefined"
+                @pointerenter="navIntent = item.to"
+                @focus="navIntent = item.to"
+              >
+                <component :is="item.icon" class="h-4 w-4" />
+                {{ item.label }}
+              </NuxtLink>
+            </li>
+          </ul>
+        </nav>
       </div>
 
       <div class="navbar-end gap-2">
@@ -239,9 +211,42 @@ import {
 } from "lucide-vue-next";
 
 const auth = useAuth();
-const config = useRuntimeConfig();
 const userMenu = ref<HTMLDetailsElement>();
 const route = useRoute();
+
+// Desktop nav. Order matches the highlight's resting order and mobile menu.
+const navItems = [
+  { to: "/", label: "博客", icon: House },
+  { to: "/posts", label: "文章", icon: FileText },
+  { to: "/moments", label: "动态", icon: MessageCircle },
+  { to: "/store", label: "商店", icon: ShoppingBag },
+  { to: "/about", label: "关于", icon: Info },
+] as const;
+
+const navRef = ref<HTMLElement>();
+const navIndicator = ref<HTMLElement>();
+// The highlight trails the pointer/keyboard, then falls back to the current page's item.
+const navIntent = ref<string | null>(null);
+
+const activeNavKey = computed(
+  () =>
+    navItems.find((item) =>
+      item.to === "/"
+        ? route.path === "/"
+        : route.path === item.to || route.path.startsWith(`${item.to}/`),
+    )?.to ?? null,
+);
+
+useGlideIndicator(
+  navRef,
+  navIndicator,
+  computed(() => navIntent.value ?? activeNavKey.value),
+);
+
+function onNavFocusOut(event: FocusEvent) {
+  const next = event.relatedTarget as Node | null;
+  if (!next || !(event.currentTarget as HTMLElement).contains(next)) navIntent.value = null;
+}
 
 const { hidden, scrolled } = useScrollHeader();
 

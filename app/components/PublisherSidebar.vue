@@ -81,32 +81,96 @@
           </div>
         </div>
 
-        <p v-if="publisher.bio" class="text-sm leading-6 text-base-content/80">
-          {{ publisher.bio }}
+        <div
+          v-if="bioHtml"
+          class="prose-goatshed prose-sm mb-5 max-w-none text-sm leading-6 text-base-content/80 text-center"
+          v-html="bioHtml"
+        />
+
+        <dl v-if="stats" class="grid grid-cols-2 gap-2">
+          <div class="rounded-xl bg-base-200/50 px-3 py-2" title="已发布的内容数">
+            <dt class="flex items-center gap-1 text-[11px] font-medium text-base-content/60">
+              <FileText class="h-3 w-3" aria-hidden="true" />
+              内容
+            </dt>
+            <dd class="mt-1 text-lg font-bold leading-none tabular-nums">
+              {{ formatCount(stats.postsCount) }}
+            </dd>
+          </div>
+
+          <div class="rounded-xl bg-base-200/50 px-3 py-2" title="已发布内容的词数（按空白分词）">
+            <dt class="flex items-center gap-1 text-[11px] font-medium text-base-content/60">
+              <PenLine class="h-3 w-3" aria-hidden="true" />
+              词数
+            </dt>
+            <dd class="mt-1 text-lg font-bold leading-none tabular-nums">
+              {{ formatCount(stats.wordsCount) }}
+            </dd>
+          </div>
+
+          <div class="rounded-xl bg-base-200/50 px-3 py-2" title="有发布记录的天数">
+            <dt class="flex items-center gap-1 text-[11px] font-medium text-base-content/60">
+              <CalendarCheck class="h-3 w-3" aria-hidden="true" />
+              活跃天数
+            </dt>
+            <dd class="mt-1 text-lg font-bold leading-none tabular-nums">
+              {{ formatCount(stats.daysPostedCount) }}
+            </dd>
+          </div>
+
+          <div class="rounded-xl bg-base-200/50 px-3 py-2" title="最长的连续发布天数">
+            <dt class="flex items-center gap-1 text-[11px] font-medium text-base-content/60">
+              <Flame class="h-3 w-3" aria-hidden="true" />
+              最长连续
+            </dt>
+            <dd class="mt-1 text-lg font-bold leading-none tabular-nums">
+              {{ formatCount(stats.longestStreakDays) }}<span class="ml-0.5 text-xs font-medium text-base-content/60">天</span>
+            </dd>
+          </div>
+        </dl>
+
+        <p v-if="statsLine" class="text-[11px] leading-5 text-base-content/55 text-center">
+          {{ statsLine }}
         </p>
 
-        <div v-if="publisher.verification?.title" class="badge badge-soft badge-primary">
-          {{ publisher.verification.title }}
+        <div v-if="publisherAttachments.length" class="space-y-1.5">
+          <p class="text-[11px] font-medium text-base-content/55">个人附件</p>
+          <div class="grid grid-cols-3 gap-2">
+            <a
+              v-for="file in publisherAttachments"
+              :key="file.id"
+              :href="file.url"
+              target="_blank"
+              rel="noreferrer"
+              class="block overflow-hidden rounded-lg border border-base-300/40"
+            >
+              <UnLazyImage
+                :src="file.url"
+                :alt="file.name || 'Publisher attachment'"
+                :blurhash="file.blurhash"
+                :width="file.width"
+                :height="file.height"
+                class="h-16 w-full object-cover"
+              />
+            </a>
+          </div>
         </div>
 
-        <div v-if="publisherAttachments.length" class="grid grid-cols-3 gap-2">
-          <a
-            v-for="file in publisherAttachments"
-            :key="file.id"
-            :href="file.url"
-            target="_blank"
-            rel="noreferrer"
-            class="block overflow-hidden rounded-lg border border-base-300/40"
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <NuxtLink
+            :to="`/posts/${publisherName}`"
+            class="flex items-center justify-center gap-1.5 rounded-xl border border-base-300/50 bg-base-200/40 px-3 py-2 text-xs font-semibold transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
           >
-            <UnLazyImage
-              :src="file.url"
-              :alt="file.name || 'Publisher attachment'"
-              :blurhash="file.blurhash"
-              :width="file.width"
-              :height="file.height"
-              class="h-16 w-full object-cover"
-            />
-          </a>
+            <BookOpen class="h-3.5 w-3.5" aria-hidden="true" />
+            文章
+          </NuxtLink>
+          <NuxtLink
+            :to="`/moments/${publisherName}`"
+            class="flex items-center justify-center gap-1.5 rounded-xl border border-base-300/50 bg-base-200/40 px-3 py-2 text-xs font-semibold transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+          >
+            <MessageSquare class="h-3.5 w-3.5" aria-hidden="true" />
+            动态
+          </NuxtLink>
         </div>
       </div>
 
@@ -116,9 +180,18 @@
 </template>
 
 <script setup lang="ts">
-import type { Publisher } from "~/types/publisher";
-import type { Post } from "~/types/post";
-import { ArrowLeftRight, Lock } from "lucide-vue-next";
+import type { Publisher, PublisherStats } from "~/types/publisher";
+import {
+  ArrowLeftRight,
+  BookOpen,
+  CalendarCheck,
+  FileText,
+  Flame,
+  Lock,
+  MessageSquare,
+  Paperclip,
+  PenLine,
+} from "lucide-vue-next";
 import {
   PopoverContent,
   PopoverPortal,
@@ -130,7 +203,10 @@ import {
   PUBLISHERS,
   type PublisherName,
 } from "~/constants/publishers";
-import { getPostIdentifier } from "~/utils/post";
+import { renderMarkdown, withSoftBreaks } from "~/utils/markdown";
+import { formatRelativeTime } from "~/utils/time";
+import { driveFileUrl } from "~/utils/media";
+import { formatCount } from "~/utils/number";
 
 const props = defineProps<{
   publisherName: string;
@@ -151,11 +227,23 @@ const { data: publishersData, pending, error } = await useFetch<Record<string, P
 
 const publisher = computed(() => publishersData.value?.[props.publisherName] ?? null);
 
-const { data: pinned, pending: pinnedPending } = await useFetch<Post[]>(
-  () => `/api/publishers/${props.publisherName}/pinned`,
+const { data: stats } = await useFetch<PublisherStats | null>(
+  () => `/api/publishers/${props.publisherName}/stats`,
   {
-    default: () => [],
+    default: () => null,
     watch: [() => props.publisherName],
+  },
+);
+
+const { data: bioHtml } = await useAsyncData(
+  `publisher-bio-${props.publisherName}`,
+  async () => {
+    const bio = publisher.value?.bio;
+    return bio ? await renderMarkdown(withSoftBreaks(bio)) : "";
+  },
+  {
+    default: () => "",
+    watch: [() => props.publisherName, () => publisher.value?.bio],
   },
 );
 
@@ -164,41 +252,59 @@ const initials = computed(() => {
   return source.slice(0, 2).toUpperCase();
 });
 
-const publisherPictureUrl = computed(() => {
-  const pic = publisher.value?.picture;
-  if (!pic?.id) return null;
-  return pic.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`;
-});
+const publisherPictureUrl = computed(() =>
+  driveFileUrl(publisher.value?.picture, config.public.apiBaseUrl),
+);
 
 const publisherPictureBlurhash = computed(
   () => publisher.value?.picture?.blurhash || undefined,
 );
 
-const publisherBackgroundUrl = computed(() => {
-  const bg = publisher.value?.background;
-  if (!bg?.id) return null;
-  return bg.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`;
-});
-
 const publisherAttachments = computed(() => {
   const files = publisher.value?.attachments || [];
   return files
-    .filter((file) => file?.id)
-    .slice(0, 6)
-    .map((file) => ({
-      id: file.id,
-      name: file.name,
-      url: file.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(file.id)}`,
-      blurhash: file.blurhash || undefined,
-      width: file.width || undefined,
-      height: file.height || undefined,
-    }));
+    .flatMap((file) => {
+      const url = driveFileUrl(file, config.public.apiBaseUrl);
+      return url
+        ? [
+            {
+              id: file.id,
+              name: file.name,
+              url,
+              blurhash: file.blurhash || undefined,
+              width: file.width || undefined,
+              height: file.height || undefined,
+            },
+          ]
+        : [];
+    })
+    .slice(0, 6);
 });
 
-function getPostUrl(post: Post) {
-  const identifier = getPostIdentifier(post);
-  return post.type === 0 ? `/moments/${identifier}` : `/posts/${identifier}`;
-}
+const firstPostedLabel = computed(() => {
+  const raw = stats.value?.firstPostedAt;
+  if (!raw) return null;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("zh-CN", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+});
+
+const lastPostedLabel = computed(() => {
+  const raw = stats.value?.lastPostedAt;
+  if (!raw) return null;
+  return formatRelativeTime(raw) || null;
+});
+
+const statsLine = computed(() => {
+  const parts: string[] = [];
+  if (firstPostedLabel.value) parts.push(`始于 ${firstPostedLabel.value}`);
+  if (lastPostedLabel.value) parts.push(`最近更新 ${lastPostedLabel.value}`);
+  return parts.join(" · ");
+});
 
 function publisherLabel(name: PublisherName) {
   const pub = publishersData.value?.[name];
@@ -206,9 +312,7 @@ function publisherLabel(name: PublisherName) {
 }
 
 function publisherAvatar(name: PublisherName) {
-  const picture = publishersData.value?.[name]?.picture;
-  if (!picture?.id) return "";
-  return picture.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(picture.id)}`;
+  return driveFileUrl(publishersData.value?.[name]?.picture, config.public.apiBaseUrl) || "";
 }
 
 function selectPublisher(name: PublisherName) {

@@ -1,20 +1,27 @@
 <template>
-  <main class="page-shell relative min-w-0 pb-8">
+  <main ref="root" class="page-shell moments-page relative min-w-0 pb-8">
+    <!--
+      The cover is the deck's first stop, so paging down from it lands on the
+      first moment instead of skipping past it. It keeps its cover height: the
+      screen belongs to the moments themselves.
+    -->
     <CoverHero
       :image="publisherBackgroundUrl"
+      :blurhash="publisherBackgroundBlurhash"
       class="cover-bleed cover-under-app-bar mb-6"
+      data-slide
     >
       <div
-        class="page-shell flex min-h-[46dvh] flex-col justify-center pb-24 pt-10 sm:min-h-[54dvh] sm:pb-28 sm:pt-14"
+        class="flex min-h-[46dvh] flex-col justify-center pb-24 pt-10 sm:min-h-[54dvh] sm:pb-28 sm:pt-14"
       >
-        <ShellBreadcrumb class="self-start" :path="`/moments/${activePub}`" />
-
-        <h1 class="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">
+        <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl">
           动态
         </h1>
         <p class="mt-2 text-sm text-base-content/75">
-          来自所选发布者的短内容更新。
+            抱怨，碎碎念，和广告 (指更新日志)
         </p>
+
+        <ShellBreadcrumb class="self-start mt-4" :path="`/moments/${activePub}`" />
       </div>
     </CoverHero>
 
@@ -33,6 +40,7 @@
       <PublisherSidebar
         :publisher-name="activePub"
         class="min-w-0 lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto lg:pt-24 lg:pb-6"
+        :data-slide="stackedSidebar ? '' : null"
         @change="setPublisher"
       />
 
@@ -43,74 +51,51 @@
             :key="group.key"
             class="timeline-group"
           >
-            <div class="timeline-date">
-              <div class="timeline-rail" aria-hidden="true">
-                <span class="timeline-day-dot" />
-              </div>
-              <div class="timeline-date-body">
-                <time class="timeline-day-label" :datetime="group.key">
-                  {{ group.label }}
-                </time>
-                <span class="timeline-weekday">{{ group.weekday }}</span>
-                <span class="timeline-day-rule" />
-                <span class="timeline-day-count">{{ group.count }}</span>
-              </div>
-            </div>
-
             <ol class="timeline-list">
               <li
-                v-for="moment in group.moments"
+                v-for="(moment, index) in group.moments"
                 :key="moment.post.id"
                 class="timeline-entry"
+                data-slide
               >
-                <div class="timeline-rail" aria-hidden="true">
-                  <span class="timeline-dot" />
+                <!--
+                  The day heading opens the first moment's screen rather than
+                  standing between screens, so the label is on hand whenever
+                  that moment is, and every moment keeps a screen of its own.
+                -->
+                <!--
+                  The day badge is an indicator, not a node: it sits centred in
+                  the row, and the spine runs past it on the right.
+                -->
+                <div v-if="index === 0" class="timeline-row timeline-row-day">
+                  <div class="timeline-day-pill">
+                    <time class="timeline-day-label" :datetime="group.key">
+                      {{ group.label }}
+                    </time>
+                    <span class="timeline-weekday">{{ group.weekday }}</span>
+                    <span class="timeline-day-count">{{ group.count }}</span>
+                  </div>
+
+                  <div class="timeline-rail" aria-hidden="true" />
                 </div>
 
-                <article class="timeline-card">
-                  <MomentMedia
-                    v-if="moment.images.length"
-                    :images="moment.images"
-                    :to="getMomentPostUrl(moment.post)"
-                    :ratio="mediaRatio(moment)"
-                    :transition-name="`moment-img-${moment.post.id}`"
-                  />
+                <div class="timeline-row timeline-row-moment">
+                  <div class="timeline-moment">
+                    <MomentCard
+                      :post="moment.post"
+                      :images="moment.images"
+                      :ratio="mediaRatio(moment)"
+                      :time="moment.time"
+                      :published-at="moment.publishedAt"
+                      :transition-name="`moment-img-${moment.post.id}`"
+                      :rendered-body="renderedBody(moment.post.id)"
+                    />
+                  </div>
 
-                  <NuxtLink
-                    :to="getMomentPostUrl(moment.post)"
-                    class="timeline-card-link"
-                  >
-                    <div class="timeline-card-body">
-                      <div class="timeline-meta">
-                        <time
-                          class="timeline-time"
-                          :datetime="moment.publishedAt"
-                        >
-                          {{ moment.time }}
-                        </time>
-                        <span
-                          v-if="moment.post.viewsUnique"
-                          class="timeline-views"
-                        >
-                          {{ moment.post.viewsUnique }} 次阅读
-                        </span>
-                      </div>
-
-                      <h2
-                        v-if="moment.post.title"
-                        class="timeline-title"
-                      >
-                        {{ moment.post.title }}
-                      </h2>
-
-                      <article
-                        v-if="renderedBody(moment.post.id)"
-                        class="prose-goatshed timeline-article line-clamp-4"
-                        v-html="renderedBody(moment.post.id)"
-                      />
-                    </div>
-                  </NuxtLink>
-                </article>
+                  <div class="timeline-rail" aria-hidden="true">
+                    <span class="timeline-dot" />
+                  </div>
+                </div>
               </li>
             </ol>
           </li>
@@ -152,8 +137,35 @@ import {
 } from "~/constants/publishers";
 import type { Post, PostListResponse } from "~/types/post";
 import type { Publisher } from "~/types/publisher";
-import { renderMarkdown } from "~/utils/markdown";
-import { getPostIdentifier } from "~/utils/post";
+import { renderMarkdown, withSoftBreaks } from "~/utils/markdown";
+
+const root = ref<HTMLElement | null>(null);
+
+useSlidePager(root);
+
+/*
+  Below `lg` the sidebar is stacked over the timeline rather than pinned beside
+  it, so it becomes a stop of its own — otherwise paging off the cover would
+  scroll straight past the publisher card and never rest on it. Beside the
+  timeline it must not be a stop: it is sticky, so it would read as the current
+  slide at every position.
+*/
+const stackedSidebar = ref(false);
+let stackedMedia: MediaQueryList | null = null;
+
+function syncStackedSidebar(event?: MediaQueryListEvent) {
+  stackedSidebar.value = event ? event.matches : stackedMedia?.matches ?? false;
+}
+
+onMounted(() => {
+  stackedMedia = window.matchMedia("(width < 64rem)");
+  syncStackedSidebar();
+  stackedMedia.addEventListener("change", syncStackedSidebar);
+});
+
+onBeforeUnmount(() =>
+  stackedMedia?.removeEventListener("change", syncStackedSidebar),
+);
 
 const route = useRoute();
 const router = useRouter();
@@ -178,6 +190,10 @@ const publisherBackgroundUrl = computed(() => {
     `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(background.id)}`
   );
 });
+
+const publisherBackgroundBlurhash = computed(
+  () => publishersData.value?.[activePub.value]?.background?.blurhash || null,
+);
 
 const moments = ref<Post[]>([]);
 const total = ref(0);
@@ -400,15 +416,6 @@ watch(
   { immediate: true },
 );
 
-function withSoftBreaks(input: string) {
-  return input.replace(/\r?\n/g, "  \n");
-}
-
-function getMomentPostUrl(post: Post) {
-  const identifier = getPostIdentifier(post);
-  return `/moments/${identifier}`;
-}
-
 async function setPublisher(next: PublisherName) {
   await router.push(`/moments/${next}`);
 }
@@ -443,10 +450,13 @@ useHead({
    turn this vertical list sideways. */
 .moments-timeline {
   --rail-width: 1.75rem;
-  --node-top: 1.5rem;
-  --day-node: 1rem;
+  /*
+    Measured from the top of a moment's row down to the middle of its own top
+    line: the card's air above it (1.25rem), its body padding and half an
+    avatar. `--node-top` and the card's `margin-top` have to move together.
+  */
+  --node-top: 2.75rem;
   --dot-size: 0.625rem;
-  --day-dot-size: 0.75rem;
   --rail-line: color-mix(in srgb, var(--color-base-300) 78%, transparent);
 
   list-style: none;
@@ -457,7 +467,7 @@ useHead({
 @media (min-width: 640px) {
   .moments-timeline {
     --rail-width: 2.5rem;
-    --node-top: 1.75rem;
+    --node-top: 3rem;
   }
 }
 
@@ -467,14 +477,74 @@ useHead({
   padding: 0;
 }
 
-.timeline-date,
+/*
+  One moment owns one screen — a definite height, not a minimum: the card below
+  then caps itself against it and scrolls inside, so a long moment can neither
+  grow the row nor push the next one off the rhythm.
+*/
 .timeline-entry {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--app-bar-height));
+}
+
+/*
+  The row is a symmetric frame — rail column, content, rail column — so the card
+  and the day badge are centred in it, with the spine down the right edge, clear
+  of the sidebar's own divider on the left.
+
+  It is only a frame: `align-items: start` keeps a short moment from stretching
+  into a full-height slab, and the rail is put back to `stretch` so the spine
+  still runs the whole row, gap below a short card included.
+*/
+.timeline-row {
   display: grid;
-  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  grid-template-columns:
+    var(--rail-width)
+    minmax(0, 1fr)
+    var(--rail-width);
+  align-items: start;
+}
+
+/* Content column; the first column is the balancing gutter. */
+.timeline-day-pill,
+.timeline-moment {
+  grid-column: 2;
+}
+
+/*
+  Capped to the row: a moment longer than its screen scrolls inside this box
+  instead of growing the row, so the timeline keeps one screen per moment.
+  `useSlidePager` hands the wheel to this box while it still has room, then goes
+  back to paging.
+*/
+.timeline-moment {
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+/* The moment fills whatever its day heading left of the screen, and no more. */
+.timeline-row-moment {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Air over the card, matched by `--node-top` so the dot lands on the timestamp. */
+.timeline-row-moment .timeline-card {
+  margin-top: 1.25rem;
+}
+
+/* Paging aligns a moment under the app bar instead of behind it. */
+:global(html:has(.moments-page)) {
+  scroll-padding-top: var(--app-bar-height);
 }
 
 .timeline-rail {
   position: relative;
+  /* Right edge of the frame, whatever the content beside it. */
+  grid-column: 3;
+  /* The row aligns items to the start; the line still spans all of it. */
+  align-self: stretch;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -491,26 +561,19 @@ useHead({
   background: var(--rail-line);
 }
 
-/* The spine begins at the first day node and ends at the final moment node. */
-.timeline-group:first-child .timeline-date .timeline-rail::before {
-  top: var(--day-node);
-}
-
+/* The spine runs from the top of the timeline down to the final moment node. */
 .timeline-group:last-child
   .timeline-entry:last-child
+  .timeline-row-moment
   .timeline-rail::before {
   bottom: calc(100% - var(--node-top));
 }
 
-.timeline-dot,
-.timeline-day-dot {
+.timeline-dot {
   position: relative;
   z-index: 1;
   border-radius: 9999px;
   background: var(--color-base-100);
-}
-
-.timeline-dot {
   width: var(--dot-size);
   height: var(--dot-size);
   margin-top: calc(var(--node-top) - var(--dot-size) / 2);
@@ -523,30 +586,33 @@ useHead({
     transform 200ms ease;
 }
 
-.timeline-day-dot {
-  width: var(--day-dot-size);
-  height: var(--day-dot-size);
-  margin-top: calc(var(--day-node) - var(--day-dot-size) / 2);
-  border: 2px solid var(--color-base-100);
-  background: var(--color-primary);
-  box-shadow: 0 0 0 4px
-    color-mix(in srgb, var(--color-primary) 14%, var(--color-base-100));
-}
-
 .timeline-entry:hover .timeline-dot {
   border-color: var(--color-primary);
   background: var(--color-primary);
   transform: scale(1.15);
 }
 
-/* ── Day heading ──────────────────────────────────────────────────── */
+/* ── Day badge ────────────────────────────────────────────────────── */
 
-.timeline-date-body {
+/*
+  Pill, centred in the content column: an indicator of where the day turns over
+  rather than a node of the spine. The spine keeps to its own column on the
+  right, so nothing here touches it.
+*/
+.timeline-day-pill {
+  justify-self: center;
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 0.5rem;
-  min-height: 2.5rem;
-  padding-bottom: 0.5rem;
+  margin-block: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--color-base-300) 70%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--color-base-200) 60%,
+    var(--color-base-100)
+  );
 }
 
 .timeline-day-label {
@@ -563,12 +629,6 @@ useHead({
   color: color-mix(in srgb, var(--color-base-content) 45%, transparent);
 }
 
-.timeline-day-rule {
-  flex: 1;
-  height: 1px;
-  background: color-mix(in srgb, var(--color-base-300) 55%, transparent);
-}
-
 .timeline-day-count {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 0.6875rem;
@@ -578,77 +638,10 @@ useHead({
 
 /* ── Moment card ──────────────────────────────────────────────────── */
 
-.timeline-card {
-  display: block;
-  overflow: hidden;
-  margin-bottom: 0.875rem;
-  border-radius: var(--radius-box, 0.9rem);
-  border: 1px solid
-    color-mix(in srgb, var(--color-base-300) 70%, transparent);
-  background: var(--color-base-100);
-  transition:
-    border-color 200ms ease,
-    transform 200ms ease,
-    box-shadow 200ms ease;
-}
-
+/* The card itself is rendered by `MomentCard`; only the timeline-owned
+   spacing and the empty state stay here. */
 .timeline-entry:last-child .timeline-card {
   margin-bottom: 0;
-}
-
-.timeline-card:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px oklch(0 0 0 / 0.06);
-}
-
-.timeline-card-link {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-}
-
-.timeline-card-body {
-  padding: 1rem;
-}
-
-@media (min-width: 640px) {
-  .timeline-card-body {
-    padding: 1.25rem;
-  }
-}
-
-.timeline-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: color-mix(in srgb, var(--color-base-content) 60%, transparent);
-}
-
-.timeline-time {
-  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-variant-numeric: tabular-nums;
-}
-
-.timeline-views::before {
-  content: "·";
-  margin-inline-end: 0.5rem;
-  opacity: 0.6;
-}
-
-.timeline-title {
-  margin-top: 0.5rem;
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.35;
-  color: color-mix(in srgb, var(--color-base-content) 92%, transparent);
-}
-
-.timeline-article {
-  margin-top: 0.375rem;
-  color: color-mix(in srgb, var(--color-base-content) 78%, transparent);
 }
 
 .timeline-empty {
@@ -659,12 +652,10 @@ useHead({
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .timeline-card,
   .timeline-dot {
     transition: none;
   }
 
-  .timeline-card:hover,
   .timeline-entry:hover .timeline-dot {
     transform: none;
   }

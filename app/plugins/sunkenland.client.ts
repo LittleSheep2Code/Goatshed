@@ -1,19 +1,21 @@
-import { configure } from "@solsynth/sunken-land";
-import login from "@solsynth/sunken-land/presets/login.css?url";
-import reactions from "@solsynth/sunken-land/presets/reactions.css?url";
-import repliesList from "@solsynth/sunken-land/presets/replies-list.css?url";
-import replyComposer from "@solsynth/sunken-land/presets/reply-composer.css?url";
+import { configure } from "@solsynth/sunkenland";
+import login from "@solsynth/sunkenland/presets/login.css?url";
+import reactions from "@solsynth/sunkenland/presets/reactions.css?url";
+import repliesList from "@solsynth/sunkenland/presets/replies-list.css?url";
+import replyComposer from "@solsynth/sunkenland/presets/reply-composer.css?url";
 
 /**
  * SunkenLand widgets (`sk-*` custom elements) are browser-only, so this runs
  * client-side. The package embeds its own Vue, and each preset is imported as
  * a Vite asset URL so it stays versioned with the dependency; `public/stickers`
- * is filled by the `postinstall` copy.
+ * ships the reaction sticker set.
  *
- * Reads work unauthenticated. To let the widgets sign users in (and react /
- * reply) register a Solarpass client and pass it here:
- *
- *   oidc: { clientId: "<app-slug>", redirectUri: defaultRedirectUri() }
+ * The elements talk to Stargate directly and cannot read the Nitro session
+ * cookie, so `getAccessToken` hands them the signed-in user's Solar token
+ * (served by `/api/sn/token`). That drives the widgets' signed-in state — the
+ * reply composer posts as the user, the reaction list highlights their own
+ * reactions — without a second Solarpass sign-in on top of better-auth.
+ * Guests get `null` and see the widgets' signed-out states.
  */
 export default defineNuxtPlugin(() => {
   const { public: config } = useRuntimeConfig();
@@ -22,5 +24,13 @@ export default defineNuxtPlugin(() => {
     baseUrl: config.apiBaseUrl,
     css: [repliesList, login, replyComposer, reactions],
     stickerUrl: "/stickers/{symbol}.webp",
+    getAccessToken: async () => {
+      try {
+        const { token } = await $fetch<{ token: string | null }>("/api/sn/token");
+        return token;
+      } catch {
+        return null;
+      }
+    },
   });
 });

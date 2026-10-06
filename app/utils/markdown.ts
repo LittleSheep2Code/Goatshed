@@ -12,6 +12,14 @@ const md = new MarkdownIt({
 const SOLIAN_FILE_PREFIX = "solian://files/";
 const DRIVE_FILE_PREFIX = "https://api.solian.app/drive/files/";
 
+/**
+ * Turn single newlines into markdown hard breaks so plain-text fields (bios,
+ * moment bodies) keep their line structure when rendered.
+ */
+export function withSoftBreaks(input: string): string {
+  return input.replace(/\r?\n/g, "  \n");
+}
+
 function transformSolianFileUrl(url: string): string {
   if (!url.startsWith(SOLIAN_FILE_PREFIX)) return url;
   const filePath = url.slice(SOLIAN_FILE_PREFIX.length);

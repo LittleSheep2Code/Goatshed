@@ -7,9 +7,9 @@
       :blurhash="publisherBackgroundBlurhash"
     >
       <div
-        class="page-shell flex min-h-[60dvh] flex-col justify-center pb-24 pt-10 sm:min-h-[70dvh] sm:pb-28 sm:pt-14"
+        class="flex min-h-[60dvh] flex-col justify-center pb-24 pt-10 sm:min-h-[70dvh] sm:pb-28 sm:pt-14"
       >
-        <ShellBreadcrumb no-link class="self-start" :path="`/blog/${activePub}`" />
+        <ShellBreadcrumb no-link class="self-start" path="/blog" />
 
         <h1
           class="hero-title mb-3 text-5xl font-bold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl"
@@ -48,11 +48,8 @@
     <section v-else class="page-shell py-8">
       <section id="recent-posts" class="pb-6">
         <div class="grid min-w-0 gap-5 lg:grid-cols-[19rem_1fr]">
-          <PublisherSidebar
-            v-if="showSidebar"
-            :publisher-name="activePub"
+          <AuthorSidebar
             class="min-w-0 lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto lg:pt-24 lg:pb-6"
-            @change="setPublisher"
           />
 
           <div class="min-w-0 space-y-4">
@@ -92,7 +89,7 @@
 
             <div class="mb-4 mt-8 flex w-full justify-center">
               <NuxtLink
-                :to="`/posts/${activePub}`"
+                :to="`/posts/${OWNER_PUBLISHER}`"
                 class="group inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-8 py-4 text-base font-bold text-primary transition-all duration-300 hover:-translate-y-0.5 hover:border-primary hover:bg-primary/20 sm:w-auto"
               >
                 浏览全部文章
@@ -109,36 +106,23 @@
 </template>
 
 <script setup lang="ts">
-import BrandingRegular from "~/assets/branding/regular.png";
-
 import { ArrowRight, Rss, Sparkles } from "lucide-vue-next";
-import {
-  isPublisherName,
-  type PublisherName,
-} from "~/constants/publishers";
+import { OWNER_PUBLISHER } from "~/constants/publishers";
 import type { Post } from "~/types/post";
 import type { Publisher } from "~/types/publisher";
 
-const route = useRoute();
-const router = useRouter();
 const config = useRuntimeConfig();
 
-const introCode: string = `while (活着) {
+const introCode = `while (活着) {
   吃饭(); 上学(); 编程(); 睡觉();
 }`;
-
-const activePub = ref<PublisherName>(
-  typeof route.query.pub === "string" && isPublisherName(route.query.pub)
-    ? route.query.pub
-    : "littlesheep",
-);
 
 const { data: publishersData } = await useFetch<
   Record<string, Publisher | null>
 >("/api/publishers");
 
 const publisherBackgroundUrl = computed(() => {
-  const background = publishersData.value?.[activePub.value]?.background;
+  const background = publishersData.value?.[OWNER_PUBLISHER]?.background;
   if (!background?.id) return null;
   return (
     background.url ||
@@ -147,9 +131,10 @@ const publisherBackgroundUrl = computed(() => {
 });
 
 const publisherBackgroundBlurhash = computed(
-  () => publishersData.value?.[activePub.value]?.background?.blurhash || null,
+  () => publishersData.value?.[OWNER_PUBLISHER]?.background?.blurhash || null,
 );
 
+// Omitting `pub` lets the API aggregate every publisher the blog knows about.
 const {
   data: recentResponse,
   pending: loading,
@@ -158,26 +143,24 @@ const {
   "posts-home",
   () =>
     $fetch<{ posts: Post[]; total: number }>("/api/posts", {
-      query: { pub: activePub.value, type: 1, take: 6, offset: 0 },
+      query: { type: 1, take: 6, offset: 0 },
     }),
-  {
-    watch: [activePub],
-    default: () => ({ posts: [], total: 0 }),
-  },
+  { default: () => ({ posts: [], total: 0 }) },
 );
 
 const recentPosts = computed(() => recentResponse.value?.posts ?? []);
 const total = computed(() => recentResponse.value?.total ?? 0);
 
-const { data: pinnedPostsData } = await useFetch<Post[]>(
-  () => `/api/publishers/${activePub.value}/pinned`,
-  {
-    default: () => [],
-    watch: [activePub],
-  },
+const { data: pinnedResponse } = await useAsyncData(
+  "pinned-home",
+  () =>
+    $fetch<{ posts: Post[]; total: number }>("/api/posts", {
+      query: { type: 1, take: 6, pinned: true },
+    }),
+  { default: () => ({ posts: [], total: 0 }) },
 );
 
-const pinnedPosts = computed(() => pinnedPostsData.value ?? []);
+const pinnedPosts = computed(() => pinnedResponse.value?.posts ?? []);
 
 const pinnedIds = computed(
   () => new Set(pinnedPosts.value.map((post) => post.id)),
@@ -187,39 +170,19 @@ const recentCards = computed(() =>
   recentPosts.value.filter((post) => !pinnedIds.value.has(post.id)),
 );
 
-const showSidebar = computed(() => true);
-
-async function setPublisher(next: PublisherName) {
-  activePub.value = next;
-  await router.replace({ query: { ...route.query, pub: next } });
-}
-
-watch(
-  () => route.query.pub,
-  (value) => {
-    if (
-      typeof value === "string" &&
-      isPublisherName(value) &&
-      value !== activePub.value
-    ) {
-      activePub.value = value;
-    }
-  },
-);
-
 useHead({
   title: "博客",
   meta: [
     {
       name: "description",
       content:
-        "浏览 littlesheep 的技术博客文章，记录 Web 开发、软件架构与技术思考。",
+        "Goatshed 山羊寒舍：littlesheep 的博客，写代码、写 Solar Network，也写点日常碎碎念。",
     },
     { property: "og:title", content: "博客 - Goatshed" },
     {
       property: "og:description",
       content:
-        "浏览 littlesheep 的技术博客文章，记录 Web 开发、软件架构与技术思考。",
+        "Goatshed 山羊寒舍：littlesheep 的博客，写代码、写 Solar Network，也写点日常碎碎念。",
     },
     { property: "og:type", content: "website" },
     { property: "og:url", content: "https://littlesheep.me" },

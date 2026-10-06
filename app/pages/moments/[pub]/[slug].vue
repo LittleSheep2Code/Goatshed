@@ -181,7 +181,7 @@
 
 <script setup lang="ts">
 import type { Post } from "~/types/post";
-import { renderMarkdown } from "~/utils/markdown";
+import { renderMarkdown, withSoftBreaks } from "~/utils/markdown";
 import { getPostIdentifier } from "~/utils/post";
 import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, ImageOff } from "lucide-vue-next";
 
@@ -252,10 +252,6 @@ watch(
   },
   { immediate: true },
 );
-
-function withSoftBreaks(input: string) {
-  return input.replace(/\r?\n/g, "  \n");
-}
 
 const publishedAt = computed(() => {
   if (!post.value) return "";

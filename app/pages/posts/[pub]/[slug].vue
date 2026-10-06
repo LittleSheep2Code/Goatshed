@@ -8,7 +8,7 @@
       :style="{ viewTransitionName: `post-${post?.id}` }"
     >
       <div
-        class="page-shell flex min-h-[46dvh] flex-col justify-center pb-24 pt-10 sm:min-h-[54dvh] sm:pb-28 sm:pt-14"
+        class="flex min-h-[46dvh] flex-col justify-center pb-24 pt-10 sm:min-h-[54dvh] sm:pb-28 sm:pt-14"
       >
         <ShellBreadcrumb
           class="self-start"

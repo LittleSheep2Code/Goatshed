@@ -6,6 +6,9 @@ export const PUBLISHERS = [
 
 export type PublisherName = (typeof PUBLISHERS)[number];
 
+/** The publisher the blog itself belongs to; used for the site's branding and author card. */
+export const OWNER_PUBLISHER: PublisherName = "littlesheep";
+
 export const PUBLISHER_META: Record<
   PublisherName,
   { description: string; locked: boolean }

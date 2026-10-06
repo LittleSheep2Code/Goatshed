@@ -10,7 +10,7 @@
     />
     <div class="cover-scrim absolute inset-0" aria-hidden="true" />
 
-    <div class="relative">
+    <div class="hero-shell relative">
       <slot />
     </div>
 

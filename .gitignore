@@ -25,5 +25,5 @@ logs
 
 *.lock
 
-# Copied from @solsynth/sunken-land by the postinstall step
+# Copied from @solsynth/sunkenland by the postinstall step
 public/stickers

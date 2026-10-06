@@ -7,35 +7,35 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare && node -e \"require('fs').cpSync('node_modules/@solsynth/sunken-land/dist/stickers','public/stickers',{recursive:true})\""
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@nuxt/eslint": "1.15.2",
     "@nuxt/image": "2.0.0",
     "@pinia/nuxt": "^0.11.3",
     "@shikijs/markdown-it": "^3.23.0",
-    "@solsynth/sunken-land": "file:vendor/solsynth-sunken-land-0.1.0.tgz",
+    "@solsynth/sunkenland": "0.1.2",
     "@unlazy/nuxt": "^2.0.1",
-    "@yeger/vue-masonry-wall": "^6.1.1",
-    "better-auth": "^1.6.23",
-    "drizzle-orm": "^0.45.2",
+    "@yeger/vue-masonry-wall": "^6.1.4",
+    "better-auth": "^1.7.7",
+    "drizzle-orm": "^0.45.3",
     "lucide-vue-next": "^1.0.0",
-    "markdown-it": "^14.1.1",
-    "nuxt": "^4.4.4",
+    "markdown-it": "^14.3.2",
+    "nuxt": "^4.6.0",
     "nuxt-shiki": "0.3.2",
-    "pg": "^8.22.0",
+    "pg": "^8.23.1",
     "pinia": "^3.0.4",
-    "reka-ui": "^2.10.1",
+    "reka-ui": "^2.11.0",
     "shiki": "^3.23.0",
     "unlazy": "^2.0.1",
-    "vue": "^3.5.33",
-    "vue-router": "^5.0.6"
+    "vue": "^3.5.43",
+    "vue-router": "^5.3.1"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.19",
-    "@tailwindcss/vite": "^4.2.4",
-    "@types/pg": "^8.20.0",
-    "daisyui": "^5.5.19",
-    "drizzle-kit": "^0.31.10"
+    "@tailwindcss/typography": "^0.5.20",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/pg": "^8.23.1",
+    "daisyui": "^5.7.47",
+    "drizzle-kit": "^0.31.11"
   }
 }

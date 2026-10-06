@@ -12,3 +12,14 @@ export interface Publisher {
     title: string | null;
   } | null;
 }
+
+/** Aggregate content stats for a publisher, from `/sphere/publishers/{name}/stats`. */
+export interface PublisherStats {
+  postsCount: number;
+  wordsCount: number;
+  attachmentsCount: number;
+  daysPostedCount: number;
+  longestStreakDays: number;
+  firstPostedAt: string | null;
+  lastPostedAt: string | null;
+}

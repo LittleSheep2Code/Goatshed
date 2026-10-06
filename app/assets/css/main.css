@@ -10,6 +10,8 @@
   --font-sans: "Nunito", "Avenir Next", sans-serif;
   /* Sweet spot between the old 72rem shell and an unbounded one. */
   --container-page: 88rem;
+  /* Cover copy sits 2rem inside each edge of the page shell. */
+  --container-hero: calc(var(--container-page) - 4rem);
   /* App bar height. Single source of truth for the bar and anything that sits under it. */
   --app-bar-height: 4rem;
 }
@@ -120,6 +122,14 @@
     @apply mx-auto w-full max-w-page px-4 sm:px-6 lg:px-8;
   }
 
+  /*
+    Copy column for `CoverHero`: the page gutters, but a narrower measure than `.page-shell`, so
+    the hero copy sits inside the content edges of the page below it.
+  */
+  .hero-shell {
+    @apply mx-auto w-full max-w-hero px-4 sm:px-6 lg:px-8;
+  }
+
   /* Breaks a shelled child out to the full viewport width (html clips the 100vw scrollbar sliver). */
   .cover-bleed {
     width: 100vw;
@@ -140,11 +150,56 @@
   }
 
   .nav-link {
-    @apply rounded-md px-3 py-2 text-sm font-semibold text-base-content/75 hover:bg-base-200 hover:text-primary;
+    @apply rounded-md px-3 py-2 text-sm font-semibold text-base-content/75 transition-colors hover:text-primary;
   }
 
   .nav-link-active {
-    @apply bg-base-200 text-primary;
+    @apply text-primary;
+  }
+
+  /*
+    Sliding highlight behind the hovered, focused or current nav item. useGlideIndicator springs its
+    translate and width; CSS blooms it open where it first lands and shrinks it away when nothing
+    is targeted.
+  */
+  .nav-indicator {
+    position: absolute;
+    inset-block: 0.25rem;
+    left: 0;
+    z-index: -1;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--color-primary) 14%, transparent);
+    pointer-events: none;
+  }
+
+  .nav-indicator[data-visible="false"] {
+    opacity: 0;
+    scale: 0.8 0.6;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .nav-indicator {
+      transition:
+        opacity 200ms cubic-bezier(0.25, 1, 0.5, 1),
+        scale 480ms cubic-bezier(0.16, 1, 0.3, 1),
+        background-color 320ms ease-out;
+    }
+
+    .nav-indicator[data-visible="false"] {
+      transition:
+        opacity 160ms ease-in,
+        scale 180ms ease-in,
+        background-color 320ms ease-out;
+    }
+
+    /*
+      Held on one item: the highlight settles into a slow breath, widening along the row and
+      squaring off its shape. `useGlideIndicator` sets the attribute once a target has been held,
+      and takes it back as soon as the highlight is retargeted or hidden.
+    */
+    .nav-indicator[data-breathing="true"] {
+      animation: nav-indicator-breathe 3.2s ease-in-out infinite;
+    }
   }
 
   .post-tile {
@@ -212,4 +267,22 @@
 [data-theme="goatshed-dark"] .shiki,
 [data-theme="goatshed-dark"] .shiki span {
   color: var(--shiki-dark) !important;
+}
+
+/*
+  Start and end at the resting capsule (a 1rem radius clamps to half the pill's height, i.e. the
+  same shape as `border-radius: 9999px`), so the breath can start or be cut anywhere without a
+  visible jump; only the clipped, sub-2px scale delta snaps back.
+*/
+@keyframes nav-indicator-breathe {
+  0%,
+  100% {
+    scale: 1 1;
+    border-radius: 1rem;
+  }
+
+  50% {
+    scale: 1.05 1.14;
+    border-radius: 0.55rem;
+  }
 }
