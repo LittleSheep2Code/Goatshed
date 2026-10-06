@@ -5,12 +5,12 @@
 
             <div class="hero-inner">
                 <div class="avatar-block">
-                    <img
+                    <UnLazyImage
                         v-if="avatarUrl"
                         :src="avatarUrl"
                         :alt="displayName"
+                        :blurhash="avatarBlurhash"
                         class="avatar-img"
-                        loading="lazy"
                     />
                     <div v-else class="avatar-placeholder">{{ initials }}</div>
                 </div>
@@ -195,6 +195,10 @@ const avatarUrl = computed(() => {
         `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(picture.id)}`
     );
 });
+
+const avatarBlurhash = computed(
+    () => publisher.value?.picture?.blurhash || undefined,
+);
 
 const initials = computed(() => displayName.value.slice(0, 2).toUpperCase());
 

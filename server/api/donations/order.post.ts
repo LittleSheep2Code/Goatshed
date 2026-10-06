@@ -5,7 +5,6 @@ import { snFetch } from "~~/server/utils/sn-api";
 
 const PRODUCT_SKUS: Record<string, string> = {
   donation: "littlesheep.goatshed.donation",
-  gaming: "littlesheep.goatshed.gaming",
 };
 
 export default defineEventHandler(async (event) => {

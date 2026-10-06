@@ -28,12 +28,6 @@
                 >
                     打赏
                 </button>
-                <button
-                    :class="['btn btn-sm', activeProductType === 'gaming' ? 'btn-secondary' : 'btn-outline']"
-                    @click="activeProductType = 'gaming'"
-                >
-                    陪玩票
-                </button>
                 <div class="ml-auto flex items-center gap-2">
                     <button
                         class="btn btn-ghost btn-xs"
@@ -63,7 +57,7 @@
                         <tr v-for="order in orders" :key="order.id">
                             <td>
                                 <span class="badge badge-sm badge-outline">
-                                    {{ order.productType === 'gaming' ? '陪玩票' : '打赏' }}
+                                    打赏
                                 </span>
                             </td>
                             <td class="font-bold">{{ order.amount }} {{ order.currency }}</td>
@@ -122,7 +116,6 @@
                 <p class="mt-2 text-base-content/50">暂无订单</p>
                 <div class="mt-4 flex justify-center gap-2">
                     <NuxtLink to="/store/buy/donation" class="btn btn-primary btn-sm">前往打赏</NuxtLink>
-                    <NuxtLink to="/store/buy/gaming" class="btn btn-outline btn-sm">购买陪玩票</NuxtLink>
                 </div>
             </div>
 
@@ -157,7 +150,7 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-base-content/60">类型</span>
-                        <span class="badge badge-sm badge-outline">{{ selectedOrder.productType === 'gaming' ? '陪玩票' : '打赏' }}</span>
+                        <span class="badge badge-sm badge-outline">打赏</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-base-content/60">金额</span>

@@ -1,14 +1,18 @@
 <template>
   <header
-    class="sticky top-0 z-40 border-b border-base-300/70 bg-base-100/85 backdrop-blur-lg transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transition-none max-lg:px-4"
+    class="sticky top-0 z-40 border-b transition duration-300 ease-out motion-reduce:transition-none max-lg:px-4"
     :class="[
       hidden ? '-translate-y-full' : 'translate-y-0',
+      // At the top the bar dissolves into the cover artwork behind it.
+      scrolled
+        ? 'border-base-300/70 bg-base-100/85 backdrop-blur-lg'
+        : 'border-transparent bg-transparent backdrop-blur-none',
       scrolled && !hidden ? 'shadow-md' : 'shadow-none',
     ]"
     :inert="hidden || undefined"
     :aria-hidden="hidden ? 'true' : undefined"
   >
-    <div class="page-shell navbar min-h-16 px-0 sm:min-h-18">
+    <div class="page-shell navbar min-h-(--app-bar-height) px-0">
       <div class="navbar-start">
         <NuxtLink
           to="/"

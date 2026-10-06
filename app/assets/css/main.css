@@ -10,6 +10,8 @@
   --font-sans: "Nunito", "Avenir Next", sans-serif;
   /* Sweet spot between the old 72rem shell and an unbounded one. */
   --container-page: 88rem;
+  /* App bar height. Single source of truth for the bar and anything that sits under it. */
+  --app-bar-height: 4rem;
 }
 
 @plugin "daisyui/theme" {
@@ -17,9 +19,9 @@
   default: true;
   prefersdark: false;
   color-scheme: light;
-  --color-base-100: #f2f5ec;
-  --color-base-200: #e7ecd9;
-  --color-base-300: #d8dfc4;
+  --color-base-100: #f0f0f0;
+  --color-base-200: #e2e2e2;
+  --color-base-300: #d2d2d2;
   --color-base-content: #353538;
   --color-primary: #1158d1;
   --color-primary-content: #f8fbff;
@@ -83,6 +85,13 @@
 }
 
 @layer base {
+  /* Matches the `sm` breakpoint where the bar grows. */
+  @media (width >= 40rem) {
+    :root {
+      --app-bar-height: 4.5rem;
+    }
+  }
+
   html {
     @apply overflow-y-auto overflow-x-clip;
   }
@@ -93,6 +102,16 @@
 
   a {
     @apply transition-colors;
+  }
+
+  /*
+    unlazy leaves a transparent 1x1 in `src` until an image is near the viewport, which would read
+    as a hole. Standing the surface tone behind it makes an unloaded image look reserved, and the
+    artwork — or the BlurHash decoded into `src` — paints straight over it. `data-src` is removed
+    by unlazy the moment the real image is swapped in.
+  */
+  img[data-src] {
+    background-color: color-mix(in oklab, var(--color-base-300) 55%, transparent);
   }
 }
 
@@ -105,6 +124,15 @@
   .cover-bleed {
     width: 100vw;
     margin-inline: calc(50% - 50vw);
+  }
+
+  /*
+    A cover hero at the top of a page rises behind the transparent app bar: the negative margin
+    cancels the bar's flow space, the padding gives it back so everything below stays put.
+  */
+  .cover-under-app-bar {
+    margin-top: calc(var(--app-bar-height) * -1);
+    padding-top: var(--app-bar-height);
   }
 
   .app-panel {

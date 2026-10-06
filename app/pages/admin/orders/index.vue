@@ -35,7 +35,7 @@
                         <td class="font-mono text-xs">{{ order.orderId.slice(0, 8) }}</td>
                         <td>
                             <span class="badge badge-sm badge-outline">
-                                {{ order.productType === 'gaming' ? '陪玩票' : '打赏' }}
+                                打赏
                             </span>
                         </td>
                         <td>
@@ -141,7 +141,7 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-base-content/60">类型</span>
-                        <span class="badge badge-sm badge-outline">{{ selectedOrder.productType === 'gaming' ? '陪玩票' : '打赏' }}</span>
+                        <span class="badge badge-sm badge-outline">打赏</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-base-content/60">金额</span>

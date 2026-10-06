@@ -7,9 +7,10 @@
                         v-if="product?.pictureUrl"
                         class="overflow-hidden rounded-2xl border border-base-300 bg-base-100 aspect-square"
                     >
-                        <img
+                        <UnLazyImage
                             :src="product.pictureUrl"
                             :alt="product.displayName || productTitle"
+                            :blurhash="product.picture?.blurhash || undefined"
                             class="h-full w-full object-cover"
                         />
                     </div>
@@ -111,62 +112,6 @@
                                 </p>
                             </div>
                         </div>
-
-                        <div v-if="productType === 'gaming'">
-                            <div class="mb-3 flex items-center gap-2">
-                                <Gamepad2 class="h-5 w-5 text-primary" />
-                                <h2 class="text-base font-bold">陪玩场次</h2>
-                            </div>
-                            <div v-if="gamingSessions.length > 0" class="space-y-2">
-                                <div
-                                    v-for="s in gamingSessions"
-                                    :key="s.id"
-                                    class="flex items-center justify-between rounded-xl border border-base-300 bg-base-100 p-3"
-                                >
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex items-center gap-1.5">
-                                            <div class="truncate text-sm font-semibold">{{ s.name }}</div>
-                                            <span :class="['badge badge-xs', getSessionStatusBadge(s.status)]">
-                                                {{ getSessionStatusLabel(s.status) }}
-                                            </span>
-                                        </div>
-                                        <div class="mt-0.5 text-xs text-base-content/40">{{ s.participantCount }} 人已加入</div>
-                                    </div>
-                                    <span class="badge badge-info badge-sm shrink-0 ml-2">{{ s.ticketCost }} 张票</span>
-                                </div>
-                            </div>
-                            <div v-else class="rounded-xl border border-base-300 bg-base-100 p-4 text-center text-xs text-base-content/50">
-                                暂无陪玩场次
-                            </div>
-
-                            <div class="mt-6 mb-3 flex items-center gap-2">
-                                <Dices class="h-5 w-5 text-primary" />
-                                <h2 class="text-base font-bold">麻将场次</h2>
-                            </div>
-                            <div v-if="mahjongSessions.length > 0" class="space-y-2">
-                                <div
-                                    v-for="s in mahjongSessions"
-                                    :key="s.id"
-                                    class="flex items-center justify-between rounded-xl border border-base-300 bg-base-100 p-3"
-                                >
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex items-center gap-1.5">
-                                            <div class="truncate text-sm font-semibold">{{ s.name }}</div>
-                                            <span :class="['badge badge-xs', getSessionStatusBadge(s.status)]">
-                                                {{ getSessionStatusLabel(s.status) }}
-                                            </span>
-                                        </div>
-                                        <div class="mt-0.5 text-xs text-base-content/40">
-                                            {{ s.participantCount }}/{{ s.playerCount }}人 · {{ s.multiplier }}x · {{ s.initialPoints.toLocaleString() }}点
-                                        </div>
-                                    </div>
-                                    <span class="badge badge-info badge-sm shrink-0 ml-2">{{ s.multiplier }} 张票</span>
-                                </div>
-                            </div>
-                            <div v-else class="rounded-xl border border-base-300 bg-base-100 p-4 text-center text-xs text-base-content/50">
-                                暂无麻将场次
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -242,13 +187,6 @@
                     >
                         查看打赏排行榜
                     </NuxtLink>
-                    <NuxtLink
-                        v-else-if="paymentResult === '已支付' && productType === 'gaming'"
-                        to="/sessions"
-                        class="btn btn-primary"
-                    >
-                        查看陪玩场次
-                    </NuxtLink>
                     <form v-else method="dialog">
                         <button class="btn btn-ghost">关闭</button>
                     </form>
@@ -262,7 +200,7 @@
 </template>
 
 <script setup lang="ts">
-import { Heart, Ticket, Plus, Minus, Loader2, Check, Clock, ShoppingCart, RefreshCw, Gamepad2, Dices } from "lucide-vue-next";
+import { Heart, Plus, Minus, Loader2, Check, Clock, ShoppingCart, RefreshCw } from "lucide-vue-next";
 import type { Component } from "vue";
 
 const route = useRoute();
@@ -285,15 +223,6 @@ const productConfig: Record<string, {
         successTitle: "感谢支持！",
         successMessage: "你的打赏已到账 ❤️",
         icon: Heart,
-    },
-    gaming: {
-        title: "陪玩票",
-        description: "和小羊一起玩游戏吧",
-        placeholder: "留下你的游戏 ID 或备注...",
-        actionLabel: "购买陪玩票",
-        successTitle: "购买成功！",
-        successMessage: "你的陪玩券已到账，等我联系你",
-        icon: Ticket,
     },
 };
 
@@ -327,9 +256,6 @@ const payDialog = ref<HTMLDialogElement>();
 const resultDialog = ref<HTMLDialogElement>();
 const paymentResult = ref<"已支付" | "待支付">("待支付");
 const payStatus = ref<"待支付" | "待支付">("待支付");
-
-const gamingSessions = ref<any[]>([]);
-const mahjongSessions = ref<any[]>([]);
 
 const POLL_INTERVAL = 30000;
 
@@ -436,21 +362,4 @@ useHead({ title: productTitle });
 onUnmounted(() => {
     stopPolling();
 });
-
-if (productType === "gaming") {
-    Promise.all([
-        $fetch("/api/sessions").then((data: any) => { gamingSessions.value = data || []; }),
-        $fetch("/api/mahjong").then((data: any) => { mahjongSessions.value = data || []; }),
-    ]).catch(() => {});
-}
-
-function getSessionStatusBadge(status: string) {
-    const map: Record<string, string> = { "upcoming": "badge-info", "ongoing": "badge-success", "ended": "badge-ghost" };
-    return map[status] || "badge-ghost";
-}
-
-function getSessionStatusLabel(status: string) {
-    const map: Record<string, string> = { "upcoming": "即将开始", "ongoing": "进行中", "ended": "已结束" };
-    return map[status] || status;
-}
 </script>

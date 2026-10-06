@@ -21,13 +21,16 @@
       <div class="moment-layout">
         <div class="moment-media">
           <div v-if="postImages.length === 1" class="moment-media-inner">
-            <img
+            <UnLazyImage
               :src="postImages[0].src"
               :alt="postImages[0].alt"
+              :blurhash="postImages[0].blurhash"
+              :width="postImages[0].width"
+              :height="postImages[0].height"
+              :placeholder-ratio="postImages[0].ratio"
               class="moment-img"
               :style="{ viewTransitionName: `moment-img-${post.id}` }"
-              loading="lazy"
-            >
+            />
           </div>
           <div v-else-if="postImages.length > 1" ref="swipeTarget" class="carousel-group moment-media-inner">
             <div class="carousel-container h-full overflow-hidden">
@@ -40,13 +43,16 @@
                   :key="idx"
                   class="flex h-full w-full flex-shrink-0 items-center justify-center"
                 >
-                  <img
+                  <UnLazyImage
                     :src="img.src"
                     :alt="img.alt"
+                    :blurhash="img.blurhash"
+                    :width="img.width"
+                    :height="img.height"
+                    :placeholder-ratio="img.ratio"
                     class="moment-img"
                     :style="idx === 0 ? { viewTransitionName: `moment-img-${post.id}` } : undefined"
-                    loading="lazy"
-                  >
+                  />
                 </div>
               </div>
             </div>
@@ -263,31 +269,42 @@ const postIdentifier = computed(() =>
 const postImages = computed(() => {
   if (!post.value) return [];
 
-  const images: { src: string; alt: string }[] = [];
+  const images: {
+    src: string;
+    alt: string;
+    blurhash?: string;
+    width?: number;
+    height?: number;
+    ratio?: number;
+  }[] = [];
+
+  function push(file: NonNullable<Post["picture"]>, alt: string) {
+    images.push({
+      src:
+        file.url ||
+        `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(file.id)}`,
+      alt,
+      blurhash: file.blurhash || undefined,
+      width: file.width || undefined,
+      height: file.height || undefined,
+      ratio: file.width && file.height ? file.width / file.height : undefined,
+    });
+  }
 
   if (post.value.picture?.id) {
-    images.push({
-      src: post.value.picture.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(post.value.picture.id)}`,
-      alt: post.value.title || "动态图片",
-    });
+    push(post.value.picture, post.value.title || "动态图片");
   }
 
   if (post.value.attachments?.length) {
     for (const att of post.value.attachments) {
       if (att.id && att.mimeType?.startsWith("image/")) {
-        images.push({
-          src: att.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(att.id)}`,
-          alt: att.name || post.value.title || "动态图片",
-        });
+        push(att, att.name || post.value.title || "动态图片");
       }
     }
   }
 
   if (images.length === 0 && post.value.background?.id) {
-    images.push({
-      src: post.value.background.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(post.value.background.id)}`,
-      alt: post.value.title || "动态图片",
-    });
+    push(post.value.background, post.value.title || "动态图片");
   }
 
   return images;

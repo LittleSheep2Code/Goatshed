@@ -38,7 +38,7 @@
                     <tr v-for="order in stats.recent" :key="order.id">
                         <td>
                             <span class="badge badge-sm badge-outline">
-                                {{ order.productType === 'gaming' ? '陪玩票' : '打赏' }}
+                                打赏
                             </span>
                         </td>
                         <td class="font-medium">{{ order.userName }}</td>

@@ -9,7 +9,14 @@
     @mousemove="onMove"
   >
     <NuxtLink v-if="coverImage" :to="postUrl" class="post-tile-cover">
-      <img :src="coverImage.src" :alt="coverImage.alt" loading="lazy" />
+      <UnLazyImage
+        :src="coverImage.src"
+        :alt="coverImage.alt"
+        :blurhash="coverImage.blurhash"
+        :width="coverImage.width"
+        :height="coverImage.height"
+        :placeholder-ratio="coverImage.ratio"
+      />
     </NuxtLink>
 
     <div class="post-tile-body relative z-10 flex min-w-0 flex-col gap-3">
@@ -112,6 +119,13 @@ const coverImage = computed(() => {
       candidate.url ||
       `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(candidate.id)}`,
     alt: props.post.title || "文章配图",
+    blurhash: candidate.blurhash || undefined,
+    width: candidate.width || undefined,
+    height: candidate.height || undefined,
+    ratio:
+      candidate.width && candidate.height
+        ? candidate.width / candidate.height
+        : undefined,
   };
 });
 

@@ -15,6 +15,7 @@
     "@pinia/nuxt": "^0.11.3",
     "@shikijs/markdown-it": "^3.23.0",
     "@solsynth/sunken-land": "file:vendor/solsynth-sunken-land-0.1.0.tgz",
+    "@unlazy/nuxt": "^2.0.1",
     "@yeger/vue-masonry-wall": "^6.1.1",
     "better-auth": "^1.6.23",
     "drizzle-orm": "^0.45.2",
@@ -26,6 +27,7 @@
     "pinia": "^3.0.4",
     "reka-ui": "^2.10.1",
     "shiki": "^3.23.0",
+    "unlazy": "^2.0.1",
     "vue": "^3.5.33",
     "vue-router": "^5.0.6"
   },

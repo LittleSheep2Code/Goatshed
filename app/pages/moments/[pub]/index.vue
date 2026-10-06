@@ -1,13 +1,22 @@
 <template>
-  <main class="moments-page min-w-0 py-8">
-    <ShellBreadcrumb :path="`/moments/${activePub}`" />
+  <main class="page-shell relative min-w-0 pb-8">
+    <CoverHero
+      :image="publisherBackgroundUrl"
+      class="cover-bleed cover-under-app-bar mb-6"
+    >
+      <div
+        class="page-shell flex min-h-[46dvh] flex-col justify-center pb-24 pt-10 sm:min-h-[54dvh] sm:pb-28 sm:pt-14"
+      >
+        <ShellBreadcrumb class="self-start" :path="`/moments/${activePub}`" />
 
-    <section class="mb-6">
-      <h1 class="text-3xl font-extrabold tracking-tight">动态</h1>
-      <p class="mt-2 text-sm text-base-content/70">
-        来自所选发布者的短内容更新。
-      </p>
-    </section>
+        <h1 class="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">
+          动态
+        </h1>
+        <p class="mt-2 text-sm text-base-content/75">
+          来自所选发布者的短内容更新。
+        </p>
+      </div>
+    </CoverHero>
 
     <section v-if="loading" class="flex justify-center py-16">
       <span class="loading loading-dots loading-lg" />
@@ -17,7 +26,10 @@
       <span>{{ error }}</span>
     </section>
 
-    <section v-else class="grid min-w-0 gap-6 lg:grid-cols-[19rem_1fr]">
+    <section
+      v-else
+      class="grid min-w-0 gap-5 lg:grid-cols-[19rem_minmax(0,42rem)]"
+    >
       <PublisherSidebar
         :publisher-name="activePub"
         class="min-w-0 lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto lg:pt-24 lg:pb-6"
@@ -25,99 +37,90 @@
       />
 
       <div class="min-w-0">
-        <MasonryWall
-          :items="galleryItems"
-          :column-width="280"
-          :gap="16"
-          :ssr-columns="3"
-          :key-mapper="(item) => item.key"
-        >
-          <template #default="{ item }">
-            <NuxtLink
-              :to="getMomentPostUrl(item.post)"
-              class="masonry-card group"
-            >
-              <div v-if="!item.textOnly" class="masonry-img-wrap">
-                <img
-                  :src="item.src"
-                  :alt="item.alt"
-                  class="masonry-img"
-                  :style="{
-                    ...(item.isFirst ? { viewTransitionName: `moment-img-${item.post.id}` } : {}),
-                    ...(item.width && item.height ? { aspectRatio: `${item.width} / ${item.height}` } : {}),
-                  }"
-                  loading="lazy"
-                >
-                <div v-if="item.totalImages > 1 && item.imageIndex === 0" class="masonry-count">
-                  {{ item.totalImages }}
-                </div>
-                <div class="masonry-overlay">
-                  <div class="masonry-overlay-content">
-                    <div class="flex items-center gap-1.5">
-                      <img
-                        v-if="getPublisherPicture(item.post)"
-                        :src="getPublisherPicture(item.post)"
-                        :alt="item.post.publisher.name"
-                        class="h-4 w-4 rounded-full object-cover ring-1 ring-white/20"
-                        loading="lazy"
-                      >
-                      <span class="text-xs font-medium text-white/90">
-                        {{ item.post.publisher.nick || item.post.publisher.name }}
-                      </span>
-                    </div>
-                    <h3
-                      v-if="item.post.title"
-                      class="mt-1.5 text-sm font-bold leading-snug text-white line-clamp-2"
-                    >
-                      {{ item.post.title }}
-                    </h3>
-                    <p
-                      v-else-if="renderedMoments[item.post.id]?.description"
-                      class="mt-1.5 text-xs leading-relaxed text-white/80 line-clamp-2"
-                      v-html="renderedMoments[item.post.id].description"
-                    />
-                  </div>
-                </div>
+        <ol v-if="dayGroups.length" class="moments-timeline">
+          <li
+            v-for="group in dayGroups"
+            :key="group.key"
+            class="timeline-group"
+          >
+            <div class="timeline-date">
+              <div class="timeline-rail" aria-hidden="true">
+                <span class="timeline-day-dot" />
               </div>
+              <div class="timeline-date-body">
+                <time class="timeline-day-label" :datetime="group.key">
+                  {{ group.label }}
+                </time>
+                <span class="timeline-weekday">{{ group.weekday }}</span>
+                <span class="timeline-day-rule" />
+                <span class="timeline-day-count">{{ group.count }}</span>
+              </div>
+            </div>
 
-              <div v-else class="masonry-text-card">
-                <div class="flex items-center gap-1.5 mb-2">
-                  <img
-                    v-if="getPublisherPicture(item.post)"
-                    :src="getPublisherPicture(item.post)"
-                    :alt="item.post.publisher.name"
-                    class="h-4 w-4 rounded-full object-cover"
-                    loading="lazy"
+            <ol class="timeline-list">
+              <li
+                v-for="moment in group.moments"
+                :key="moment.post.id"
+                class="timeline-entry"
+              >
+                <div class="timeline-rail" aria-hidden="true">
+                  <span class="timeline-dot" />
+                </div>
+
+                <article class="timeline-card">
+                  <MomentMedia
+                    v-if="moment.images.length"
+                    :images="moment.images"
+                    :to="getMomentPostUrl(moment.post)"
+                    :ratio="mediaRatio(moment)"
+                    :transition-name="`moment-img-${moment.post.id}`"
+                  />
+
+                  <NuxtLink
+                    :to="getMomentPostUrl(moment.post)"
+                    class="timeline-card-link"
                   >
-                  <span class="text-xs text-base-content/60">
-                    {{ item.post.publisher.nick || item.post.publisher.name }}
-                  </span>
-                </div>
-                <h3
-                  v-if="item.post.title"
-                  class="text-sm font-bold leading-snug text-base-content/90 line-clamp-2"
-                >
-                  {{ item.post.title }}
-                </h3>
-                <article
-                  v-if="renderedMoments[item.post.id]?.description"
-                  class="prose-goatshed mt-1.5 max-w-none text-xs leading-relaxed text-base-content/70 line-clamp-4"
-                  v-html="renderedMoments[item.post.id].description"
-                />
-                <article
-                  v-else-if="renderedMoments[item.post.id]?.content"
-                  class="prose-goatshed mt-1.5 max-w-none text-xs leading-relaxed text-base-content/70 line-clamp-4"
-                  v-html="renderedMoments[item.post.id].content"
-                />
-                <span class="mt-2 text-[10px] text-base-content/40">
-                  {{ formatDate(item.post.publishedAt || item.post.createdAt) }}
-                </span>
-              </div>
-            </NuxtLink>
-          </template>
-        </MasonryWall>
+                    <div class="timeline-card-body">
+                      <div class="timeline-meta">
+                        <time
+                          class="timeline-time"
+                          :datetime="moment.publishedAt"
+                        >
+                          {{ moment.time }}
+                        </time>
+                        <span
+                          v-if="moment.post.viewsUnique"
+                          class="timeline-views"
+                        >
+                          {{ moment.post.viewsUnique }} 次阅读
+                        </span>
+                      </div>
 
-        <div class="flex justify-center py-6">
+                      <h2
+                        v-if="moment.post.title"
+                        class="timeline-title"
+                      >
+                        {{ moment.post.title }}
+                      </h2>
+
+                      <article
+                        v-if="renderedBody(moment.post.id)"
+                        class="prose-goatshed timeline-article line-clamp-4"
+                        v-html="renderedBody(moment.post.id)"
+                      />
+                    </div>
+                  </NuxtLink>
+                </article>
+              </li>
+            </ol>
+          </li>
+        </ol>
+
+        <div v-else class="timeline-empty">
+          <p>这里还没有动态。</p>
+        </div>
+
+        <div class="flex flex-col items-center gap-3 py-8">
           <button
             v-if="hasMore"
             class="btn btn-outline btn-sm"
@@ -130,7 +133,12 @@
             />
             <span v-else>加载更多动态</span>
           </button>
-          <p v-else class="text-xs text-base-content/55">没有更多动态了。</p>
+          <p
+            v-else-if="moments.length"
+            class="font-mono text-xs text-base-content/55"
+          >
+            没有更多动态了。
+          </p>
         </div>
       </div>
     </section>
@@ -138,12 +146,12 @@
 </template>
 
 <script setup lang="ts">
-import { MasonryWall } from "@yeger/vue-masonry-wall";
 import {
   isPublisherName,
   type PublisherName,
 } from "~/constants/publishers";
 import type { Post, PostListResponse } from "~/types/post";
+import type { Publisher } from "~/types/publisher";
 import { renderMarkdown } from "~/utils/markdown";
 import { getPostIdentifier } from "~/utils/post";
 
@@ -158,6 +166,19 @@ const activePub = computed<PublisherName>(() => {
     : "littlesheep";
 });
 
+const { data: publishersData } = await useFetch<
+  Record<string, Publisher | null>
+>("/api/publishers");
+
+const publisherBackgroundUrl = computed(() => {
+  const background = publishersData.value?.[activePub.value]?.background;
+  if (!background?.id) return null;
+  return (
+    background.url ||
+    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(background.id)}`
+  );
+});
+
 const moments = ref<Post[]>([]);
 const total = ref(0);
 const offset = ref(0);
@@ -170,8 +191,31 @@ const renderedMoments = ref<
 
 const hasMore = computed(() => moments.value.length < total.value);
 
-function postImages(post: Post) {
-  const images: { src: string; alt: string; width?: number; height?: number }[] = [];
+interface TimelineImage {
+  src: string;
+  alt: string;
+  blurhash?: string;
+  width?: number;
+  height?: number;
+}
+
+interface TimelineMoment {
+  post: Post;
+  time: string;
+  publishedAt: string;
+  images: TimelineImage[];
+}
+
+interface TimelineDay {
+  key: string;
+  label: string;
+  weekday: string;
+  count: number;
+  moments: TimelineMoment[];
+}
+
+function postImages(post: Post): TimelineImage[] {
+  const images: TimelineImage[] = [];
 
   if (post.picture?.id) {
     images.push({
@@ -179,6 +223,7 @@ function postImages(post: Post) {
         post.picture.url ||
         `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(post.picture.id)}`,
       alt: post.title || "动态图片",
+      blurhash: post.picture.blurhash ?? undefined,
       width: post.picture.width ?? undefined,
       height: post.picture.height ?? undefined,
     });
@@ -192,6 +237,7 @@ function postImages(post: Post) {
             att.url ||
             `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(att.id)}`,
           alt: att.name || post.title || "动态图片",
+          blurhash: att.blurhash ?? undefined,
           width: att.width ?? undefined,
           height: att.height ?? undefined,
         });
@@ -205,6 +251,7 @@ function postImages(post: Post) {
         post.background.url ||
         `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(post.background.id)}`,
       alt: post.title || "动态图片",
+      blurhash: post.background.blurhash ?? undefined,
       width: post.background.width ?? undefined,
       height: post.background.height ?? undefined,
     });
@@ -213,53 +260,77 @@ function postImages(post: Post) {
   return images;
 }
 
-interface GalleryItem {
-  key: string;
-  post: Post;
-  src: string;
-  alt: string;
-  width?: number;
-  height?: number;
-  imageIndex: number;
-  totalImages: number;
-  isFirst: boolean;
-  textOnly: boolean;
+function dayKey(date: Date) {
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
 }
 
-const galleryItems = computed<GalleryItem[]>(() => {
-  const items: GalleryItem[] = [];
+function dayLabel(date: Date) {
+  const options: Intl.DateTimeFormatOptions =
+    date.getFullYear() === new Date().getFullYear()
+      ? { month: "long", day: "numeric" }
+      : { year: "numeric", month: "long", day: "numeric" };
+  return new Intl.DateTimeFormat("zh-CN", options).format(date);
+}
+
+function weekdayLabel(date: Date) {
+  return new Intl.DateTimeFormat("zh-CN", { weekday: "short" }).format(date);
+}
+
+function timeLabel(date: Date) {
+  return new Intl.DateTimeFormat("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+const dayGroups = computed<TimelineDay[]>(() => {
+  const groups: TimelineDay[] = [];
+  const byKey = new Map<string, TimelineDay>();
+
   for (const post of moments.value) {
-    const images = postImages(post);
-    if (images.length === 0) {
-      items.push({
-        key: `post-${post.id}-text`,
-        post,
-        src: "",
-        alt: "",
-        imageIndex: 0,
-        totalImages: 0,
-        isFirst: true,
-        textOnly: true,
-      });
-    } else {
-      for (let i = 0; i < images.length; i++) {
-        items.push({
-          key: `post-${post.id}-img-${i}`,
-          post,
-          src: images[i].src,
-          alt: images[i].alt,
-          width: images[i].width,
-          height: images[i].height,
-          imageIndex: i,
-          totalImages: images.length,
-          isFirst: i === 0,
-          textOnly: false,
-        });
-      }
+    const date = new Date(post.publishedAt || post.createdAt);
+    const key = dayKey(date);
+    let group = byKey.get(key);
+
+    if (!group) {
+      group = {
+        key,
+        label: dayLabel(date),
+        weekday: weekdayLabel(date),
+        count: 0,
+        moments: [],
+      };
+      byKey.set(key, group);
+      groups.push(group);
     }
+
+    group.moments.push({
+      post,
+      time: timeLabel(date),
+      publishedAt: date.toISOString(),
+      images: postImages(post),
+    });
+    group.count++;
   }
-  return items;
+
+  return groups;
 });
+
+function mediaRatio(moment: TimelineMoment) {
+  const image = moment.images[0];
+  return image?.width && image.height
+    ? `${image.width} / ${image.height}`
+    : "16 / 9";
+}
+
+function renderedBody(postId: string) {
+  const entry = renderedMoments.value[postId];
+  if (!entry) return "";
+  return entry.description || entry.content || "";
+}
 
 function queryParams(nextOffset: number) {
   return {
@@ -333,22 +404,9 @@ function withSoftBreaks(input: string) {
   return input.replace(/\r?\n/g, "  \n");
 }
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleString();
-}
-
 function getMomentPostUrl(post: Post) {
   const identifier = getPostIdentifier(post);
   return `/moments/${identifier}`;
-}
-
-function getPublisherPicture(post: Post) {
-  const pic = post.publisher?.picture;
-  if (!pic?.id) return null;
-  return (
-    pic.url ||
-    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`
-  );
 }
 
 async function setPublisher(next: PublisherName) {
@@ -378,96 +436,237 @@ useHead({
 </script>
 
 <style scoped>
-.moments-page {
-  max-width: 90rem;
-  margin-inline: auto;
-  padding-inline: 1rem;
+/* ── Rail ─────────────────────────────────────────────────────────── */
+
+/* Named `moments-timeline`, not `timeline`: daisyUI ships a `.timeline`
+   component whose base rule is `display: flex` (horizontal), which would
+   turn this vertical list sideways. */
+.moments-timeline {
+  --rail-width: 1.75rem;
+  --node-top: 1.5rem;
+  --day-node: 1rem;
+  --dot-size: 0.625rem;
+  --day-dot-size: 0.75rem;
+  --rail-line: color-mix(in srgb, var(--color-base-300) 78%, transparent);
+
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 @media (min-width: 640px) {
-  .moments-page {
-    padding-inline: 1.5rem;
+  .moments-timeline {
+    --rail-width: 2.5rem;
+    --node-top: 1.75rem;
   }
 }
 
-@media (min-width: 1024px) {
-  .moments-page {
-    padding-inline: 2rem;
-  }
+.timeline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.masonry-card {
-  display: block;
-  overflow: hidden;
-  border-radius: var(--radius-box, 0.9rem);
-  border: 1px solid color-mix(in srgb, var(--color-base-300) 70%, transparent);
-  background: var(--color-base-100);
-  text-decoration: none;
-  transition: box-shadow 200ms ease;
+.timeline-date,
+.timeline-entry {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
 }
 
-.masonry-card:hover {
-  box-shadow: 0 4px 24px oklch(0 0 0 / 0.08);
-}
-
-.masonry-img-wrap {
+.timeline-rail {
   position: relative;
-  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 }
 
-.masonry-img {
-  width: 100%;
-  display: block;
-  transition: transform 300ms ease;
-}
-
-.masonry-card:hover .masonry-img {
-  transform: scale(1.03);
-}
-
-.masonry-count {
+.timeline-rail::before {
+  content: "";
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: var(--rail-line);
+}
+
+/* The spine begins at the first day node and ends at the final moment node. */
+.timeline-group:first-child .timeline-date .timeline-rail::before {
+  top: var(--day-node);
+}
+
+.timeline-group:last-child
+  .timeline-entry:last-child
+  .timeline-rail::before {
+  bottom: calc(100% - var(--node-top));
+}
+
+.timeline-dot,
+.timeline-day-dot {
+  position: relative;
+  z-index: 1;
+  border-radius: 9999px;
+  background: var(--color-base-100);
+}
+
+.timeline-dot {
+  width: var(--dot-size);
+  height: var(--dot-size);
+  margin-top: calc(var(--node-top) - var(--dot-size) / 2);
+  border: 2px solid
+    color-mix(in srgb, var(--color-primary) 40%, var(--color-base-300));
+  box-shadow: 0 0 0 4px var(--color-base-100);
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease,
+    transform 200ms ease;
+}
+
+.timeline-day-dot {
+  width: var(--day-dot-size);
+  height: var(--day-dot-size);
+  margin-top: calc(var(--day-node) - var(--day-dot-size) / 2);
+  border: 2px solid var(--color-base-100);
+  background: var(--color-primary);
+  box-shadow: 0 0 0 4px
+    color-mix(in srgb, var(--color-primary) 14%, var(--color-base-100));
+}
+
+.timeline-entry:hover .timeline-dot {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  transform: scale(1.15);
+}
+
+/* ── Day heading ──────────────────────────────────────────────────── */
+
+.timeline-date-body {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-width: 1.5rem;
-  height: 1.5rem;
-  padding: 0 0.375rem;
-  border-radius: 9999px;
-  background: oklch(0 0 0 / 0.5);
-  color: oklch(1 0 0 / 0.9);
-  font-size: 0.65rem;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.timeline-day-label {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.8125rem;
   font-weight: 600;
-  backdrop-filter: blur(4px);
+  letter-spacing: 0.01em;
+  color: var(--color-base-content);
+  font-variant-numeric: tabular-nums;
 }
 
-.masonry-overlay {
-  position: absolute;
-  inset: 0;
+.timeline-weekday {
+  font-size: 0.6875rem;
+  color: color-mix(in srgb, var(--color-base-content) 45%, transparent);
+}
+
+.timeline-day-rule {
+  flex: 1;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-base-300) 55%, transparent);
+}
+
+.timeline-day-count {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.6875rem;
+  color: color-mix(in srgb, var(--color-primary) 45%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Moment card ──────────────────────────────────────────────────── */
+
+.timeline-card {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 0.875rem;
+  border-radius: var(--radius-box, 0.9rem);
+  border: 1px solid
+    color-mix(in srgb, var(--color-base-300) 70%, transparent);
+  background: var(--color-base-100);
+  transition:
+    border-color 200ms ease,
+    transform 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.timeline-entry:last-child .timeline-card {
+  margin-bottom: 0;
+}
+
+.timeline-card:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px oklch(0 0 0 / 0.06);
+}
+
+.timeline-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.timeline-card-body {
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .timeline-card-body {
+    padding: 1.25rem;
+  }
+}
+
+.timeline-meta {
   display: flex;
-  align-items: flex-end;
-  background: linear-gradient(
-    to top,
-    oklch(0 0 0 / 0.6) 0%,
-    oklch(0 0 0 / 0.2) 40%,
-    transparent 100%
-  );
-  opacity: 0;
-  transition: opacity 200ms ease;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--color-base-content) 60%, transparent);
 }
 
-.masonry-card:hover .masonry-overlay {
-  opacity: 1;
+.timeline-time {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
 }
 
-.masonry-overlay-content {
-  width: 100%;
-  padding: 0.75rem;
+.timeline-views::before {
+  content: "·";
+  margin-inline-end: 0.5rem;
+  opacity: 0.6;
 }
 
-.masonry-text-card {
-  padding: 0.875rem;
+.timeline-title {
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--color-base-content) 92%, transparent);
+}
+
+.timeline-article {
+  margin-top: 0.375rem;
+  color: color-mix(in srgb, var(--color-base-content) 78%, transparent);
+}
+
+.timeline-empty {
+  padding: 4rem 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--color-base-content) 55%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline-card,
+  .timeline-dot {
+    transition: none;
+  }
+
+  .timeline-card:hover,
+  .timeline-entry:hover .timeline-dot {
+    transform: none;
+  }
 }
 </style>

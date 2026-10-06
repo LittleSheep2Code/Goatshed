@@ -1,9 +1,10 @@
 <template>
-  <main class="page-shell relative min-w-0 py-8" data-pagefind-body>
+  <main class="page-shell relative min-w-0 pb-8" data-pagefind-body>
     <CoverHero
       :image="postPictureUrl"
       :fallback-image="publisherBackgroundUrl"
-      class="cover-bleed -mt-8 mb-8"
+      :blurhash="coverBlurhash"
+      class="cover-bleed cover-under-app-bar mb-8"
       :style="{ viewTransitionName: `post-${post?.id}` }"
     >
       <div
@@ -122,11 +123,14 @@
           rel="noreferrer"
           class="block overflow-hidden rounded-xl border border-base-300/40 transition-transform hover:scale-[1.02]"
         >
-          <img
+          <UnLazyImage
             :src="file.url"
             :alt="file.name || '文章附件'"
+            :blurhash="file.blurhash"
+            :width="file.width"
+            :height="file.height"
+            :placeholder-ratio="file.ratio"
             class="h-32 w-full object-cover"
-            loading="lazy"
           />
         </a>
       </div>
@@ -318,6 +322,21 @@ const publisherBackgroundUrl = computed(() => {
   );
 });
 
+// Mirrors the artwork the hero picks, so its backdrop matches whatever is on top.
+const coverBlurhash = computed(() => {
+  if (postPictureUrl.value) {
+    const pic =
+      post.value?.picture ||
+      post.value?.attachments?.[0] ||
+      post.value?.background;
+    if (pic?.blurhash) return pic.blurhash;
+  }
+  const background =
+    publishersData.value?.[activePub.value]?.background ??
+    post.value?.publisher?.background;
+  return background?.blurhash || null;
+});
+
 const publisherPictureUrl = computed(() => {
   const pic = post.value?.publisher?.picture;
   if (!pic?.id) return null;
@@ -338,6 +357,11 @@ const postAttachments = computed(() => {
       url:
         file.url ||
         `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(file.id)}`,
+      blurhash: file.blurhash || undefined,
+      width: file.width || undefined,
+      height: file.height || undefined,
+      ratio:
+        file.width && file.height ? file.width / file.height : undefined,
     }));
 });
 

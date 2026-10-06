@@ -15,12 +15,12 @@
                     class="group rounded-2xl border border-base-300 bg-base-100 overflow-hidden transition-shadow hover:shadow-lg"
                 >
                     <div class="aspect-square bg-base-200 overflow-hidden">
-                        <img
+                        <UnLazyImage
                             v-if="product.pictureUrl"
                             :src="product.pictureUrl"
                             :alt="product.displayName"
+                            :blurhash="product.picture?.blurhash || undefined"
                             class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            loading="lazy"
                         />
                         <div v-else class="flex h-full items-center justify-center">
                             <Package class="h-16 w-16 text-base-content/20" />

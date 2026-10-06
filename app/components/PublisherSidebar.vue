@@ -10,7 +10,13 @@
           <div class="relative inline-block">
             <div class="avatar">
               <div class="h-24 w-24 rounded-full bg-primary text-primary-content">
-                <img v-if="publisherPictureUrl" :src="publisherPictureUrl" :alt="publisher.name">
+                <UnLazyImage
+                  v-if="publisherPictureUrl"
+                  :key="publisherPictureUrl"
+                  :src="publisherPictureUrl"
+                  :alt="publisher.name"
+                  :blurhash="publisherPictureBlurhash"
+                />
                 <span v-else class="text-3xl font-bold">{{ initials }}</span>
               </div>
             </div>
@@ -92,7 +98,14 @@
             rel="noreferrer"
             class="block overflow-hidden rounded-lg border border-base-300/40"
           >
-            <img :src="file.url" :alt="file.name || 'Publisher attachment'" class="h-16 w-full object-cover" loading="lazy">
+            <UnLazyImage
+              :src="file.url"
+              :alt="file.name || 'Publisher attachment'"
+              :blurhash="file.blurhash"
+              :width="file.width"
+              :height="file.height"
+              class="h-16 w-full object-cover"
+            />
           </a>
         </div>
       </div>
@@ -157,6 +170,10 @@ const publisherPictureUrl = computed(() => {
   return pic.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`;
 });
 
+const publisherPictureBlurhash = computed(
+  () => publisher.value?.picture?.blurhash || undefined,
+);
+
 const publisherBackgroundUrl = computed(() => {
   const bg = publisher.value?.background;
   if (!bg?.id) return null;
@@ -172,6 +189,9 @@ const publisherAttachments = computed(() => {
       id: file.id,
       name: file.name,
       url: file.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(file.id)}`,
+      blurhash: file.blurhash || undefined,
+      width: file.width || undefined,
+      height: file.height || undefined,
     }));
 });
 

@@ -1,6 +1,10 @@
 <template>
-  <main class="page-shell relative min-w-0 py-8">
-    <CoverHero :image="publisherBackgroundUrl" class="cover-bleed -mt-8 mb-6">
+  <main class="page-shell relative min-w-0 pb-8">
+    <CoverHero
+      :image="publisherBackgroundUrl"
+      :blurhash="publisherBackgroundBlurhash"
+      class="cover-bleed cover-under-app-bar mb-6"
+    >
       <div
         class="page-shell flex min-h-[46dvh] flex-col justify-center pb-24 pt-10 sm:min-h-[54dvh] sm:pb-28 sm:pt-14"
       >
@@ -128,6 +132,10 @@ const publisherBackgroundUrl = computed(() => {
     `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(background.id)}`
   );
 });
+
+const publisherBackgroundBlurhash = computed(
+  () => publishersData.value?.[activePub.value]?.background?.blurhash || null,
+);
 
 const posts = computed(() => data.value?.posts ?? []);
 

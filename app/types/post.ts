@@ -5,6 +5,8 @@ export interface MediaFile {
   mimeType?: string | null;
   width?: number | null;
   height?: number | null;
+  /** BlurHash string returned by Solar Network drive files, used for image placeholders. */
+  blurhash?: string | null;
 }
 
 export interface Publisher {

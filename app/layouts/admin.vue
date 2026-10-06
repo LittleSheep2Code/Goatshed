@@ -89,7 +89,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { Shield, LayoutDashboard, Receipt, Users, Gamepad2, Dices, Menu, X } from "lucide-vue-next";
+import { Shield, LayoutDashboard, Receipt, Users, Menu, X } from "lucide-vue-next";
 import type { Component } from "vue";
 
 interface NavItem {
@@ -102,8 +102,6 @@ const navItems: NavItem[] = [
     { to: "/admin", label: "概览", icon: LayoutDashboard },
     { to: "/admin/orders", label: "订单", icon: Receipt },
     { to: "/admin/users", label: "用户", icon: Users },
-    { to: "/admin/sessions", label: "陪玩场次", icon: Gamepad2 },
-    { to: "/admin/mahjong", label: "麻将", icon: Dices },
 ];
 
 const mobileMenuOpen = ref(false);

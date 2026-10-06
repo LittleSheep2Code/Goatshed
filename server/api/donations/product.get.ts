@@ -10,7 +10,6 @@ const CACHE_TTL = 60 * 60 * 1000;
 
 const PRODUCT_IDENTIFIERS: Record<string, string> = {
   donation: "donation",
-  gaming: "gaming",
 };
 
 export default defineEventHandler(async (event) => {

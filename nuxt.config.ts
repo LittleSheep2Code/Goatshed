@@ -5,7 +5,13 @@ const nitroDataDir = process.env.NITRO_DATA_DIR?.trim() || ".data";
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
-  modules: ["@pinia/nuxt", "@nuxt/image", "@nuxt/eslint", "nuxt-shiki"],
+  modules: [
+    "@pinia/nuxt",
+    "@nuxt/image",
+    "@nuxt/eslint",
+    "nuxt-shiki",
+    "@unlazy/nuxt",
+  ],
   shiki: {
     dynamic: true,
     bundledLangs: ["cpp", "rust", "go", "python", "typescript", "javascript"],
@@ -46,7 +52,7 @@ export default defineNuxtConfig({
           content: "littlesheep, blog, developer, Solar Network",
         },
         { name: "author", content: "littlesheep" },
-        { name: "theme-color", content: "#eef0e7" },
+        { name: "theme-color", content: "#f0f0f0" },
         { property: "og:type", content: "website" },
         { property: "og:site_name", content: "Goatshed" },
         {
