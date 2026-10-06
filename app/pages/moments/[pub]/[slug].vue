@@ -129,7 +129,7 @@
                   class="inline-flex items-center gap-1.5 text-xs text-primary/70 transition-colors hover:text-primary"
                 >
                   <ExternalLink class="h-3.5 w-3.5" />
-                  在 Solian 查看
+                  在 Solar Network 查看
                 </a>
               </div>
             </div>

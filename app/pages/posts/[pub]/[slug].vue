@@ -64,23 +64,8 @@
               rel="noopener noreferrer"
               class="inline-flex items-center gap-1.5 text-xs text-primary transition-colors hover:underline"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-3.5 w-3.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
-                />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-              在 Solian 查看
+              <ExternalLink class="h-3.5 w-3.5" />
+              在 Solar Network 查看
             </a>
           </div>
         </div>
@@ -219,6 +204,7 @@
 </template>
 
 <script setup lang="ts">
+import { ExternalLink } from "lucide-vue-next";
 import type { Post } from "~/types/post";
 import type { Publisher } from "~/types/publisher";
 import { renderMarkdown } from "~/utils/markdown";

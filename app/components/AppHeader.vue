@@ -1,6 +1,12 @@
 <template>
   <header
-    class="sticky top-0 z-40 border-b border-base-300/70 bg-base-100/85 backdrop-blur-lg max-lg:px-4"
+    class="sticky top-0 z-40 border-b border-base-300/70 bg-base-100/85 backdrop-blur-lg transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transition-none max-lg:px-4"
+    :class="[
+      hidden ? '-translate-y-full' : 'translate-y-0',
+      scrolled && !hidden ? 'shadow-md' : 'shadow-none',
+    ]"
+    :inert="hidden || undefined"
+    :aria-hidden="hidden ? 'true' : undefined"
   >
     <div class="page-shell navbar min-h-16 px-0 sm:min-h-18">
       <div class="navbar-start">
@@ -231,6 +237,22 @@ import {
 const auth = useAuth();
 const config = useRuntimeConfig();
 const userMenu = ref<HTMLDetailsElement>();
+const route = useRoute();
+
+const { hidden, scrolled } = useScrollHeader();
+
+// A fresh page always starts with the bar visible.
+watch(
+  () => route.fullPath,
+  () => {
+    hidden.value = false;
+  },
+);
+
+// Don't leave an open menu floating off-screen.
+watch(hidden, (isHidden) => {
+  if (isHidden) closeMenu();
+});
 
 const { data: avatarData } = await useFetch<{ avatarUrl: string | null }>("/api/sn/avatar", {
   key: () => `avatar-${auth.user.value?.id ?? "anon"}`,
