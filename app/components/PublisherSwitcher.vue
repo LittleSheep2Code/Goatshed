@@ -25,11 +25,11 @@
       <span class="min-w-0 text-left">
         <span class="inline-flex items-center gap-1.5 font-semibold">
           <span>{{ publisherLabel(publisher) }}</span>
-          <Lock v-if="publisherMeta[publisher].locked" class="h-3.5 w-3.5 opacity-80" aria-hidden="true" />
+          <Lock v-if="PUBLISHER_META[publisher].locked" class="h-3.5 w-3.5 opacity-80" aria-hidden="true" />
         </span>
         <span class="mt-0.5 block text-[11px] opacity-70">
-          {{ publisherMeta[publisher].description }}
-          <template v-if="publisherMeta[publisher].locked"> 需要登录。</template>
+          {{ PUBLISHER_META[publisher].description }}
+          <template v-if="PUBLISHER_META[publisher].locked"> 需要登录。</template>
         </span>
       </span>
     </button>
@@ -38,7 +38,10 @@
 
 <script setup lang="ts">
 import { Lock } from "lucide-vue-next";
-import type { PublisherName } from "~/constants/publishers";
+import {
+  PUBLISHER_META,
+  type PublisherName,
+} from "~/constants/publishers";
 import type { Publisher } from "~/types/publisher";
 
 const props = defineProps<{
@@ -60,21 +63,6 @@ const publisherEntries = props.publishers.map((name) => [name, publisherData[nam
 
 const publisherMap = Object.fromEntries(publisherEntries) as Record<PublisherName, Publisher | null>;
 
-const publisherMeta: Record<PublisherName, { description: string; locked: boolean }> = {
-  littlesheep: {
-    description: "技术博客",
-    locked: false,
-  },
-  littlesheep0v0: {
-    description: "生活随记",
-    locked: false,
-  },
-  littlesheepuwu: {
-    description: "私密生活随记",
-    locked: true,
-  },
-};
-
 function publisherLabel(name: PublisherName) {
   return publisherMap[name]?.nick || publisherMap[name]?.name || name;
 }
@@ -86,7 +74,7 @@ function publisherAvatar(name: PublisherName) {
 }
 
 function onPublisherClick(name: PublisherName) {
-  if (publisherMeta[name].locked && !auth.authenticated.value) {
+  if (PUBLISHER_META[name].locked && !auth.authenticated.value) {
     const next = router.resolve({
       path: route.path,
       query: { ...route.query, pub: name },

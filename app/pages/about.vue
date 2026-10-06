@@ -1,5 +1,5 @@
 <template>
-    <main class="page-shell mx-auto max-w-5xl py-8">
+    <main class="page-shell py-8">
         <section class="about-hero">
             <div class="hero-grid" />
 

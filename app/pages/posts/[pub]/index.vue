@@ -1,21 +1,19 @@
 <template>
-  <main class="page-shell min-w-0 py-8">
-    <ShellBreadcrumb :path="`/posts/${activePub}`" />
+  <main class="page-shell relative min-w-0 py-8">
+    <CoverHero :image="publisherBackgroundUrl" class="cover-bleed -mt-8 mb-6">
+      <div
+        class="page-shell flex min-h-[46dvh] flex-col justify-center pb-24 pt-10 sm:min-h-[54dvh] sm:pb-28 sm:pt-14"
+      >
+        <ShellBreadcrumb class="self-start" :path="`/posts/${activePub}`" />
 
-    <section class="mb-6">
-      <h1 class="text-3xl font-extrabold tracking-tight">文章</h1>
-      <p class="mt-2 text-sm text-base-content/70">
-        按页浏览所选发布者的文章列表。
-      </p>
-
-      <div class="mt-5 max-w-xl">
-        <PublisherSwitcher
-          :publishers="PUBLISHERS"
-          :active="activePub"
-          @change="setPublisher"
-        />
+        <h1 class="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">
+          文章
+        </h1>
+        <p class="mt-2 text-sm text-base-content/75">
+          按页浏览所选发布者的文章列表。
+        </p>
       </div>
-    </section>
+    </CoverHero>
 
     <section v-if="pending" class="flex justify-center py-16">
       <span class="loading loading-dots loading-lg" />
@@ -25,9 +23,20 @@
       <span>{{ error.message }}</span>
     </section>
 
-    <section v-else class="grid min-w-0 gap-5 lg:grid-cols-[1fr_19rem]">
+    <section v-else class="grid min-w-0 gap-5 lg:grid-cols-[19rem_1fr]">
+      <PublisherSidebar
+        :publisher-name="activePub"
+        class="min-w-0 lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto lg:pt-24 lg:pb-6"
+        @change="setPublisher"
+      />
+
       <div class="min-w-0 space-y-4">
-        <PostCard v-for="post in posts" :key="post.id" :post="post" />
+        <PostCard
+          v-for="(post, index) in posts"
+          :key="post.id"
+          :post="post"
+          :index="index"
+        />
 
         <div class="mt-8 flex flex-wrap items-center justify-center gap-2">
           <button
@@ -59,11 +68,6 @@
           </button>
         </div>
       </div>
-
-      <PublisherSidebar
-        :publisher-name="activePub"
-        class="h-fit min-w-0 lg:sticky lg:top-24"
-      />
     </section>
   </main>
 </template>
@@ -71,14 +75,15 @@
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight } from "lucide-vue-next";
 import {
-  PUBLISHERS,
   isPublisherName,
   type PublisherName,
 } from "~/constants/publishers";
 import type { Post } from "~/types/post";
+import type { Publisher } from "~/types/publisher";
 
 const route = useRoute();
 const router = useRouter();
+const config = useRuntimeConfig();
 
 const pageSize = 12;
 
@@ -111,7 +116,21 @@ const { data, pending, error } = await useAsyncData(
   },
 );
 
+const { data: publishersData } = await useFetch<
+  Record<string, Publisher | null>
+>("/api/publishers");
+
+const publisherBackgroundUrl = computed(() => {
+  const background = publishersData.value?.[activePub.value]?.background;
+  if (!background?.id) return null;
+  return (
+    background.url ||
+    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(background.id)}`
+  );
+});
+
 const posts = computed(() => data.value?.posts ?? []);
+
 const total = computed(() => data.value?.total ?? 0);
 const maxPage = computed(() =>
   Math.max(Math.ceil(total.value / pageSize) - 1, 0),

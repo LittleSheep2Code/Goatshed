@@ -1,6 +1,6 @@
 <template>
     <main class="page-shell py-8">
-        <div class="mx-auto max-w-5xl">
+        <div>
             <div class="grid gap-8 lg:grid-cols-5">
                 <div class="lg:col-span-3">
                     <div

@@ -7,14 +7,6 @@
       <p class="mt-2 text-sm text-base-content/70">
         来自所选发布者的短内容更新。
       </p>
-
-      <div class="mt-5 max-w-xl">
-        <PublisherSwitcher
-          :publishers="PUBLISHERS"
-          :active="activePub"
-          @change="setPublisher"
-        />
-      </div>
     </section>
 
     <section v-if="loading" class="flex justify-center py-16">
@@ -25,7 +17,13 @@
       <span>{{ error }}</span>
     </section>
 
-    <section v-else class="grid min-w-0 gap-6 lg:grid-cols-[1fr_19rem]">
+    <section v-else class="grid min-w-0 gap-6 lg:grid-cols-[19rem_1fr]">
+      <PublisherSidebar
+        :publisher-name="activePub"
+        class="min-w-0 lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto lg:pt-24 lg:pb-6"
+        @change="setPublisher"
+      />
+
       <div class="min-w-0">
         <MasonryWall
           :items="galleryItems"
@@ -135,11 +133,6 @@
           <p v-else class="text-xs text-base-content/55">没有更多动态了。</p>
         </div>
       </div>
-
-      <PublisherSidebar
-        :publisher-name="activePub"
-        class="h-fit min-w-0 lg:sticky lg:top-24"
-      />
     </section>
   </main>
 </template>
@@ -147,7 +140,6 @@
 <script setup lang="ts">
 import { MasonryWall } from "@yeger/vue-masonry-wall";
 import {
-  PUBLISHERS,
   isPublisherName,
   type PublisherName,
 } from "~/constants/publishers";

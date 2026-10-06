@@ -1,6 +1,6 @@
 <template>
     <main class="page-shell py-8">
-        <div class="mx-auto max-w-5xl">
+        <div>
             <div class="mb-8 text-center">
                 <h1 class="text-3xl font-black">小羊的商店</h1>
                 <p class="mt-2 text-sm text-base-content/60">

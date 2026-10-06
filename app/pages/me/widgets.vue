@@ -1,6 +1,6 @@
 <template>
     <main class="page-shell py-8">
-        <div class="mx-auto max-w-5xl">
+        <div>
             <div class="mb-6">
                 <NuxtLink
                     to="/me"

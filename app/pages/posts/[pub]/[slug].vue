@@ -1,70 +1,53 @@
 <template>
-  <main class="page-shell mx-auto py-8" data-pagefind-body>
-    <ShellBreadcrumb :path="`/posts/${postIdentifier}`" />
-
-    <section class="post-header relative mb-10 mt-8">
-      <article
-        v-if="post"
-        class="post-tile post-tile-detail min-w-0"
-        :style="{ viewTransitionName: `post-${post.id}` }"
-        @mousemove="onTileMove"
+  <main class="page-shell relative min-w-0 py-8" data-pagefind-body>
+    <CoverHero
+      :image="postPictureUrl"
+      :fallback-image="publisherBackgroundUrl"
+      class="cover-bleed -mt-8 mb-8"
+      :style="{ viewTransitionName: `post-${post?.id}` }"
+    >
+      <div
+        class="page-shell flex min-h-[46dvh] flex-col justify-center pb-24 pt-10 sm:min-h-[54dvh] sm:pb-28 sm:pt-14"
       >
-        <NuxtLink
-          v-if="postPictureUrl"
-          :to="`/posts/${postIdentifier}`"
-          class="-mx-6 -mt-6 mb-5 block overflow-hidden rounded-t-box border-b border-base-300/40"
-        >
-          <img
-            :src="postPictureUrl"
-            :alt="post?.title || '文章配图'"
-            class="aspect-video w-full object-cover"
-            loading="lazy"
-          />
-        </NuxtLink>
+        <ShellBreadcrumb
+          class="self-start"
+          :path="`/posts/${postIdentifier}`"
+        />
 
-        <div class="relative flex min-w-0 flex-col gap-3">
+        <div v-if="post" class="relative mt-4 flex min-w-0 flex-col gap-3">
           <div
-            v-if="heroBackgroundStyle"
-            class="post-hero-bg"
-            :style="heroBackgroundStyle"
-          />
-
-          <div
-            class="relative z-10 flex flex-wrap items-center gap-2 text-xs text-base-content/70"
+            class="flex flex-wrap items-center gap-2 text-xs text-base-content/70"
           >
             <div class="inline-flex items-center gap-1.5">
               <img
                 v-if="publisherPictureUrl"
                 :src="publisherPictureUrl"
-                :alt="post?.publisher?.name || '发布者'"
+                :alt="post.publisher.name"
                 class="h-4 w-4 rounded-full object-cover"
                 loading="lazy"
               />
               <span class="opacity-70">{{
-                post?.publisher?.nick || post?.publisher?.name
+                post.publisher.nick || post.publisher.name
               }}</span>
             </div>
             <span>{{ publishedAt }}</span>
-            <span v-if="post?.viewsUnique">{{ post.viewsUnique }} 次阅读</span>
+            <span v-if="post.viewsUnique">{{ post.viewsUnique }} 次阅读</span>
           </div>
 
           <h1
-            class="relative z-10 text-xl font-bold leading-tight sm:text-2xl lg:text-3xl"
+            class="text-2xl font-bold leading-tight tracking-tight sm:text-3xl lg:text-4xl"
           >
-            {{ post?.title || "无标题文章" }}
+            {{ post.title || "无标题文章" }}
           </h1>
 
           <p
-            v-if="post?.description"
-            class="relative z-10 text-sm text-base-content/70 line-clamp-3"
+            v-if="post.description"
+            class="max-w-3xl text-sm text-base-content/75 line-clamp-3"
           >
             {{ post.description }}
           </p>
 
-          <div
-            v-if="post?.tags.length"
-            class="relative z-10 flex flex-wrap gap-1"
-          >
+          <div v-if="post.tags.length" class="flex flex-wrap gap-1">
             <span
               v-for="tag in post.tags"
               :key="tag.id"
@@ -74,9 +57,9 @@
             </span>
           </div>
 
-          <div class="relative z-10 flex items-center gap-2 pt-1">
+          <div class="flex items-center gap-2 pt-1">
             <a
-              :href="`https://solian.app/posts/${post?.id}`"
+              :href="`https://solian.app/posts/${post.id}`"
               target="_blank"
               rel="noopener noreferrer"
               class="inline-flex items-center gap-1.5 text-xs text-primary transition-colors hover:underline"
@@ -101,8 +84,8 @@
             </a>
           </div>
         </div>
-      </article>
-    </section>
+      </div>
+    </CoverHero>
 
     <div v-if="pending" class="flex justify-center py-16">
       <span class="loading loading-spinner loading-lg" />
@@ -237,6 +220,7 @@
 
 <script setup lang="ts">
 import type { Post } from "~/types/post";
+import type { Publisher } from "~/types/publisher";
 import { renderMarkdown } from "~/utils/markdown";
 import { getPostIdentifier } from "~/utils/post";
 import { extractToc, injectHeadingIds, type TocItem } from "~/utils/toc";
@@ -322,7 +306,10 @@ const nextPostIdentifier = computed(() =>
 );
 
 const postPictureUrl = computed(() => {
-  const pic = post.value?.picture || post.value?.attachments?.[0];
+  const pic =
+    post.value?.picture ||
+    post.value?.attachments?.[0] ||
+    post.value?.background;
   if (!pic?.id) return null;
   return (
     pic.url ||
@@ -330,15 +317,19 @@ const postPictureUrl = computed(() => {
   );
 });
 
-const heroBackgroundStyle = computed(() => {
-  const bg = post.value?.background;
-  if (!bg?.id) return null;
-  const url =
-    bg.url ||
-    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`;
-  return {
-    backgroundImage: `linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.05)), url(${url})`,
-  };
+const { data: publishersData } = await useFetch<
+  Record<string, Publisher | null>
+>("/api/publishers");
+
+const publisherBackgroundUrl = computed(() => {
+  const background =
+    publishersData.value?.[activePub.value]?.background ??
+    post.value?.publisher?.background;
+  if (!background?.id) return null;
+  return (
+    background.url ||
+    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(background.id)}`
+  );
 });
 
 const publisherPictureUrl = computed(() => {
@@ -363,14 +354,6 @@ const postAttachments = computed(() => {
         `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(file.id)}`,
     }));
 });
-
-function onTileMove(event: MouseEvent) {
-  const element = event.currentTarget as HTMLElement | null;
-  if (!element) return;
-  const rect = element.getBoundingClientRect();
-  element.style.setProperty("--mouse-x", `${event.clientX - rect.left}px`);
-  element.style.setProperty("--mouse-y", `${event.clientY - rect.top}px`);
-}
 
 const postOgImage = computed(() => {
   const pic = post.value?.picture;
@@ -443,34 +426,6 @@ useHead(() => ({
 </script>
 
 <style scoped>
-.post-header {
-  position: relative;
-}
-
-.post-tile-detail {
-  padding: 1.5rem;
-}
-
-.post-hero-bg {
-  position: absolute;
-  inset: -1.5rem;
-  opacity: 0.35;
-  background:
-    radial-gradient(
-      circle at 15% 10%,
-      color-mix(in oklab, var(--color-primary) 18%, transparent) 0%,
-      transparent 35%
-    ),
-    radial-gradient(
-      ellipse 70% 50% at 85% 85%,
-      color-mix(in oklab, var(--color-primary) 12%, transparent) 0%,
-      transparent 45%
-    );
-  pointer-events: none;
-  z-index: 0;
-  border-radius: var(--radius-box, 0.9rem);
-}
-
 .post-content-grid {
   display: grid;
   grid-template-columns: 1fr;

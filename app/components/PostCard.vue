@@ -1,38 +1,29 @@
 <template>
   <article
     class="post-tile min-w-0"
+    :class="{
+      'post-tile-with-cover': !!coverImage,
+      'post-tile-reverse': reversed,
+    }"
     :style="{ viewTransitionName: `post-${post.id}` }"
     @mousemove="onMove"
   >
-    <NuxtLink
-      v-if="coverImage"
-      :to="postUrl"
-      class="-mx-5 -mt-5 mb-6 block overflow-hidden border-b border-base-300/40"
-    >
-      <img
-        :src="coverImage.src"
-        :alt="coverImage.alt"
-        class="aspect-video w-full object-cover"
-        loading="lazy"
-      />
+    <NuxtLink v-if="coverImage" :to="postUrl" class="post-tile-cover">
+      <img :src="coverImage.src" :alt="coverImage.alt" loading="lazy" />
     </NuxtLink>
 
-    <div class="relative z-10 flex min-w-0 flex-col gap-3">
-      <div class="flex items-center gap-2 text-xs text-base-content/70">
-        <div class="inline-flex items-center gap-1.5">
-          <img
-            v-if="publisherPictureUrl"
-            :src="publisherPictureUrl"
-            :alt="post.publisher.name"
-            class="h-4 w-4 rounded-full object-cover"
-            loading="lazy"
-          />
-          <span class="opacity-70">{{
-            post.publisher.nick || post.publisher.name
-          }}</span>
-        </div>
-        <span>{{ formattedDate }}</span>
-        <span>{{ post.viewsUnique }} 次阅读</span>
+    <div class="post-tile-body relative z-10 flex min-w-0 flex-col gap-3">
+      <div class="inline-flex items-center gap-1.5 text-xs text-base-content/70">
+        <img
+          v-if="publisherPictureUrl"
+          :src="publisherPictureUrl"
+          :alt="post.publisher.name"
+          class="h-4 w-4 rounded-full object-cover"
+          loading="lazy"
+        />
+        <span class="opacity-70">{{
+          post.publisher.nick || post.publisher.name
+        }}</span>
       </div>
 
       <NuxtLink :to="postUrl" class="min-w-0 hover:no-underline">
@@ -55,10 +46,20 @@
         </span>
       </div>
 
-      <div
-        class="flex items-center justify-between text-xs text-base-content/70"
-      >
-        <NuxtLink :to="postUrl" class="link link-primary">阅读全文</NuxtLink>
+      <div v-if="coverImage" class="hidden lg:block lg:flex-1" aria-hidden="true" />
+
+      <div class="flex flex-col gap-2 text-xs text-base-content/70">
+        <ReactionBar :post-id="post.id" :max-visible="3" />
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex min-w-0 items-center gap-2">
+            <span>{{ formattedDate }}</span>
+            <span aria-hidden="true">·</span>
+            <span>{{ post.viewsUnique }} 次阅读</span>
+          </div>
+          <NuxtLink :to="postUrl" class="link link-primary shrink-0"
+            >阅读全文</NuxtLink
+          >
+        </div>
       </div>
     </div>
   </article>
@@ -70,7 +71,11 @@ import { getPostIdentifier } from "~/utils/post";
 
 const props = defineProps<{
   post: Post;
+  /** Zero-based position within its list; odd positions mirror the wide-screen layout. */
+  index?: number;
 }>();
+
+const reversed = computed(() => (props.index ?? 0) % 2 === 1);
 
 const config = useRuntimeConfig();
 
@@ -127,3 +132,70 @@ function onMove(event: MouseEvent) {
   element.style.setProperty("--mouse-y", `${event.clientY - rect.top}px`);
 }
 </script>
+
+<style scoped>
+.post-tile-cover {
+  display: block;
+  overflow: hidden;
+  border-bottom: 1px solid
+    color-mix(in oklab, var(--color-base-300) 45%, transparent);
+}
+
+.post-tile-cover img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.post-tile-body {
+  padding: 1.25rem;
+}
+
+@media (min-width: 64rem) {
+  .post-tile-body {
+    padding: 1.5rem;
+  }
+
+  .post-tile-with-cover {
+    display: flex;
+    align-items: stretch;
+  }
+
+  .post-tile-reverse {
+    flex-direction: row-reverse;
+  }
+
+  .post-tile-with-cover .post-tile-cover {
+    position: relative;
+    flex: 1 1 50%;
+    min-width: 0;
+    /* Drives the tile height at 16:9, but stretches to fill when the body is taller. */
+    aspect-ratio: 16 / 9;
+    border-bottom: 0;
+    border-right: 1px solid
+      color-mix(in oklab, var(--color-base-300) 45%, transparent);
+  }
+
+  /* Fill the stretched cover box; crops the sides only when the body outgrows 16:9. */
+  .post-tile-with-cover .post-tile-cover img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+  }
+
+  .post-tile-reverse .post-tile-cover {
+    border-right: 0;
+    border-left: 1px solid
+      color-mix(in oklab, var(--color-base-300) 45%, transparent);
+  }
+
+  .post-tile-with-cover .post-tile-body {
+    flex: 1 1 50%;
+    min-width: 0;
+    align-self: stretch;
+  }
+}
+</style>

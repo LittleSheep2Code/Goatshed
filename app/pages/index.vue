@@ -1,8 +1,10 @@
 <template>
-  <main class="page-shell relative min-w-0 py-8">
-    <section id="hero" class="relative pb-14 pt-10 sm:pb-20 sm:pt-14">
-      <div class="relative z-10">
-        <ShellBreadcrumb no-link :path="`/blog/${activePub}`" />
+  <main class="relative min-w-0">
+    <CoverHero id="hero" :image="publisherBackgroundUrl">
+      <div
+        class="page-shell flex min-h-[60dvh] flex-col justify-center pb-24 pt-10 sm:min-h-[70dvh] sm:pb-28 sm:pt-14"
+      >
+        <ShellBreadcrumb no-link class="self-start" :path="`/blog/${activePub}`" />
 
         <h1
           class="hero-title mb-3 text-5xl font-bold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl"
@@ -25,54 +27,63 @@
           lang="cpp"
           container-class="max-w-xl opacity-75 sm:text-lg"
         />
-
-        <div class="mt-6 max-w-xl">
-          <PublisherSwitcher
-            :publishers="PUBLISHERS"
-            :active="activePub"
-            @change="setPublisher"
-          />
-        </div>
       </div>
-    </section>
+    </CoverHero>
 
-    <section v-if="loading" class="flex justify-center py-16">
+    <section v-if="loading" class="page-shell flex justify-center py-16">
       <span class="loading loading-dots loading-lg" />
     </section>
 
-    <section v-else-if="error" class="alert alert-error">
-      <span>{{ error }}</span>
+    <section v-else-if="error" class="page-shell py-8">
+      <div class="alert alert-error">
+        <span>{{ error }}</span>
+      </div>
     </section>
 
-    <section v-else>
-      <section v-if="pinnedPosts.length" id="featured" class="pb-6">
-        <div class="mb-6 flex items-center gap-3">
-          <h2
-            class="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-primary"
-          >
-            <Sparkles class="h-4 w-4" />
-            精选
-          </h2>
-          <div class="h-px flex-1 bg-base-300/50" />
-        </div>
+    <section v-else class="page-shell py-8">
+      <section id="recent-posts" class="pb-6">
+        <div class="grid min-w-0 gap-5 lg:grid-cols-[19rem_1fr]">
+          <PublisherSidebar
+            v-if="showSidebar"
+            :publisher-name="activePub"
+            class="min-w-0 lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto lg:pt-24 lg:pb-6"
+            @change="setPublisher"
+          />
 
-        <div class="grid gap-4 sm:grid-cols-2">
-          <PostCard v-for="post in pinnedPosts" :key="post.id" :post="post" />
-        </div>
-      </section>
-
-      <section id="recent-posts" class="pb-6 pt-6">
-        <div class="mb-6 flex items-center gap-3">
-          <h2 class="text-sm font-bold uppercase tracking-widest">最新</h2>
-          <div class="h-px flex-1 bg-base-300/50" />
-          <span class="select-none text-xs text-primary/50"
-            >[{{ recentPosts.length }}/{{ total }}]</span
-          >
-        </div>
-
-        <div class="grid min-w-0 gap-5 lg:grid-cols-[1fr_19rem]">
           <div class="min-w-0 space-y-4">
-            <PostCard v-for="post in recentPosts" :key="post.id" :post="post" />
+            <template v-if="pinnedPosts.length">
+              <div class="flex items-center gap-3 pt-1">
+                <h2
+                  class="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-primary"
+                >
+                  <Sparkles class="h-4 w-4" />
+                  精选
+                </h2>
+                <div class="h-px flex-1 bg-base-300/50" />
+              </div>
+
+              <PostCard
+                v-for="(post, index) in pinnedPosts"
+                :key="post.id"
+                :post="post"
+                :index="index"
+              />
+            </template>
+
+            <div class="flex items-center gap-3 pt-3">
+              <h2 class="text-sm font-bold uppercase tracking-widest">最新</h2>
+              <div class="h-px flex-1 bg-base-300/50" />
+              <span class="select-none text-xs text-primary/50"
+                >[{{ recentCards.length }}/{{ total }}]</span
+              >
+            </div>
+
+            <PostCard
+              v-for="(post, index) in recentCards"
+              :key="post.id"
+              :post="post"
+              :index="pinnedPosts.length + index"
+            />
 
             <div class="mb-4 mt-8 flex w-full justify-center">
               <NuxtLink
@@ -86,12 +97,6 @@
               </NuxtLink>
             </div>
           </div>
-
-          <PublisherSidebar
-            v-if="showSidebar"
-            :publisher-name="activePub"
-            class="h-fit min-w-0 lg:sticky lg:top-24"
-          />
         </div>
       </section>
     </section>
@@ -103,14 +108,15 @@ import BrandingRegular from "~/assets/branding/regular.png";
 
 import { ArrowRight, Rss, Sparkles } from "lucide-vue-next";
 import {
-  PUBLISHERS,
   isPublisherName,
   type PublisherName,
 } from "~/constants/publishers";
 import type { Post } from "~/types/post";
+import type { Publisher } from "~/types/publisher";
 
 const route = useRoute();
 const router = useRouter();
+const config = useRuntimeConfig();
 
 const introCode: string = `while (活着) {
   吃饭(); 上学(); 编程(); 睡觉();
@@ -121,6 +127,19 @@ const activePub = ref<PublisherName>(
     ? route.query.pub
     : "littlesheep",
 );
+
+const { data: publishersData } = await useFetch<
+  Record<string, Publisher | null>
+>("/api/publishers");
+
+const publisherBackgroundUrl = computed(() => {
+  const background = publishersData.value?.[activePub.value]?.background;
+  if (!background?.id) return null;
+  return (
+    background.url ||
+    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(background.id)}`
+  );
+});
 
 const {
   data: recentResponse,
@@ -150,6 +169,14 @@ const { data: pinnedPostsData } = await useFetch<Post[]>(
 );
 
 const pinnedPosts = computed(() => pinnedPostsData.value ?? []);
+
+const pinnedIds = computed(
+  () => new Set(pinnedPosts.value.map((post) => post.id)),
+);
+
+const recentCards = computed(() =>
+  recentPosts.value.filter((post) => !pinnedIds.value.has(post.id)),
+);
 
 const showSidebar = computed(() => true);
 
