@@ -8,7 +8,7 @@
         named slots do not compile on custom elements.
       -->
       <sk-reply-composer :post="postId" placeholder="写下你的评论..." submit-label="发送">
-        <span slot="sign-in">
+        <span slot="sign-in" class="w-full">
           <span class="comment-login-prompt block w-full rounded-xl border border-base-300/40 bg-base-200/30 px-4 py-3 text-center text-sm text-base-content/60">
             <button class="link link-primary" type="button" @click="login()">登录</button> 后参与评论
           </span>

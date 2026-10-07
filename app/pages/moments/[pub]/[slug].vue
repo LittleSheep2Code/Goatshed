@@ -11,9 +11,10 @@
     </div>
 
     <template v-else-if="post">
+      <!-- Floats over whichever edge the media took: the top one on small screens. -->
       <header class="moment-header">
-        <button class="btn btn-ghost btn-sm gap-1.5" @click="goBack">
-          <ArrowLeft class="h-4 w-4" />
+        <button type="button" class="moment-back" @click="goBack">
+          <ArrowLeft class="h-4 w-4" aria-hidden="true" />
           动态
         </button>
       </header>
@@ -32,10 +33,14 @@
               :style="{ viewTransitionName: `moment-img-${post.id}` }"
             />
           </div>
-          <div v-else-if="postImages.length > 1" ref="swipeTarget" class="carousel-group moment-media-inner">
+          <div
+            v-else-if="postImages.length > 1"
+            ref="swipeTarget"
+            class="carousel-group moment-media-inner"
+          >
             <div class="carousel-container h-full overflow-hidden">
               <div
-                class="flex h-full transition-transform duration-300 ease-out"
+                class="flex h-full transition-transform duration-300 ease-out motion-reduce:transition-none"
                 :style="{ transform: `translateX(-${carouselIndex * 100}%)` }"
               >
                 <div
@@ -51,21 +56,29 @@
                     :height="img.height"
                     :placeholder-ratio="img.ratio"
                     class="moment-img"
-                    :style="idx === 0 ? { viewTransitionName: `moment-img-${post.id}` } : undefined"
+                    :style="
+                      idx === 0
+                        ? { viewTransitionName: `moment-img-${post.id}` }
+                        : undefined
+                    "
                   />
                 </div>
               </div>
             </div>
             <button
               v-show="carouselIndex > 0"
+              type="button"
               class="carousel-arrow carousel-arrow-left"
+              aria-label="上一张"
               @click="carouselIndex--"
             >
               <ChevronLeft class="h-4 w-4" />
             </button>
             <button
               v-show="carouselIndex < postImages.length - 1"
+              type="button"
               class="carousel-arrow carousel-arrow-right"
+              aria-label="下一张"
               @click="carouselIndex++"
             >
               <ChevronRight class="h-4 w-4" />
@@ -74,40 +87,58 @@
               <div class="carousel-progress-track">
                 <div
                   class="carousel-progress-bar"
-                  :style="{ width: `${((carouselIndex + 1) / postImages.length) * 100}%` }"
+                  :style="{
+                    width: `${((carouselIndex + 1) / postImages.length) * 100}%`,
+                  }"
                 />
               </div>
             </div>
           </div>
-          <div v-else class="moment-media-inner flex items-center justify-center bg-base-200/30">
+          <div
+            v-else
+            class="moment-media-inner flex items-center justify-center bg-base-200/30"
+          >
             <ImageOff class="h-16 w-16 text-base-content/20" />
           </div>
         </div>
 
+        <span class="moment-seam" aria-hidden="true" />
+
         <div class="moment-detail">
           <div class="moment-detail-inner">
-            <div class="mb-4 flex items-center gap-2 text-xs text-base-content/70">
-              <div class="inline-flex items-center gap-1.5">
+            <div class="moment-byline">
+              <span class="inline-flex min-w-0 items-center gap-1.5">
                 <img
                   v-if="publisherPictureUrl"
                   :src="publisherPictureUrl"
                   :alt="post.publisher.name"
-                  class="h-4 w-4 rounded-full object-cover"
+                  class="h-5 w-5 shrink-0 rounded-full object-cover"
                   loading="lazy"
-                >
-                <span class="opacity-70">{{ post.publisher.nick || post.publisher.name }}</span>
-              </div>
-              <span>{{ publishedAt }}</span>
-              <span v-if="post.viewsUnique">{{ post.viewsUnique }} 次阅读</span>
+                />
+                <span class="moment-author">{{
+                  post.publisher.nick || post.publisher.name
+                }}</span>
+              </span>
+              <span class="moment-dot" aria-hidden="true">·</span>
+              <time
+                class="moment-num"
+                :datetime="post.publishedAt || post.createdAt"
+              >
+                {{ publishedAt }}
+              </time>
+              <template v-if="post.viewsUnique">
+                <span class="moment-dot" aria-hidden="true">·</span>
+                <span class="moment-num">{{ post.viewsUnique }} 次阅读</span>
+              </template>
             </div>
 
-            <h1 v-if="post.title" class="mb-4 text-lg font-bold leading-tight sm:text-xl">
+            <h1 v-if="post.title" class="moment-title">
               {{ post.title }}
             </h1>
 
             <article
               v-if="renderedDescription"
-              class="prose-goatshed max-w-none text-sm leading-6 text-base-content/80 mb-4"
+              class="prose-goatshed moment-description"
               v-html="renderedDescription"
             />
             <article
@@ -116,12 +147,15 @@
               v-html="renderedContent"
             />
 
-            <div v-if="post.tags?.length || post.id" class="moment-meta mt-6 flex flex-col gap-3">
+            <div
+              v-if="post.tags?.length || post.id"
+              class="moment-meta mt-6 flex flex-col gap-3"
+            >
               <div v-if="post.tags?.length" class="flex flex-wrap gap-1.5">
                 <span
                   v-for="tag in post.tags"
                   :key="tag.id"
-                  class="badge badge-ghost badge-sm"
+                  class="moment-tag badge badge-ghost badge-sm"
                 >
                   #{{ tag.slug }}
                 </span>
@@ -132,9 +166,9 @@
                   :href="`https://solian.app/posts/${post.id}`"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1.5 text-xs text-primary/70 transition-colors hover:text-primary"
+                  class="moment-source-link"
                 >
-                  <ExternalLink class="h-3.5 w-3.5" />
+                  <ExternalLink class="h-3.5 w-3.5" aria-hidden="true" />
                   在 Solar Network 查看
                 </a>
               </div>
@@ -171,7 +205,7 @@
             <div v-if="post?.id" class="mt-4">
               <ReactionBar :post-id="post.id" />
             </div>
-            <CommentSection :post-id="post.id" v-if="post?.id" />
+            <CommentSection v-if="post?.id" :post-id="post.id" />
           </div>
         </div>
       </div>
@@ -183,7 +217,13 @@
 import type { Post } from "~/types/post";
 import { renderMarkdown, withSoftBreaks } from "~/utils/markdown";
 import { getPostIdentifier } from "~/utils/post";
-import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, ImageOff } from "lucide-vue-next";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  ImageOff,
+} from "lucide-vue-next";
 
 definePageMeta({ layout: "blank" });
 
@@ -243,8 +283,12 @@ watch(
   () => post.value,
   async (p) => {
     if (p) {
-      renderedContent.value = p.content ? await renderMarkdown(withSoftBreaks(p.content)) : "";
-      renderedDescription.value = p.description ? await renderMarkdown(withSoftBreaks(p.description)) : "";
+      renderedContent.value = p.content
+        ? await renderMarkdown(withSoftBreaks(p.content))
+        : "";
+      renderedDescription.value = p.description
+        ? await renderMarkdown(withSoftBreaks(p.description))
+        : "";
     } else {
       renderedContent.value = "";
       renderedDescription.value = "";
@@ -253,9 +297,17 @@ watch(
   { immediate: true },
 );
 
+// Pinned to `zh-CN`: the default locale differs between the Nitro server and
+// the visitor's browser, which would hydrate a different string than it served.
 const publishedAt = computed(() => {
-  if (!post.value) return "";
-  return new Date(post.value.publishedAt || post.value.createdAt).toLocaleString();
+  const raw = post.value?.publishedAt || post.value?.createdAt;
+  if (!raw) return "";
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("zh-CN", {
+    dateStyle: "long",
+    timeStyle: "short",
+  }).format(date);
 });
 
 const postIdentifier = computed(() =>
@@ -320,15 +372,24 @@ const postOgImage = computed(() => {
 
   const pic = post.value.picture;
   if (pic?.id) {
-    return pic.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`;
+    return (
+      pic.url ||
+      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`
+    );
   }
   const bg = post.value.background;
   if (bg?.id) {
-    return bg.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`;
+    return (
+      bg.url ||
+      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`
+    );
   }
   const attach = post.value.attachments?.[0];
   if (attach?.id) {
-    return attach.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(attach.id)}`;
+    return (
+      attach.url ||
+      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(attach.id)}`
+    );
   }
   return "https://littlesheep.me/og-image.png";
 });
@@ -357,7 +418,10 @@ useHead(() => ({
     },
     {
       property: "article:author",
-      content: post.value?.publisher?.nick || post.value?.publisher?.name || "littlesheep",
+      content:
+        post.value?.publisher?.nick ||
+        post.value?.publisher?.name ||
+        "littlesheep",
     },
     { name: "twitter:title", content: post.value?.title || "动态" },
     {
@@ -377,10 +441,23 @@ useHead(() => ({
 
 <style scoped>
 .moment-view {
+  position: relative;
   height: 100dvh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+/*
+  Media over copy on small screens, side by side from `lg`. The seam is a flex
+  item rather than a border, so it keeps the fading hairline the rest of the
+  site's columns are separated by at either orientation.
+*/
+.moment-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .moment-header {
@@ -391,11 +468,36 @@ useHead(() => ({
   padding: 0.75rem 1rem;
 }
 
-.moment-layout {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
+/* A pill rather than a bare ghost button: it has to stay legible on the photo. */
+.moment-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2rem;
+  padding-inline: 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--color-base-300) 55%, transparent);
+  background-color: color-mix(in srgb, var(--color-base-100) 78%, transparent);
+  backdrop-filter: blur(10px);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--color-base-content) 80%, transparent);
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+.moment-back:hover {
+  color: var(--color-primary);
+  border-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
+  background-color: color-mix(in srgb, var(--color-base-100) 92%, transparent);
+}
+
+.moment-back:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .moment-media {
@@ -419,6 +521,102 @@ useHead(() => ({
   object-fit: contain;
 }
 
+.moment-seam {
+  flex: 0 0 1px;
+  background-image: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in srgb, var(--color-base-300) 80%, transparent) 14%,
+    color-mix(in srgb, var(--color-base-300) 80%, transparent) 86%,
+    transparent 100%
+  );
+}
+
+.moment-detail {
+  flex: 1 1 40%;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.moment-detail-inner {
+  padding: 1.5rem 1rem 2rem;
+}
+
+@media (min-width: 640px) {
+  .moment-detail-inner {
+    padding: 1.75rem 1.5rem 2.5rem;
+  }
+}
+
+/* ── Copy ─────────────────────────────────────────────────────────── */
+
+.moment-byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--color-base-content) 62%, transparent);
+}
+
+.moment-author {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--color-base-content) 85%, transparent);
+}
+
+.moment-dot {
+  opacity: 0.45;
+}
+
+.moment-num {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.moment-title {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.moment-description {
+  max-width: none;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--color-base-content) 80%, transparent);
+}
+
+.moment-tag {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  letter-spacing: 0.01em;
+}
+
+.moment-source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--color-primary) 80%, transparent);
+}
+
+.moment-source-link:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+/* ── Carousel ─────────────────────────────────────────────────────── */
+
 .carousel-group {
   position: relative;
 }
@@ -438,7 +636,9 @@ useHead(() => ({
   backdrop-filter: blur(4px);
   opacity: 0;
   transform: translateY(-50%) scale(0.85);
-  transition: opacity 200ms ease, transform 200ms ease;
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
   pointer-events: none;
   cursor: pointer;
   border: none;
@@ -485,16 +685,7 @@ useHead(() => ({
   transition: width 300ms ease-out;
 }
 
-.moment-detail {
-  flex: 1 1 40%;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.moment-detail-inner {
-  padding: 1.25rem 1rem 2rem;
-}
+/* ── End marker ───────────────────────────────────────────────────── */
 
 .post-divider {
   max-width: 32rem;
@@ -510,13 +701,31 @@ useHead(() => ({
     flex: 1 1 55%;
   }
 
+  /* Fixed basis, so the seam and the media share whatever the cap leaves over. */
   .moment-detail {
-    flex: 0 0 45%;
-    max-width: 32rem;
+    flex: 0 0 min(45%, 32rem);
   }
 
   .moment-detail-inner {
-    padding: 2rem 2rem 3rem;
+    padding: 2.25rem 2rem 3rem;
+  }
+
+  .moment-seam {
+    background-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      color-mix(in srgb, var(--color-base-300) 80%, transparent) 10%,
+      color-mix(in srgb, var(--color-base-300) 80%, transparent) 90%,
+      transparent 100%
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moment-back,
+  .carousel-arrow,
+  .carousel-progress-bar {
+    transition: none;
   }
 }
 </style>

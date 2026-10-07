@@ -189,7 +189,6 @@ import {
   Flame,
   Lock,
   MessageSquare,
-  Paperclip,
   PenLine,
 } from "lucide-vue-next";
 import {

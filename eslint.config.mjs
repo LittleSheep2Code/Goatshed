@@ -6,6 +6,7 @@ export default withNuxt(
   {
     rules: {
       "vue/no-v-html": "off",
+      "vue/no-deprecated-slot-attribute": "off"
     },
   },
 );

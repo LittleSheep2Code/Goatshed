@@ -15,57 +15,68 @@
           :path="`/posts/${postIdentifier}`"
         />
 
-        <div v-if="post" class="relative mt-4 flex min-w-0 flex-col gap-3">
-          <div
-            class="flex flex-wrap items-center gap-2 text-xs text-base-content/70"
-          >
-            <div class="inline-flex items-center gap-1.5">
+        <div v-if="post" class="post-hero mt-5 flex min-w-0 flex-col gap-4">
+          <!--
+            Meta reads as a machine readout: numerals in mono and tabular, the
+            same discipline the timeline and the publisher card keep.
+          -->
+          <div class="post-hero-meta">
+            <span class="inline-flex min-w-0 items-center gap-1.5">
               <img
                 v-if="publisherPictureUrl"
                 :src="publisherPictureUrl"
                 :alt="post.publisher.name"
-                class="h-4 w-4 rounded-full object-cover"
+                class="h-5 w-5 shrink-0 rounded-full object-cover"
                 loading="lazy"
               />
-              <span class="opacity-70">{{
+              <span class="post-hero-author">{{
                 post.publisher.nick || post.publisher.name
               }}</span>
-            </div>
-            <span>{{ publishedAt }}</span>
-            <span v-if="post.viewsUnique">{{ post.viewsUnique }} 次阅读</span>
+            </span>
+            <span class="post-hero-dot" aria-hidden="true">·</span>
+            <time
+              class="post-num"
+              :datetime="post.publishedAt || post.createdAt"
+            >
+              {{ publishedAt }}
+            </time>
+            <template v-if="post.viewsUnique">
+              <span class="post-hero-dot" aria-hidden="true">·</span>
+              <span class="post-num">{{ post.viewsUnique }} 次阅读</span>
+            </template>
+            <template v-if="readingStats">
+              <span class="post-hero-dot" aria-hidden="true">·</span>
+              <span class="post-num">
+                {{ readingStats.characters }} 字 · 约
+                {{ readingStats.minutes }} 分钟
+              </span>
+            </template>
           </div>
 
-          <h1
-            class="text-2xl font-bold leading-tight tracking-tight sm:text-3xl lg:text-4xl"
-          >
+          <h1 class="post-hero-title">
             {{ post.title || "无标题文章" }}
           </h1>
 
-          <p
-            v-if="post.description"
-            class="max-w-3xl text-sm text-base-content/75 line-clamp-3"
-          >
+          <p v-if="post.description" class="post-hero-lede line-clamp-3">
             {{ post.description }}
           </p>
 
-          <div v-if="post.tags.length" class="flex flex-wrap gap-1">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-2 pt-0.5">
             <span
               v-for="tag in post.tags"
               :key="tag.id"
-              class="badge badge-ghost badge-sm"
+              class="post-tag badge badge-ghost badge-sm"
             >
               #{{ tag.slug }}
             </span>
-          </div>
 
-          <div class="flex items-center gap-2 pt-1">
             <a
               :href="`https://solian.app/posts/${post.id}`"
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 text-xs text-primary transition-colors hover:underline"
+              class="post-source-link"
             >
-              <ExternalLink class="h-3.5 w-3.5" />
+              <ExternalLink class="h-3.5 w-3.5" aria-hidden="true" />
               在 Solar Network 查看
             </a>
           </div>
@@ -83,58 +94,64 @@
 
     <div v-else-if="post" class="post-content-grid">
       <div class="post-main-column">
-        <aside v-if="tocItems.length" class="post-toc-mobile mb-4 xl:hidden">
+        <aside
+          v-if="tocItems.length && !railVisible"
+          class="post-toc-mobile mb-4 xl:hidden"
+          data-pagefind-ignore
+        >
           <PostToc :items="tocItems" />
         </aside>
 
         <article
           id="article"
-          class="prose-goatshed post-article min-w-0 p-0 sm:p-6 lg:p-7"
+          class="prose-goatshed post-article min-w-0"
           v-html="renderedContent"
         />
+
+        <!--
+          Below `xl` the rail is out of the flow, so the copy carries its own
+          engagement rather than leaving reactions and replies unreachable.
+          `railVisible` keeps only one of the two mounted.
+        -->
+        <section
+          v-if="!railVisible"
+          class="post-engagement flex flex-col gap-8 mt-6 xl:hidden"
+          data-pagefind-ignore
+        >
+          <section class="post-rail-section">
+            <h2 class="post-rail-heading">互动</h2>
+            <ReactionBar :post-id="post.id" />
+          </section>
+
+          <section class="post-rail-section">
+            <h2 class="post-rail-heading">评论</h2>
+            <CommentSection :post-id="post.id" />
+          </section>
+        </section>
       </div>
 
-      <aside class="post-sidebar hidden xl:flex xl:flex-col xl:gap-5">
-        <PostToc v-if="tocItems.length" :items="tocItems" />
+      <!--
+        Same column as `PublisherSidebar`: no cards, one hairline that fades at
+        both ends on the edge facing the copy, sections carried by their labels.
+      -->
+      <aside v-if="railVisible" class="post-rail hidden xl:grid">
+        <span class="post-rail-line" aria-hidden="true" />
 
-        <div class="post-sidebar-card" data-pagefind-ignore>
-          <h4 class="mb-3 text-xs font-semibold text-base-content/70 uppercase tracking-wider">Reactions</h4>
-          <ReactionBar :post-id="post.id" />
-        </div>
+        <div class="post-rail-body" data-pagefind-ignore>
+          <PostToc v-if="tocItems.length" :items="tocItems" />
 
-        <div class="post-sidebar-card" data-pagefind-ignore>
-          <h4 class="mb-3 text-xs font-semibold text-base-content/70 uppercase tracking-wider">Comments</h4>
-          <CommentSection :post-id="post.id" />
+          <section class="post-rail-section">
+            <h2 class="post-rail-heading">互动</h2>
+            <ReactionBar :post-id="post.id" />
+          </section>
+
+          <section class="post-rail-section">
+            <h2 class="post-rail-heading">评论</h2>
+            <CommentSection :post-id="post.id" />
+          </section>
         </div>
       </aside>
     </div>
-
-    <section
-      v-else-if="!isArticle && postAttachments.length"
-      class="mt-5"
-      data-pagefind-ignore
-    >
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <a
-          v-for="file in postAttachments"
-          :key="file.id"
-          :href="file.url"
-          target="_blank"
-          rel="noreferrer"
-          class="block overflow-hidden rounded-xl border border-base-300/40 transition-transform hover:scale-[1.02]"
-        >
-          <UnLazyImage
-            :src="file.url"
-            :alt="file.name || '文章附件'"
-            :blurhash="file.blurhash"
-            :width="file.width"
-            :height="file.height"
-            :placeholder-ratio="file.ratio"
-            class="h-32 w-full object-cover"
-          />
-        </a>
-      </div>
-    </section>
 
     <div
       class="post-divider relative mb-8 mt-12 flex items-center justify-center gap-4"
@@ -168,17 +185,14 @@
       <NuxtLink
         v-if="prevPost"
         :to="`/posts/${prevPostIdentifier}`"
-        class="post-nav-link group relative flex flex-col gap-1 rounded-2xl border border-base-300/30 px-5 py-4 transition-all duration-300 hover:border-primary/40"
+        class="post-nav-link group relative flex flex-col gap-1 rounded-2xl border border-base-300/30 px-5 py-4 transition-all duration-300 hover:border-primary/40 motion-reduce:transition-none"
       >
         <div class="post-nav-bg" />
         <div class="flex items-center gap-1.5">
-          <span
-            class="text-[10px] uppercase tracking-wider text-base-content/45"
-            >上一篇</span
-          >
+          <span class="post-nav-label">上一篇</span>
         </div>
         <span
-          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary"
+          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary motion-reduce:transition-none"
         >
           {{ prevPost.title || "无标题文章" }}
         </span>
@@ -188,17 +202,14 @@
       <NuxtLink
         v-if="nextPost"
         :to="`/posts/${nextPostIdentifier}`"
-        class="post-nav-link group relative col-start-2 flex flex-col items-end gap-1 rounded-2xl border border-base-300/30 px-5 py-4 text-end transition-all duration-300 hover:border-primary/40"
+        class="post-nav-link group relative col-start-2 flex flex-col items-end gap-1 rounded-2xl border border-base-300/30 px-5 py-4 text-end transition-all duration-300 hover:border-primary/40 motion-reduce:transition-none"
       >
         <div class="post-nav-bg" />
         <div class="flex items-center gap-1.5">
-          <span
-            class="text-[10px] uppercase tracking-wider text-base-content/45"
-            >下一篇</span
-          >
+          <span class="post-nav-label">下一篇</span>
         </div>
         <span
-          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary"
+          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary motion-reduce:transition-none"
         >
           {{ nextPost.title || "无标题文章" }}
         </span>
@@ -254,6 +265,28 @@ const { data: nextPost } = await useAsyncData(
 const renderedContent = ref("");
 const tocItems = ref<TocItem[]>([]);
 
+/*
+  The rail is an `xl` layout; below that the copy carries its own TOC and
+  engagement. Defaulting to the rail matches the server render, and the swap
+  happens once the viewport is known, so neither side is ever mounted twice.
+*/
+const railVisible = ref(true);
+let railMedia: MediaQueryList | null = null;
+
+function syncRailVisibility(event?: MediaQueryListEvent) {
+  railVisible.value = event ? event.matches : railMedia?.matches ?? true;
+}
+
+onMounted(() => {
+  railMedia = window.matchMedia("(width >= 80rem)");
+  syncRailVisibility();
+  railMedia.addEventListener("change", syncRailVisibility);
+});
+
+onBeforeUnmount(() =>
+  railMedia?.removeEventListener("change", syncRailVisibility),
+);
+
 watchEffect(() => {
   if (post.value?.type === 0) {
     const identifier = getPostIdentifier(post.value);
@@ -276,14 +309,46 @@ watch(
   { immediate: true },
 );
 
+// Pinned to `zh-CN`: the default locale differs between the Nitro server and
+// the visitor's browser, which would hydrate a different string than it served.
 const publishedAt = computed(() => {
-  if (!post.value) return "";
-  return new Date(
-    post.value.publishedAt || post.value.createdAt,
-  ).toLocaleString();
+  const raw = post.value?.publishedAt || post.value?.createdAt;
+  if (!raw) return "";
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("zh-CN", {
+    dateStyle: "long",
+    timeStyle: "short",
+  }).format(date);
 });
 
-const isArticle = computed(() => post.value?.type === 1);
+/**
+ * Reading load for the header readout. CJK is counted per character, latin per
+ * word, and the two speeds are added — markdown scaffolding is dropped first so
+ * code fences and link targets do not inflate the count.
+ */
+const readingStats = computed(() => {
+  const source = (post.value?.content || "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`[^`]*`/g, " ")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[#>*_~|-]/g, " ");
+  if (!source.trim()) return null;
+
+  const cjk = (source.match(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/g) || [])
+    .length;
+  const latin = (
+    source
+      .replace(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/g, " ")
+      .match(/[A-Za-z0-9]+/g) || []
+  ).length;
+  if (!cjk && !latin) return null;
+
+  return {
+    characters: (cjk + latin).toLocaleString("zh-CN"),
+    minutes: Math.max(1, Math.round(cjk / 400 + latin / 220)),
+  };
+});
 
 const postIdentifier = computed(() =>
   post.value ? getPostIdentifier(post.value) : "",
@@ -346,25 +411,6 @@ const publisherPictureUrl = computed(() => {
   );
 });
 
-const postAttachments = computed(() => {
-  const files = post.value?.attachments || [];
-  return files
-    .filter((file) => file?.id)
-    .slice(0, 9)
-    .map((file) => ({
-      id: file.id,
-      name: file.name,
-      url:
-        file.url ||
-        `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(file.id)}`,
-      blurhash: file.blurhash || undefined,
-      width: file.width || undefined,
-      height: file.height || undefined,
-      ratio:
-        file.width && file.height ? file.width / file.height : undefined,
-    }));
-});
-
 const postOgImage = computed(() => {
   const pic = post.value?.picture;
   if (pic?.id) {
@@ -377,7 +423,7 @@ const postOgImage = computed(() => {
   if (bg?.id) {
     return (
       bg.url ||
-      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}}`
+      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`
     );
   }
   const attach = post.value?.attachments?.[0];
@@ -436,6 +482,82 @@ useHead(() => ({
 </script>
 
 <style scoped>
+/* ── Cover copy ───────────────────────────────────────────────────── */
+
+.post-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--color-base-content) 62%, transparent);
+}
+
+.post-hero-author {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--color-base-content) 85%, transparent);
+}
+
+.post-hero-dot {
+  opacity: 0.45;
+}
+
+.post-num {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.post-hero-title {
+  font-size: 1.875rem;
+  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+@media (min-width: 640px) {
+  .post-hero-title {
+    font-size: 2.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .post-hero-title {
+    font-size: 2.75rem;
+  }
+}
+
+.post-hero-lede {
+  max-width: 42rem;
+  font-size: 0.875rem;
+  line-height: 1.75;
+  color: color-mix(in srgb, var(--color-base-content) 78%, transparent);
+}
+
+/* Keeps the daisyUI ghost badge shape, only the tag's own voice changes. */
+.post-tag {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  letter-spacing: 0.01em;
+}
+
+.post-source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--color-primary);
+}
+
+.post-source-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Content grid ─────────────────────────────────────────────────── */
+
 .post-content-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -446,7 +568,7 @@ useHead(() => ({
 
 @media (min-width: 1280px) {
   .post-content-grid {
-    grid-template-columns: 1fr 20rem;
+    grid-template-columns: minmax(0, 1fr) 20rem;
     max-width: 76rem;
     gap: 1.5rem;
   }
@@ -460,68 +582,113 @@ useHead(() => ({
   position: relative;
 }
 
-.post-sidebar {
-  position: sticky;
-  top: calc(var(--spacing) * 24);
-  align-self: start;
-  max-height: calc(100vh - calc(var(--spacing) * 28));
-  overflow-y: auto;
-}
-
-.post-sidebar :deep(.toc-wrapper) {
-  position: static;
-  top: auto;
-  max-height: none;
-  overflow-y: visible;
-}
-
-@media (min-width: 1280px) {
-  .post-sidebar :deep(.toc-header) {
-    cursor: pointer;
-    pointer-events: auto;
-  }
-
-  .post-sidebar :deep(.toc-chevron) {
-    display: block;
-  }
-
-  .post-sidebar :deep(.toc-list) {
-    max-height: 500px;
-  }
-
-  .post-sidebar :deep(.toc-list.toc-collapsed) {
-    max-height: 0;
-    opacity: 0;
-    margin-top: 0;
-    overflow: hidden;
-  }
-}
-
-.post-sidebar-card {
-  padding: 1rem;
-  border-radius: var(--radius-box, 0.9rem);
-  border: 1px solid color-mix(in srgb, var(--color-base-300) 40%, transparent);
-  background-color: var(--color-base-100);
-}
-
 .post-toc-mobile :deep(.toc-wrapper) {
   position: relative;
   top: 0;
 }
 
 .post-article {
-  padding: 0 1rem;
-  border-radius: 0;
+  /* The page shell already carries the mobile gutter. */
+  padding: 0;
 }
 
 @media (min-width: 640px) {
   .post-article {
     padding: 1.5rem 1.75rem;
-    border-radius: var(--radius-box, 0.9rem);
-    border: 1px solid color-mix(in srgb, var(--color-base-300) 70%, transparent);
-    background-color: var(--color-base-100);
   }
 }
+
+/* ── Rail ─────────────────────────────────────────────────────────── */
+
+/*
+  Mirrors `PublisherSidebar`: the hairline is a column of its own rather than a
+  background on the scroller, so it stays the height of the visible rail while
+  the rail's contents scroll behind it.
+*/
+.post-rail {
+  position: sticky;
+  top: calc(var(--app-bar-height) + 1.5rem);
+  align-self: start;
+  grid-template-columns: 1px minmax(0, 1fr);
+  column-gap: 1.75rem;
+}
+
+.post-rail-line {
+  background-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--color-base-300) 80%, transparent) 12%,
+    color-mix(in srgb, var(--color-base-300) 80%, transparent) 88%,
+    transparent 100%
+  );
+}
+
+.post-rail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0;
+  max-height: calc(100dvh - var(--app-bar-height) - 3rem);
+  overflow-y: auto;
+}
+
+/* The rail's TOC is a section, not a card: the hairline already frames it. */
+.post-rail :deep(.toc-wrapper) {
+  position: static;
+  top: auto;
+  max-height: none;
+  overflow-y: visible;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+}
+
+.post-rail :deep(.toc-header) {
+  cursor: pointer;
+  pointer-events: auto;
+  padding: 0;
+}
+
+.post-rail :deep(.toc-chevron) {
+  display: block;
+}
+
+.post-rail :deep(.toc-list) {
+  max-height: 500px;
+}
+
+.post-rail :deep(.toc-list.toc-collapsed) {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  overflow: hidden;
+}
+
+.post-rail-section {
+  min-width: 0;
+}
+
+.post-rail-heading {
+  margin-bottom: 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-base-content) 50%, transparent);
+}
+
+/* The TOC's own label is styled by `PostToc`; only its scale is pulled in line. */
+.post-rail :deep(.toc-header > span) {
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--color-base-content) 50%, transparent);
+}
+
+.post-engagement {
+  min-width: 0;
+}
+
+/* ── End of article ───────────────────────────────────────────────── */
 
 .post-divider {
   max-width: 52rem;
@@ -531,6 +698,13 @@ useHead(() => ({
 .post-nav-link {
   background: color-mix(in srgb, var(--color-base-300) 8%, transparent);
   position: relative;
+}
+
+.post-nav-label {
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-base-content) 45%, transparent);
 }
 
 .post-nav-bg {
@@ -557,5 +731,11 @@ useHead(() => ({
 
 .post-nav-link:hover .post-nav-bg {
   opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-nav-bg {
+    transition: none;
+  }
 }
 </style>
