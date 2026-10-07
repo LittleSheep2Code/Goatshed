@@ -630,6 +630,108 @@
                 </div>
             </section>
 
+            <!--
+        guestbook: the replies on the account's own "about" post — what visitors
+        left on this page over on Solar Network. Read-only: the board is that
+        post's reply thread, and the list stays out of the site's search index
+        the way the article comments do.
+      -->
+            <section data-slide>
+                <div class="app-panel p-6 sm:p-8">
+                    <header class="section-head" data-reveal="head">
+                        <span class="key">guestbook</span>
+                        <h2>留言板</h2>
+                        <span class="rule" />
+                    </header>
+
+                    <!--
+            Composer first, then what it feeds. Client-only, like the widgets
+            on the post pages: the custom element talks to Stargate with the
+            signed-in user's Solar token, and its `sign-in` slot hands a guest
+            to the site's own login instead of a second Solarpass sign-in.
+          -->
+                    <ClientOnly>
+                        <sk-reply-composer
+                            :post="GUESTBOOK_POST"
+                            class="guestbook-composer"
+                            placeholder="写下你的留言…"
+                            submit-label="发送"
+                        >
+                            <span slot="sign-in" class="guestbook-signin">
+                                <button
+                                    class="guestbook-signin-link"
+                                    type="button"
+                                    @click="login(route.fullPath)"
+                                >
+                                    登录
+                                </button>
+                                后留言
+                            </span>
+                        </sk-reply-composer>
+                    </ClientOnly>
+
+                    <ul
+                        v-if="guestbook.comments.length"
+                        class="guestbook"
+                        data-pagefind-ignore
+                    >
+                        <li
+                            v-for="(reply, index) in guestbook.comments"
+                            :key="reply.id"
+                            class="guestbook-reply"
+                            data-reveal
+                            :style="{
+                                '--reveal-delay': revealDelay(index, 40, 6),
+                            }"
+                        >
+                            <img
+                                v-if="reply.author?.avatar"
+                                :src="reply.author.avatar"
+                                :alt="replyName(reply)"
+                                class="guestbook-avatar"
+                                loading="lazy"
+                                decoding="async"
+                            />
+                            <span
+                                v-else
+                                class="guestbook-avatar guestbook-avatar-empty"
+                                aria-hidden="true"
+                            >
+                                {{ replyInitial(reply) }}
+                            </span>
+
+                            <div class="guestbook-body">
+                                <p class="guestbook-meta">
+                                    <span class="guestbook-author">{{
+                                        replyName(reply)
+                                    }}</span>
+                                    <time
+                                        class="guestbook-time"
+                                        :datetime="reply.createdAt"
+                                    >
+                                        {{
+                                            formatRelativeTime(reply.createdAt)
+                                        }}
+                                    </time>
+                                </p>
+                                <p class="guestbook-content">
+                                    {{ reply.content }}
+                                </p>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <p
+                        v-else
+                        class="guestbook-empty"
+                        data-reveal
+                        data-pagefind-ignore
+                    >
+                        还没有留言，来写下第一条吧。
+                    </p>
+                </div>
+            </section>
+
             <!-- links -->
             <section data-slide>
                 <div class="app-panel p-6 sm:p-8">
@@ -687,6 +789,7 @@ import {
 import { OWNER_PUBLISHER } from "~/constants/publishers";
 import { PROJECT_REPOS, type ProjectRepo } from "~/constants/projects";
 import type { AccountLink } from "~/types/account";
+import type { Comment, CommentListResponse } from "~/types/comment";
 import type { MusicPeriod, MusicSnapshot } from "~/types/music";
 import type { Publisher, PublisherStats } from "~/types/publisher";
 import { formatCount } from "~/utils/number";
@@ -749,6 +852,65 @@ const { data: githubStars } = await useFetch<Record<string, number>>(
     "/api/github/stars",
     { default: () => ({}) },
 );
+
+/*
+  The message board reads the replies on the account's own "about" post — the
+  Solar Network post this page is published as. Those live upstream, so a failed
+  read leaves an empty board rather than a dead page, the way the music card
+  drops out when Last.fm has nothing.
+*/
+const GUESTBOOK_POST = "01a114b8-6008-7d6f-b905-8283ddff29ff";
+
+const { data: guestbook, refresh: refreshGuestbook } =
+    await useFetch<CommentListResponse>(
+        `/api/posts/${GUESTBOOK_POST}/comments`,
+        { query: { take: 50 }, default: () => ({ comments: [], total: 0 }) },
+    );
+
+const route = useRoute();
+const { login } = useAuth();
+
+/*
+  The board refreshes off the widget's own broadcast rather than polling. The
+  composer announces a successful post on `window` — the same signal
+  `sk-replies-list` listens to — so a new reply lands here without a reload.
+  Spelled out rather than imported: the package's entry is the browser bundle
+  the client-only plugin already loads, and this is the name it documents.
+*/
+const REPLY_POSTED_EVENT = "sunkenland:reply-posted";
+
+async function onReplyPosted(event: Event) {
+    const detail = (event as CustomEvent<{ postId?: string }>).detail;
+    if (detail?.postId !== GUESTBOOK_POST) return;
+
+    await refreshGuestbook();
+
+    /*
+      The reveal observer only ever saw the rows that existed at mount, so rows
+      a refresh brings in have to be revealed by hand — left alone they would
+      sit at the hidden state forever. `nextTick` first: the list has not
+      patched yet when `refresh` resolves.
+    */
+    await nextTick();
+    root.value
+        ?.querySelectorAll<HTMLElement>(".guestbook-reply:not(.is-revealed)")
+        .forEach((row) => row.classList.add("is-revealed"));
+}
+
+onMounted(() => window.addEventListener(REPLY_POSTED_EVENT, onReplyPosted));
+onBeforeUnmount(() =>
+    window.removeEventListener(REPLY_POSTED_EVENT, onReplyPosted),
+);
+
+/** A reply's author, with the same anonymous fallback the rest of the site uses. */
+function replyName(reply: Comment): string {
+    return reply.author?.nick || reply.author?.name || "匿名";
+}
+
+/** What the avatar tile shows when the author has no picture. */
+function replyInitial(reply: Comment): string {
+    return replyName(reply).charAt(0).toUpperCase();
+}
 
 /** Chart windows, in Last.fm's own period vocabulary. */
 const periods: { period: MusicPeriod; label: string }[] = [
@@ -2224,6 +2386,156 @@ useHead({
         width: 2.75rem;
         height: 2.75rem;
     }
+}
+
+/* --- guestbook ----------------------------------------------------------- */
+
+/*
+  The composer is a foreign widget: its own shadow styles, themed only through
+  the `--sk-*` tokens the post pages map too. Everything it hands back — the
+  sign-in slot — is light DOM and styled here like the rest of the panel.
+*/
+.guestbook-composer {
+    --sk-font: var(--font-sans);
+    --sk-base-100: var(--color-base-100);
+    --sk-base-200: var(--color-base-200);
+    --sk-base-300: var(--color-base-300);
+    --sk-base-content: var(--color-base-content);
+    --sk-primary: var(--color-primary);
+    --sk-primary-content: var(--color-primary-content);
+    --sk-radius: var(--radius-box);
+    --sk-border: color-mix(in oklab, var(--color-base-300) 70%, transparent);
+    margin-bottom: 0.75rem;
+}
+
+.guestbook-signin {
+    display: block;
+    width: 100%;
+    font-size: 0.85rem;
+    text-align: center;
+    color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+}
+
+/* A button, not an anchor: the slot is a call to the site's login route. */
+.guestbook-signin-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: var(--color-primary);
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, currentColor 45%, transparent);
+    text-underline-offset: 2px;
+}
+
+.guestbook-signin-link:hover,
+.guestbook-signin-link:focus-visible {
+    text-decoration-color: currentColor;
+}
+
+.guestbook-signin-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/*
+  Other people's words, so the list is plain: one row per reply, hairlines
+  between them, full content rather than the clamped preview the timeline cards
+  use — a board that hid its messages would not be a board. The panel scrolls
+  when the thread outgrows a screen; `useSlidePager` hands that wheel to it.
+*/
+.guestbook {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.guestbook-reply {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0 0.75rem;
+    padding: 0.7rem 0;
+}
+
+.guestbook-reply + .guestbook-reply {
+    border-top: 1px solid
+        color-mix(in oklab, var(--color-base-300) 55%, transparent);
+}
+
+.guestbook-avatar {
+    width: 2.1rem;
+    height: 2.1rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    object-fit: cover;
+}
+
+.guestbook-avatar-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: color-mix(in oklab, var(--color-solar) 20%, transparent);
+    color: color-mix(
+        in oklab,
+        var(--color-solar) 80%,
+        var(--color-base-content)
+    );
+}
+
+.guestbook-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.guestbook-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 0;
+    min-width: 0;
+}
+
+.guestbook-author {
+    overflow: hidden;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Right-aligned like the ledger's timestamps, so dates line up down the board. */
+.guestbook-time {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+}
+
+.guestbook-content {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: color-mix(in oklab, var(--color-base-content) 82%, transparent);
+}
+
+.guestbook-empty {
+    margin: 0;
+    padding: 1.5rem 0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
 }
 
 /* --- meta snippets ------------------------------------------------------- */
