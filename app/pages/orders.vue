@@ -115,7 +115,7 @@
                 <Receipt class="mx-auto h-12 w-12 text-base-content/20" />
                 <p class="mt-2 text-base-content/50">暂无订单</p>
                 <div class="mt-4 flex justify-center gap-2">
-                    <NuxtLink to="/store/buy/donation" class="btn btn-primary btn-sm">前往打赏</NuxtLink>
+                    <NuxtLink to="/store" class="btn btn-primary btn-sm">前往打赏</NuxtLink>
                 </div>
             </div>
 

@@ -35,7 +35,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: "Goatshed",
-      titleTemplate: "%s - Goatshed",
+      titleTemplate: "%s | Goatshed",
       htmlAttrs: {
         lang: "zh-CN",
       },
@@ -44,8 +44,7 @@ export default defineNuxtConfig({
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         {
           name: "description",
-          content:
-            "A stylish personal blog powered by Solar Network.",
+          content: "欢迎来到小羊之家 ( *｀ω´)",
         },
         {
           name: "keywords",
@@ -57,12 +56,11 @@ export default defineNuxtConfig({
         { property: "og:site_name", content: "Goatshed" },
         {
           property: "og:title",
-          content: "Goatshed - littlesheep's Personal Blog",
+          content: "Goatshed 山羊寒舍",
         },
         {
           property: "og:description",
-          content:
-            "A stylish personal blog powered by Solar Network.",
+          content: "欢迎来到小羊之家 ( *｀ω´)",
         },
         {
           property: "og:image",
@@ -73,12 +71,11 @@ export default defineNuxtConfig({
         { name: "twitter:card", content: "summary_large_image" },
         {
           name: "twitter:title",
-          content: "Goatshed - littlesheep's Personal Blog",
+          content: "Goatshed 山羊寒舍",
         },
         {
           name: "twitter:description",
-          content:
-            "A stylish personal blog powered by Solar Network.",
+          content: "欢迎来到小羊之家 ( *｀ω´)",
         },
         {
           name: "twitter:image",
@@ -114,9 +111,13 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
+    /** Last.fm key for the about page's music section; empty disables it. */
+    lastfmApiKey: "",
     public: {
       apiBaseUrl: "https://api.solian.app",
       oauthProviderName: "Solarpass",
+      /** Last.fm account the about page's music section reads. */
+      lastfmUser: "LittleSheepOvO",
     },
   },
   nitro: {

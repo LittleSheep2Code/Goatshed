@@ -89,7 +89,7 @@
             >
                 <Trophy class="mx-auto h-12 w-12 text-base-content/20" />
                 <p class="mt-3 text-base-content/50">还没有赞助者，成为第一个上榜者吧！</p>
-                <NuxtLink to="/store/buy/donation" class="btn btn-primary mt-4">前去支持</NuxtLink>
+                <NuxtLink to="/store" class="btn btn-primary mt-4">前去支持</NuxtLink>
             </div>
 
             <div v-if="hasMore" class="mt-6 text-center">

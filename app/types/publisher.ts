@@ -10,6 +10,8 @@ export interface Publisher {
   attachments?: MediaFile[];
   verification: {
     title: string | null;
+    /** Free-form note Solar Network attaches to the badge, e.g. what the holder does. */
+    description?: string | null;
   } | null;
 }
 

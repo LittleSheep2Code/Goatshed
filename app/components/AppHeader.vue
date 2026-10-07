@@ -98,8 +98,8 @@ to="/store"
                 class="inline-flex items-center gap-2"
                 active-class="bg-base-200 text-primary"
               >
-                <ShoppingBag class="h-4 w-4" />
-                商店
+                <Coffee class="h-4 w-4" />
+                支持
               </NuxtLink>
             </li>
             <li>
@@ -198,6 +198,7 @@ to="/store"
 import BrandingCompact from "~/assets/branding/compact.png";
 
 import {
+  Coffee,
   FileText,
   House,
   Info,
@@ -206,7 +207,6 @@ import {
   Menu,
   MessageCircle,
   Receipt,
-  ShoppingBag,
   User,
 } from "lucide-vue-next";
 
@@ -219,7 +219,7 @@ const navItems = [
   { to: "/", label: "博客", icon: House },
   { to: "/posts", label: "文章", icon: FileText },
   { to: "/moments", label: "动态", icon: MessageCircle },
-  { to: "/store", label: "商店", icon: ShoppingBag },
+  { to: "/store", label: "支持", icon: Coffee },
   { to: "/about", label: "关于", icon: Info },
 ] as const;
 

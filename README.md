@@ -74,6 +74,7 @@ Some publishers are treated as locked in the server API layer. When that content
 - `app/middleware/auth.ts`: protects pages such as `/me`.
 - `server/api/auth/[...all].ts`: better-auth catch-all handler.
 - `server/utils/floating-api.ts`: Solar API fetch wrapper.
+- `server/utils/lastfm.ts`: Last.fm snapshot (recent scrobbles, charts) for the about page's music section, cached for ten minutes.
 
 ## Environment
 
@@ -86,6 +87,8 @@ Copy values from `.env.example` and configure:
 - `SOLIAN_CLIENT_SECRET` — Solarpass OAuth client secret
 - `ADMIN_EMAILS` — comma-separated list of admin email addresses
 - `NUXT_PUBLIC_API_BASE_URL`
+- `NUXT_LASTFM_API_KEY` — Last.fm API key; the about page's music section stays hidden without it
+- `NUXT_PUBLIC_LASTFM_USER` — Last.fm account that section reads (defaults to `LittleSheepOvO`)
 
 ## Development
 
