@@ -139,6 +139,12 @@ import type { Post, PostListResponse } from "~/types/post";
 import type { Publisher } from "~/types/publisher";
 import { renderMarkdown, withSoftBreaks } from "~/utils/markdown";
 
+/*
+  The deck owns the scroll position itself — see the memory block at the bottom
+  of this file — so the router must not also jump it to the top.
+*/
+definePageMeta({ scrollToTop: false });
+
 const root = ref<HTMLElement | null>(null);
 
 useSlidePager(root);
@@ -424,9 +430,103 @@ watch(
   activePub,
   async () => {
     await loadInitial();
+
+    /*
+      Another publisher's deck reads as a fresh one: the cover, not the offset
+      the previous deck was left at. A reader coming back from a moment keeps
+      the place `onMounted` handed to the watcher above.
+    */
+    if (pendingDeckScroll.value === null) window.scrollTo(0, 0);
   },
   { immediate: true },
 );
+
+/*
+  Place in the deck, kept across the round trip into a moment.
+
+  Every visit rebuilds the deck from the network, so the browser's own scroll
+  restoration has nothing to land on and `scrollToTop: false` above stops the
+  router from jumping it to the cover. Instead, leaving the deck for one of its
+  own moments saves the offset, and the next mount of the deck — a browser Back,
+  the moment's own back control, or the nav link — puts the reader back there.
+  Leaving the deck for anything else drops it, so an ordinary arrival still
+  starts at the cover.
+*/
+const SCROLL_MEMORY_PREFIX = "goatshed:moments-scroll:";
+
+function scrollMemoryKey(pub: string) {
+  return `${SCROLL_MEMORY_PREFIX}${pub}`;
+}
+
+function rememberDeckScroll(pub: string, top: number) {
+  try {
+    if (top > 0) {
+      sessionStorage.setItem(scrollMemoryKey(pub), String(Math.round(top)));
+    } else {
+      sessionStorage.removeItem(scrollMemoryKey(pub));
+    }
+  } catch {
+    // Storage unavailable (blocked cookies): the reader just starts at the cover.
+  }
+}
+
+function forgetDeckScroll(pub: string) {
+  try {
+    sessionStorage.removeItem(scrollMemoryKey(pub));
+  } catch {
+    // Nothing to drop.
+  }
+}
+
+/** Reads the remembered offset and consumes it, so it is spent once. */
+function takeDeckScroll(pub: string) {
+  try {
+    const raw = sessionStorage.getItem(scrollMemoryKey(pub));
+    sessionStorage.removeItem(scrollMemoryKey(pub));
+    const top = Number(raw);
+    return raw !== null && Number.isFinite(top) && top > 0 ? top : null;
+  } catch {
+    return null;
+  }
+}
+
+const pendingDeckScroll = ref<number | null>(null);
+
+onMounted(() => {
+  const remembered = takeDeckScroll(activePub.value);
+  pendingDeckScroll.value = remembered;
+
+  if (remembered === null) window.scrollTo(0, 0);
+});
+
+/*
+  A row is one screen tall, so the deck's height is settled as soon as the rows
+  are in the DOM — there is nothing below them to wait for.
+*/
+watch(
+  () => moments.value.length,
+  async (count) => {
+    if (!count || pendingDeckScroll.value === null) return;
+
+    await nextTick();
+    const top = pendingDeckScroll.value;
+    pendingDeckScroll.value = null;
+    window.scrollTo(0, top);
+  },
+);
+
+function onLeaveDeck(to: { path: string }) {
+  const pub = activePub.value;
+
+  if (to.path.startsWith(`/moments/${pub}/`)) {
+    rememberDeckScroll(pub, window.scrollY);
+  } else {
+    forgetDeckScroll(pub);
+  }
+}
+
+onBeforeRouteLeave((to) => onLeaveDeck(to));
+onBeforeRouteUpdate((to) => onLeaveDeck(to));
 
 useHead({
   title: "动态",
