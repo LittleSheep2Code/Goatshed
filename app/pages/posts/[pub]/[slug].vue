@@ -154,7 +154,7 @@
     </div>
 
     <div
-      class="post-divider relative mb-8 mt-12 flex items-center justify-center gap-4"
+      class="post-frame relative mb-8 mt-12 flex items-center justify-center gap-4"
       aria-hidden="true"
     >
       <div
@@ -181,48 +181,79 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-3 mt-10" data-pagefind-ignore>
+    <!--
+      The neighbour's own artwork sits in the corner each card points at — the
+      previous post's top-left, the next post's top-right — so the direction is
+      legible before the label is read.
+    -->
+    <nav
+      class="post-frame post-nav"
+      aria-label="文章导航"
+      data-pagefind-ignore
+    >
       <NuxtLink
         v-if="prevPost"
         :to="`/posts/${prevPostIdentifier}`"
-        class="post-nav-link group relative flex flex-col gap-1 rounded-2xl border border-base-300/30 px-5 py-4 transition-all duration-300 hover:border-primary/40 motion-reduce:transition-none"
+        class="post-nav-link post-nav-prev"
+        :class="{ 'post-nav-has-cover': !!prevCover }"
       >
-        <div class="post-nav-bg" />
-        <div class="flex items-center gap-1.5">
-          <span class="post-nav-label">上一篇</span>
+        <div v-if="prevCover" class="post-nav-thumb" aria-hidden="true">
+          <img :src="prevCover" alt="" loading="lazy" decoding="async" />
         </div>
-        <span
-          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary motion-reduce:transition-none"
-        >
-          {{ prevPost.title || "无标题文章" }}
-        </span>
+
+        <div class="post-nav-bg" />
+
+        <div class="post-nav-body">
+          <span class="post-nav-label">上一篇</span>
+          <span class="post-nav-title">
+            {{ prevPost.title || "无标题文章" }}
+          </span>
+          <time
+            v-if="prevDate"
+            class="post-nav-date post-num"
+            :datetime="prevPost.publishedAt || prevPost.createdAt"
+          >
+            {{ prevDate }}
+          </time>
+        </div>
       </NuxtLink>
-      <div v-else />
 
       <NuxtLink
         v-if="nextPost"
         :to="`/posts/${nextPostIdentifier}`"
-        class="post-nav-link group relative col-start-2 flex flex-col items-end gap-1 rounded-2xl border border-base-300/30 px-5 py-4 text-end transition-all duration-300 hover:border-primary/40 motion-reduce:transition-none"
+        class="post-nav-link post-nav-next"
+        :class="{ 'post-nav-has-cover': !!nextCover }"
       >
-        <div class="post-nav-bg" />
-        <div class="flex items-center gap-1.5">
-          <span class="post-nav-label">下一篇</span>
+        <div v-if="nextCover" class="post-nav-thumb" aria-hidden="true">
+          <img :src="nextCover" alt="" loading="lazy" decoding="async" />
         </div>
-        <span
-          class="line-clamp-2 text-sm leading-snug font-medium text-base-content/80 transition-colors duration-200 group-hover:text-primary motion-reduce:transition-none"
-        >
-          {{ nextPost.title || "无标题文章" }}
-        </span>
+
+        <div class="post-nav-bg" />
+
+        <div class="post-nav-body">
+          <span class="post-nav-label">下一篇</span>
+          <span class="post-nav-title">
+            {{ nextPost.title || "无标题文章" }}
+          </span>
+          <time
+            v-if="nextDate"
+            class="post-nav-date post-num"
+            :datetime="nextPost.publishedAt || nextPost.createdAt"
+          >
+            {{ nextDate }}
+          </time>
+        </div>
       </NuxtLink>
-    </div>
+    </nav>
   </main>
 </template>
 
 <script setup lang="ts">
 import { ExternalLink } from "lucide-vue-next";
-import type { Post } from "~/types/post";
+import type { MediaFile, Post } from "~/types/post";
 import type { Publisher } from "~/types/publisher";
 import { renderMarkdown } from "~/utils/markdown";
+import { driveFileUrl } from "~/utils/media";
 import { getPostIdentifier } from "~/utils/post";
 import { extractToc, injectHeadingIds, type TocItem } from "~/utils/toc";
 
@@ -246,21 +277,29 @@ const postApiId = computed(() => {
   return `${pub}/${slug}`;
 });
 
-const {
-  data: post,
-  pending,
-  error,
-} = await useAsyncData(`post-${postApiId.value}`, () =>
-  $fetch<Post>(`/api/posts/${postApiId.value}`),
-);
-const { data: prevPost } = await useAsyncData(
+/*
+  Only the article itself has to be in hand before the first paint, and it needs
+  nothing from the other three, so all four start in the same tick. Awaiting them
+  one after another — which is what a bare `await` on each does — holds a blank
+  screen for four upstream round trips, and `/prev` + `/next` are the two slowest
+  calls on the page.
+*/
+const { data: prevPost } = useAsyncData(
   `post-${postApiId.value}-prev`,
   () => $fetch<Post | null>(`/api/posts/${postApiId.value}/prev`),
 );
-const { data: nextPost } = await useAsyncData(
+const { data: nextPost } = useAsyncData(
   `post-${postApiId.value}-next`,
   () => $fetch<Post | null>(`/api/posts/${postApiId.value}/next`),
 );
+
+const [{ data: post, pending, error }, { data: publishersData }] =
+  await Promise.all([
+    useAsyncData(`post-${postApiId.value}`, () =>
+      $fetch<Post>(`/api/posts/${postApiId.value}`),
+    ),
+    useFetch<Record<string, Publisher | null>>("/api/publishers"),
+  ]);
 
 const renderedContent = ref("");
 const tocItems = ref<TocItem[]>([]);
@@ -360,41 +399,53 @@ const nextPostIdentifier = computed(() =>
   nextPost.value ? getPostIdentifier(nextPost.value) : "",
 );
 
-const postPictureUrl = computed(() => {
-  const pic =
-    post.value?.picture ||
-    post.value?.attachments?.[0] ||
-    post.value?.background;
-  if (!pic?.id) return null;
+/** The artwork a post carries, in the order the hero and the nav cards pick it. */
+function postArtwork(target: Post | null | undefined): MediaFile | null {
   return (
-    pic.url ||
-    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`
+    target?.picture || target?.attachments?.[0] || target?.background || null
   );
-});
+}
 
-const { data: publishersData } = await useFetch<
-  Record<string, Publisher | null>
->("/api/publishers");
+/** Cover for the prev / next card, shown in the corner its link points at. */
+const prevCover = computed(() =>
+  driveFileUrl(postArtwork(prevPost.value), config.public.apiBaseUrl),
+);
+const nextCover = computed(() =>
+  driveFileUrl(postArtwork(nextPost.value), config.public.apiBaseUrl),
+);
 
-const publisherBackgroundUrl = computed(() => {
-  const background =
+/**
+ * Date-only readout for the nav cards. Pinned to `zh-CN` for the same reason as
+ * `publishedAt`: the server's default locale is not the visitor's.
+ */
+function navDate(target: Post | null | undefined): string {
+  const raw = target?.publishedAt || target?.createdAt;
+  if (!raw) return "";
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium" }).format(date);
+}
+
+const prevDate = computed(() => navDate(prevPost.value));
+const nextDate = computed(() => navDate(nextPost.value));
+
+const postPictureUrl = computed(() =>
+  driveFileUrl(postArtwork(post.value), config.public.apiBaseUrl),
+);
+
+const publisherBackgroundUrl = computed(() =>
+  driveFileUrl(
     publishersData.value?.[activePub.value]?.background ??
-    post.value?.publisher?.background;
-  if (!background?.id) return null;
-  return (
-    background.url ||
-    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(background.id)}`
-  );
-});
+      post.value?.publisher?.background,
+    config.public.apiBaseUrl,
+  ),
+);
 
 // Mirrors the artwork the hero picks, so its backdrop matches whatever is on top.
 const coverBlurhash = computed(() => {
   if (postPictureUrl.value) {
-    const pic =
-      post.value?.picture ||
-      post.value?.attachments?.[0] ||
-      post.value?.background;
-    if (pic?.blurhash) return pic.blurhash;
+    const own = postArtwork(post.value)?.blurhash;
+    if (own) return own;
   }
   const background =
     publishersData.value?.[activePub.value]?.background ??
@@ -402,39 +453,17 @@ const coverBlurhash = computed(() => {
   return background?.blurhash || null;
 });
 
-const publisherPictureUrl = computed(() => {
-  const pic = post.value?.publisher?.picture;
-  if (!pic?.id) return null;
-  return (
-    pic.url ||
-    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`
-  );
-});
+const publisherPictureUrl = computed(() =>
+  driveFileUrl(post.value?.publisher?.picture, config.public.apiBaseUrl),
+);
 
-const postOgImage = computed(() => {
-  const pic = post.value?.picture;
-  if (pic?.id) {
-    return (
-      pic.url ||
-      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`
-    );
-  }
-  const bg = post.value?.background;
-  if (bg?.id) {
-    return (
-      bg.url ||
-      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`
-    );
-  }
-  const attach = post.value?.attachments?.[0];
-  if (attach?.id) {
-    return (
-      attach.url ||
-      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(attach.id)}`
-    );
-  }
-  return "https://littlesheep.me/og-image.png";
-});
+const postOgImage = computed(
+  () =>
+    driveFileUrl(post.value?.picture, config.public.apiBaseUrl) ||
+    driveFileUrl(post.value?.background, config.public.apiBaseUrl) ||
+    driveFileUrl(post.value?.attachments?.[0], config.public.apiBaseUrl) ||
+    "https://littlesheep.me/og-image.png",
+);
 
 useHead(() => ({
   title: post.value?.title || "文章",
@@ -558,6 +587,24 @@ useHead(() => ({
 
 /* ── Content grid ─────────────────────────────────────────────────── */
 
+/*
+  The frame every block below the hero shares: the article's measure, centred —
+  and at `xl` the rail's track reserved on the right instead of narrowing the
+  block, so a block's right edge lands on the article's rather than under the
+  rail. These numbers mirror `.post-content-grid`'s tracks; move them together.
+*/
+.post-frame {
+  max-width: 52rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 1280px) {
+  .post-frame {
+    max-width: 76rem;
+    padding-inline-end: calc(20rem + 1.5rem);
+  }
+}
+
 .post-content-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -632,6 +679,17 @@ useHead(() => ({
   overflow-y: auto;
 }
 
+/*
+  `CommentSection` bleeds out of `.page-shell`'s gutter with a negative margin,
+  which is right in the copy column but wrong here: the rail has no gutter to
+  cancel, so the widgets hang 0.75rem past both edges. `overflow-y` alone still
+  computes `overflow-x` to `auto`, so that bleed became the rail's horizontal
+  scrollbar.
+*/
+.post-rail :deep(.comment-section) {
+  margin-inline: 0;
+}
+
 /* The rail's TOC is a section, not a card: the hairline already frames it. */
 .post-rail :deep(.toc-wrapper) {
   position: static;
@@ -690,20 +748,144 @@ useHead(() => ({
 
 /* ── End of article ───────────────────────────────────────────────── */
 
-.post-divider {
-  max-width: 52rem;
-  margin-inline: auto;
+/*
+  The pair stacks below `sm` — two half-width columns leave the titles about
+  two characters wide — and splits left/right above it, where the corner cover
+  also has the direction it implies.
+*/
+.post-nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  margin-top: 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .post-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .post-nav-next {
+    grid-column-start: 2;
+  }
 }
 
 .post-nav-link {
-  background: color-mix(in srgb, var(--color-base-300) 8%, transparent);
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-base-300) 30%, transparent);
+  padding: 1rem 1.25rem;
+  background: color-mix(in srgb, var(--color-base-300) 8%, transparent);
+  transition: border-color 0.3s ease;
+}
+
+.post-nav-link:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+
+/* With a cover the copy clears the corner the artwork holds. */
+.post-nav-prev.post-nav-has-cover {
+  padding-inline-start: 7.75rem;
+}
+
+.post-nav-next.post-nav-has-cover {
+  padding-inline-end: 7.75rem;
+}
+
+/*
+  Rounded to the card's own corner minus its border, so the artwork continues
+  the outline instead of poking through it, and masked on the facing edge: it
+  dissolves into the card rather than ending in a seam.
+*/
+.post-nav-thumb {
+  position: absolute;
+  inset-block: 0;
+  width: 6.5rem;
+  overflow: hidden;
+  opacity: 0.9;
+  transition: opacity 0.35s ease;
+}
+
+.post-nav-prev .post-nav-thumb {
+  inset-inline-start: 0;
+  border-start-start-radius: calc(1rem - 1px);
+  border-end-start-radius: calc(1rem - 1px);
+  mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    rgb(0 0 0 / 0.78) 45%,
+    transparent 100%
+  );
+}
+
+.post-nav-next .post-nav-thumb {
+  inset-inline-end: 0;
+  border-start-end-radius: calc(1rem - 1px);
+  border-end-end-radius: calc(1rem - 1px);
+  mask-image: linear-gradient(
+    to left,
+    #000 0%,
+    rgb(0 0 0 / 0.78) 45%,
+    transparent 100%
+  );
+}
+
+.post-nav-link:hover .post-nav-thumb {
+  opacity: 1;
+}
+
+.post-nav-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-nav-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .post-nav-next .post-nav-body {
+    align-items: flex-end;
+    text-align: end;
+  }
 }
 
 .post-nav-label {
   font-size: 0.625rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-base-content) 45%, transparent);
+}
+
+.post-nav-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.375;
+  color: color-mix(in srgb, var(--color-base-content) 80%, transparent);
+  transition: color 0.2s ease;
+}
+
+.post-nav-link:hover .post-nav-title {
+  color: var(--color-primary);
+}
+
+.post-nav-date {
+  font-size: 0.6875rem;
   color: color-mix(in srgb, var(--color-base-content) 45%, transparent);
 }
 
@@ -734,7 +916,8 @@ useHead(() => ({
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .post-nav-bg {
+  .post-nav-link,
+  .post-nav-link * {
     transition: none;
   }
 }

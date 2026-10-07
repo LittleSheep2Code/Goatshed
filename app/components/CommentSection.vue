@@ -1,5 +1,5 @@
 <template>
-  <section class="comment-section" data-pagefind-ignore>
+  <section class="comment-section -mx-3" data-pagefind-ignore>
     <ClientOnly>
       <!--
         SunkenLand widgets. They talk to Stargate directly and get the signed-in
