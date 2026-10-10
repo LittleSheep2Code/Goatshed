@@ -9,6 +9,8 @@ export default defineNuxtConfig({
     "@pinia/nuxt",
     "@nuxt/image",
     "@nuxt/eslint",
+    "@nuxt/fonts",
+    "nuxt-og-image",
     "nuxt-shiki",
     "@unlazy/nuxt",
   ],
@@ -26,11 +28,95 @@ export default defineNuxtConfig({
     },
   },
   css: ["~/assets/css/main.css"],
+  /*
+    Fonts are self-hosted so the OG renderer (which only reads globally emitted
+    `@font-face` rules) and the site resolve the same files. Latin is Nunito,
+    the family the site's `--font-sans` already names; CJK is a single-file
+    Noto Sans SC, because Google's sliced CJK subsets would mean hundreds of
+    files per OG render.
+  */
+  fonts: {
+    families: [
+      {
+        name: "Nunito",
+        src: "/fonts/Nunito-Regular.woff2",
+        weight: 400,
+        style: "normal",
+        global: true,
+      },
+      {
+        name: "Nunito",
+        src: "/fonts/Nunito-Medium.woff2",
+        weight: 500,
+        style: "normal",
+        global: true,
+      },
+      {
+        name: "Nunito",
+        src: "/fonts/Nunito-SemiBold.woff2",
+        weight: 600,
+        style: "normal",
+        global: true,
+      },
+      {
+        name: "Nunito",
+        src: "/fonts/Nunito-Bold.woff2",
+        weight: 700,
+        style: "normal",
+        global: true,
+      },
+      {
+        name: "Nunito",
+        src: "/fonts/Nunito-ExtraBold.woff2",
+        weight: 800,
+        style: "normal",
+        global: true,
+      },
+      {
+        name: "Nunito",
+        src: "/fonts/Nunito-Black.woff2",
+        weight: 900,
+        style: "normal",
+        global: true,
+      },
+      {
+        name: "Noto Sans SC",
+        src: "/fonts/NotoSansSC-Regular.woff2",
+        weight: 400,
+        style: "normal",
+        global: true,
+      },
+      {
+        name: "Noto Sans SC",
+        src: "/fonts/NotoSansSC-Bold.woff2",
+        weight: 700,
+        style: "normal",
+        global: true,
+      },
+    ],
+  },
   site: {
     url: "https://littlesheep.me",
     name: "Goatshed 山羊寒舍",
     description:
       "LittleSheep's personal blog powered by Solar Network. About tech, programming, and life.",
+  },
+  ogImage: {
+    enabled: true,
+    defaults: {
+      // 1.91:1, the ratio every unfurler crops to; templates are laid out for it.
+      width: 1200,
+      height: 630,
+    },
+    security: {
+      renderTimeout: 60000,
+      /*
+        Drive-file variants are rendered by the API on first request (~5s cold
+        for a camera original), so the 3s default drops the card artwork and
+        silently falls back to the plain panel.
+      */
+      imageFetchTimeout: 15000,
+    },
   },
   app: {
     head: {
@@ -62,13 +148,13 @@ export default defineNuxtConfig({
           property: "og:description",
           content: "欢迎来到小羊之家 ( *｀ω´)",
         },
-        {
-          property: "og:image",
-          content: "https://littlesheep.me/og-image.png",
-        },
+        /*
+          `og:image` and the Twitter image tags are injected per page by
+          nuxt-og-image; the static default here pointed at a file that never
+          existed.
+        */
         { property: "og:url", content: "https://littlesheep.me" },
         { property: "og:locale", content: "zh_CN" },
-        { name: "twitter:card", content: "summary_large_image" },
         {
           name: "twitter:title",
           content: "Goatshed 山羊寒舍",
@@ -76,10 +162,6 @@ export default defineNuxtConfig({
         {
           name: "twitter:description",
           content: "欢迎来到小羊之家 ( *｀ω´)",
-        },
-        {
-          name: "twitter:image",
-          content: "https://littlesheep.me/og-image.png",
         },
       ],
       script: [
@@ -98,7 +180,9 @@ export default defineNuxtConfig({
         },
         {
           rel: "stylesheet",
-          href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;500;600&display=swap",
+          // Noto Sans SC is self-hosted (see `fonts` above) so the OG renderer
+          // gets whole-font files; it is deliberately not requested twice.
+          href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;500;600&display=swap",
         },
         { rel: "icon", type: "image/png", href: "/favicon.png" },
         {

@@ -175,4 +175,10 @@ useHead({
         { property: "og:title", content: "打赏排行榜 - Goatshed" },
     ],
 });
+
+defineOgImage("UniOgImage", {
+    title: "打赏排行榜",
+    description: "感谢所有支持小羊的朋友们。",
+    eyebrow: "支持",
+});
 </script>

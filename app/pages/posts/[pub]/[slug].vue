@@ -104,6 +104,7 @@
 
         <article
           id="article"
+          ref="articleEl"
           class="prose-goatshed post-article min-w-0"
           v-html="renderedContent"
         />
@@ -152,6 +153,13 @@
         </div>
       </aside>
     </div>
+
+    <!--
+      Full-viewport viewer for the article's inline images. It is handed the
+      copy's own element and delegates the clicks itself, so nothing about how
+      the body is rendered has to change.
+    -->
+    <ImageLightbox :container="articleEl" />
 
     <div
       class="post-frame relative mb-8 mt-12 flex items-center justify-center gap-4"
@@ -277,6 +285,11 @@ const postApiId = computed(() => {
   return `${pub}/${slug}`;
 });
 
+defineOgImage("PostOgImage", {
+  pub: computed(() => activePub.value),
+  slug: computed(() => postSlug.value || ""),
+});
+
 /*
   Only the article itself has to be in hand before the first paint, and it needs
   nothing from the other three, so all four start in the same tick. Awaiting them
@@ -303,6 +316,8 @@ const [{ data: post, pending, error }, { data: publishersData }] =
 
 const renderedContent = ref("");
 const tocItems = ref<TocItem[]>([]);
+/** The rendered body; the lightbox walks its images to build the slideshow. */
+const articleEl = ref<HTMLElement | null>(null);
 
 /*
   The rail is an `xl` layout; below that the copy carries its own TOC and
@@ -643,6 +658,32 @@ useHead(() => ({
   padding: 0;
 }
 
+/*
+  Inline artwork. Preflight already caps an `img` at its container and keeps its
+  ratio — a 4000px screenshot lands on the copy's measure instead of overflowing
+  it — but the cap is stated here so the article's images keep it whatever else
+  changes, and the radius is what makes a photo read as a block of the copy,
+  the same one the full-screen view gives it.
+*/
+.post-article :deep(img) {
+  max-width: 100%;
+  border-radius: var(--radius-media);
+}
+
+/* Inline artwork opens in `ImageLightbox`, so the cursor says so… */
+.post-article :deep(img:not([data-no-lightbox])) {
+  cursor: zoom-in;
+}
+
+/*
+  …except where the image is a link's own target, where the click still
+  navigates. Carries the same `:not()` as the rule above so it is the more
+  specific of the two on the one point they disagree about.
+*/
+.post-article :deep(a img:not([data-no-lightbox])) {
+  cursor: pointer;
+}
+
 @media (min-width: 640px) {
   .post-article {
     padding: 1.5rem 1.75rem;
@@ -681,17 +722,6 @@ useHead(() => ({
   min-width: 0;
   max-height: calc(100dvh - var(--app-bar-height) - 3rem);
   overflow-y: auto;
-}
-
-/*
-  `CommentSection` bleeds out of `.page-shell`'s gutter with a negative margin,
-  which is right in the copy column but wrong here: the rail has no gutter to
-  cancel, so the widgets hang 0.75rem past both edges. `overflow-y` alone still
-  computes `overflow-x` to `auto`, so that bleed became the rail's horizontal
-  scrollbar.
-*/
-.post-rail :deep(.comment-section) {
-  margin-inline: 0;
 }
 
 /* The rail's TOC is a section, not a card: the hairline already frames it. */

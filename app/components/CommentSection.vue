@@ -1,5 +1,5 @@
 <template>
-  <section class="comment-section -mx-3" data-pagefind-ignore>
+  <section class="comment-section" data-pagefind-ignore>
     <ClientOnly>
       <!--
         SunkenLand widgets. They talk to Stargate directly and get the signed-in
@@ -50,6 +50,37 @@ const { login } = useAuth();
   --sk-primary-content: var(--color-primary-content);
   --sk-radius: var(--radius-box);
   --sk-border: color-mix(in oklab, var(--color-base-300) 70%, transparent);
+}
+
+/*
+  The widgets ship their own insets, and the presets hard-code most of them in
+  the shadow root — only the signed-in controls (`--sk-input-padding`,
+  `--sk-submit-padding`, `--sk-btn-padding`) are tokens. Zero the block insets
+  through `::part` so whichever container places the widget — the page gutter
+  below `xl`, the rail column above it — is the single thing that decides
+  horizontal alignment, and the widgets' text lines up with the section labels
+  and the reaction bar beside them. The controls keep their own padding: that
+  is their shape rather than alignment, and the tokens above still retune it.
+*/
+.comment-section sk-replies-list::part(header),
+.comment-section sk-replies-list::part(list),
+.comment-section sk-replies-list::part(state),
+.comment-section sk-replies-list::part(error),
+.comment-section sk-replies-list::part(empty),
+.comment-section sk-replies-list::part(load-more),
+.comment-section sk-replies-list::part(view-all),
+.comment-section sk-reply-composer::part(form),
+.comment-section sk-reply-composer::part(guest),
+.comment-section sk-reply-composer::part(error) {
+  padding: 0;
+}
+
+/*
+  Replies keep the nesting indent the element derives from `--sk-depth` on each
+  row (the same 18px step the preset uses); only the base inset goes.
+*/
+.comment-section sk-replies-list::part(reply) {
+  padding: 0 0 0 calc(var(--sk-depth, 0) * 18px);
 }
 
 .comment-section .comment-replies {

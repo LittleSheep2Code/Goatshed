@@ -12,6 +12,11 @@
   --container-page: 88rem;
   /* Cover copy sits 2rem inside each edge of the page shell. */
   --container-hero: calc(var(--container-page) - 4rem);
+  /*
+    Post artwork: an inline image and the same photo full-screen in
+    `ImageLightbox` share one radius, so opening a picture never re-shapes it.
+  */
+  --radius-media: 0.75rem;
   /* App bar height. Single source of truth for the bar and anything that sits under it. */
   --app-bar-height: 4rem;
 }

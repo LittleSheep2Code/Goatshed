@@ -44,4 +44,10 @@ useHead({
         { name: "description", content: "支持小羊 - 通过爱发电请小羊喝杯咖啡" },
     ],
 });
+
+defineOgImage("UniOgImage", {
+    title: "支持小羊",
+    description: "通过爱发电请小羊喝杯咖啡，帮这个博客继续写下去。",
+    eyebrow: "支持",
+});
 </script>

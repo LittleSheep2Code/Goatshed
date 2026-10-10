@@ -188,6 +188,12 @@ useHead({
     { property: "og:url", content: "https://littlesheep.me" },
   ],
 });
+
+defineOgImage("UniOgImage", {
+  title: "写代码、写 Solar Network，也写点日常碎碎念。",
+  description: "littlesheep 的个人博客 · Goatshed 山羊寒舍",
+  eyebrow: "博客",
+});
 </script>
 
 <style scoped>

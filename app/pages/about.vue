@@ -1220,6 +1220,13 @@ useHead({
         },
     ],
 });
+
+defineOgImage("UniOgImage", {
+    title: "关于小羊",
+    description:
+        "littlesheep（小羊）：Solar Network、MaidKit 的作者，高中在读，现居深圳。",
+    eyebrow: "关于",
+});
 </script>
 
 <style scoped>

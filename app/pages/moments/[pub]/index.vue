@@ -188,6 +188,11 @@ const { data: publishersData } = await useFetch<
   Record<string, Publisher | null>
 >("/api/publishers");
 
+defineOgImage("PublisherOgImage", {
+  name: computed(() => activePub.value),
+  eyebrow: "日常",
+});
+
 const publisherBackgroundUrl = computed(() => {
   const background = publishersData.value?.[activePub.value]?.background;
   if (!background?.id) return null;

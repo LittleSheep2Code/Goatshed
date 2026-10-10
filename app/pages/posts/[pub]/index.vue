@@ -103,6 +103,11 @@ const currentPage = computed(() => {
   return Number.isFinite(raw) && raw >= 0 ? Math.floor(raw) : 0;
 });
 
+defineOgImage("PublisherOgImage", {
+  name: computed(() => activePub.value),
+  eyebrow: "文章",
+});
+
 const { data, pending, error } = await useAsyncData(
   () => `posts-list-${activePub.value}-${currentPage.value}`,
   () =>

@@ -258,6 +258,11 @@ const {
   $fetch<Post>(`/api/posts/${postApiId.value}`),
 );
 
+defineOgImage("MomentOgImage", {
+  pub: computed(() => activePub.value),
+  slug: computed(() => postSlug.value || ""),
+});
+
 watchEffect(() => {
   if (post.value?.type === 1) {
     const identifier = getPostIdentifier(post.value);
