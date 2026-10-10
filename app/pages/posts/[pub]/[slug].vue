@@ -337,7 +337,11 @@ watch(
   () => post.value?.content,
   async (content) => {
     if (content) {
-      const rendered = await renderMarkdown(content);
+      /*
+        Article bodies get the embed: a Solar post URL alone in its own
+        paragraph renders as the `sk-post` widget rather than a bare link.
+      */
+      const rendered = await renderMarkdown(content, { embedPosts: true });
       renderedContent.value = injectHeadingIds(rendered);
       tocItems.value = extractToc(renderedContent.value);
     } else {

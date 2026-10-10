@@ -5,6 +5,7 @@ Goatshed is a personal blog built with Nuxt 4. It is first a blog project, but i
 ## What It Does
 
 - Renders blog posts and moments from Solar Network publishers.
+- Embeds a Solar post linked on its own line in an article through the SunkenLand `sk-post` widget.
 - Uses server-side Nuxt API routes as a thin proxy over Solar Network APIs.
 - Supports protected publishers and protected content with authentication via better-auth.
 - Includes a Solarpass login flow based on OpenID Connect.
@@ -19,6 +20,7 @@ Goatshed is a personal blog built with Nuxt 4. It is first a blog project, but i
 - daisyUI
 - Nuxt Image
 - Shiki for code highlighting
+- SunkenLand (`sk-*` web components) for reactions, replies, and post embeds
 - better-auth (authentication)
 - Drizzle ORM (database)
 - PostgreSQL

@@ -245,6 +245,29 @@
     display: block;
     min-height: 1.2em;
   }
+
+  /*
+    A Solar post quoted in an article renders as the `sk-post` widget. Its
+    shadow DOM is themed by mapping the site's DaisyUI tokens onto the
+    widget's `--sk-*` surface — the same bridge `CommentSection` applies to the
+    reply widgets — so the card sits on-palette in both themes.
+  */
+  .post-embed {
+    margin-block: 1.5rem;
+  }
+
+  .post-embed sk-post {
+    display: block;
+    --sk-font: var(--font-sans);
+    --sk-base-100: var(--color-base-100);
+    --sk-base-200: var(--color-base-200);
+    --sk-base-300: var(--color-base-300);
+    --sk-base-content: var(--color-base-content);
+    --sk-primary: var(--color-primary);
+    --sk-primary-content: var(--color-primary-content);
+    --sk-radius: var(--radius-box);
+    --sk-border: color-mix(in oklab, var(--color-base-300) 70%, transparent);
+  }
 }
 
 .shiki {

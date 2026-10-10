@@ -1,5 +1,7 @@
 import { configure } from "@solsynth/sunkenland";
 import login from "@solsynth/sunkenland/presets/login.css?url";
+import media from "@solsynth/sunkenland/presets/media.css?url";
+import post from "@solsynth/sunkenland/presets/post.css?url";
 import reactions from "@solsynth/sunkenland/presets/reactions.css?url";
 import repliesList from "@solsynth/sunkenland/presets/replies-list.css?url";
 import replyComposer from "@solsynth/sunkenland/presets/reply-composer.css?url";
@@ -22,7 +24,7 @@ export default defineNuxtPlugin(() => {
 
   configure({
     baseUrl: config.apiBaseUrl,
-    css: [repliesList, login, replyComposer, reactions],
+    css: [repliesList, login, replyComposer, reactions, post, media],
     stickerUrl: "/stickers/{symbol}.webp",
     getAccessToken: async () => {
       try {
