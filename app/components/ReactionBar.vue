@@ -23,7 +23,16 @@
                 class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-base-200 transition-colors"
                 @click.stop="addReaction(opt.symbol)"
               >
-                <span class="text-2xl">{{ opt.emoji }}</span>
+                <img
+                  v-if="!missingStickers.has(opt.symbol)"
+                  :src="reactionStickerUrl(opt.symbol)"
+                  :alt="opt.label"
+                  class="h-8 w-8 object-contain"
+                  loading="lazy"
+                  decoding="async"
+                  @error="onStickerError(opt.symbol)"
+                />
+                <span v-else class="text-2xl">{{ opt.emoji }}</span>
                 <span class="text-xs font-medium text-base-content/70">
                   {{ opt.label }}
                 </span>
@@ -44,7 +53,16 @@
       :disabled="toggling"
       @click.stop="toggleReaction(reaction)"
     >
-      <span class="text-sm leading-none">{{ symbolToEmoji(reaction.symbol) }}</span>
+      <img
+        v-if="!missingStickers.has(reaction.symbol)"
+        :src="reactionStickerUrl(reaction.symbol)"
+        :alt="reaction.label"
+        class="h-4 w-4 object-contain"
+        loading="lazy"
+        decoding="async"
+        @error="onStickerError(reaction.symbol)"
+      />
+      <span v-else class="text-sm leading-none">{{ reaction.emoji }}</span>
       <span>{{ reaction.count }}</span>
     </button>
 
@@ -60,6 +78,7 @@
 
 <script setup lang="ts">
 import type { ReactionSummary } from "~/types/comment";
+import { REACTIONS, reactionStickerUrl, type ReactionMeta } from "~/utils/reactions";
 import { SmilePlus } from "lucide-vue-next";
 import {
   PopoverContent,
@@ -86,27 +105,44 @@ const toggling = ref(false);
 const pickerOpen = ref(false);
 const showAll = ref(false);
 
-const availableReactions = [
-  { symbol: "thumb_up", emoji: "👍", label: "赞" },
-  { symbol: "heart", emoji: "❤️", label: "爱心" },
-  { symbol: "clap", emoji: "👏", label: "鼓掌" },
-  { symbol: "party", emoji: "🎉", label: "庆祝" },
-  { symbol: "laugh", emoji: "😂", label: "哈哈" },
-  { symbol: "cry", emoji: "😢", label: "哭泣" },
-  { symbol: "angry", emoji: "😠", label: "生气" },
-  { symbol: "confuse", emoji: "😕", label: "困惑" },
-  { symbol: "pray", emoji: "🙏", label: "祈祷" },
+/** What the picker offers and in what order — a subset of what the API can serve. */
+const PICKER_SYMBOLS = [
+  "thumb_up",
+  "heart",
+  "clap",
+  "party",
+  "laugh",
+  "cry",
+  "angry",
+  "confuse",
+  "pray",
 ];
 
-const displayReactions = computed(() => {
-  const filtered = reactions.value.filter((r) => r.count > 0);
-  if (showAll.value) return filtered;
-  return filtered.slice(0, props.maxVisible);
-});
+/**
+ * Symbols whose sticker failed to load — an unknown symbol, or a build whose
+ * `public/stickers` copy never ran. Those chips fall back to their emoji.
+ */
+const missingStickers = ref(new Set<string>());
 
-function symbolToEmoji(symbol: string): string {
-  const found = availableReactions.find((r) => r.symbol === symbol);
-  return found?.emoji || "👍";
+/** A reaction's emoji + label, standing in for symbols the site does not name. */
+function metaFor(symbol: string): ReactionMeta {
+  return REACTIONS[symbol] ?? { emoji: "❓", label: symbol };
+}
+
+const availableReactions = PICKER_SYMBOLS.map((symbol) => ({
+  symbol,
+  ...metaFor(symbol),
+}));
+
+const displayReactions = computed(() =>
+  reactions.value
+    .filter((reaction) => reaction.count > 0)
+    .slice(0, showAll.value ? undefined : props.maxVisible)
+    .map((reaction) => ({ ...reaction, ...metaFor(reaction.symbol) })),
+);
+
+function onStickerError(symbol: string) {
+  missingStickers.value = new Set(missingStickers.value).add(symbol);
 }
 
 async function fetchReactions() {

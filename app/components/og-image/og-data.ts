@@ -20,7 +20,6 @@ export interface OgPublisher {
   nick?: string | null;
   bio?: string | null;
   picture?: OgDriveFile | null;
-  verification?: { title?: string | null } | null;
 }
 
 /**
@@ -57,16 +56,118 @@ export const OG_SITE_URL = "littlesheep.me";
 /** Mirrors the site's default meta description, used when a card has no data. */
 export const OG_SITE_TAGLINE = "欢迎来到小羊之家 ( *｀ω´)";
 
-/** Brand tokens, mirrored from the DaisyUI theme in `app/assets/css/main.css`. */
+/**
+ * Card palette, taken from the DaisyUI theme in `app/assets/css/main.css`:
+ * paper and ink carry the page, one hairline holds the colophon, and the
+ * primary blue appears exactly once — on the publication's address. Each text
+ * value clears 4.5:1 on paper at its own size (`graphite` is one step darker
+ * than the site's muted grey so 20px captions stay legible).
+ */
 export const OG = {
   font: "'Nunito', 'Noto Sans SC', sans-serif",
-  base: "#f0f0f0",
+  paper: "#f0f0f0",
   ink: "#353538",
-  muted: "#6f6f77",
-  primary: "#1158d1",
-  accent: "#0f8ad6",
-  secondary: "#3e78d8",
+  inkSoft: "#55555c",
+  graphite: "#66666e",
+  rule: "#d2d2d2",
+  blue: "#1158d1",
 } as const;
+
+/**
+ * One grid for the whole card family: the brand lockup sits at the margin, the
+ * copy hangs from a fixed line below it, the colophon is ruled off at the
+ * bottom, and the plate — the card's only image — is a fixed square in the
+ * top-right corner. Templates must not invent their own numbers.
+ */
+export const OG_FRAME = {
+  margin: 72,
+  lockupHeight: 40,
+  /** Lockup width for the 3.38:1 brand asset. */
+  lockupWidth: 135,
+  /** Gap between the lockup and the copy's first line. */
+  copyTop: 96,
+  /** Square plate, and the gutter between it and the copy column. */
+  plate: 344,
+  plateGutter: 72,
+  /** Publisher portrait, a circle rather than a framed plate. */
+  portrait: 288,
+  /** Copy column width with and without a plate. */
+  copyNarrow: 640,
+  copyWide: 860,
+} as const;
+
+/**
+ * Full-width characters occupy one em; Latin a shade over half, punctuation a
+ * third. The Latin factor is deliberately generous — Nunito's advances vary, and
+ * a card that mis-fits by one line breaks the grid, so over-estimating width
+ * (which picks a smaller size) is the safe direction.
+ */
+function ogCharEm(char: string): number {
+  return /[\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFF60]/.test(char)
+    ? 1
+    : /[A-Za-z0-9]/.test(char)
+      ? 0.56
+      : 0.38;
+}
+
+/** Width of a string in ems, so display type can be fitted to a column. */
+export function ogTextEm(text: string): number {
+  let em = 0;
+  for (const char of text) em += ogCharEm(char);
+  return em;
+}
+
+/*
+  0.97 keeps a little slack against the model's own error: a line that wraps one
+  character past the estimate would push the copy block into the colophon.
+*/
+function ogCapacityEm(columnPx: number, fontSize: number, lines: number): number {
+  return (columnPx / fontSize) * lines * 0.97;
+}
+
+/** Clips a string to an em budget, ending on an ellipsis when it cut something. */
+export function ogClip(text: string, capacityEm: number): string {
+  const clean = text.trim();
+  if (ogTextEm(clean) <= capacityEm) return clean;
+  let em = 0;
+  let out = "";
+  for (const char of clean) {
+    const width = ogCharEm(char);
+    if (em + width > capacityEm - 1) break;
+    em += width;
+    out += char;
+  }
+  return `${out.trimEnd()}…`;
+}
+
+/** Copies that are already sized (ledes, bios): clip to the lines they may take. */
+export function ogFit(
+  text: string,
+  columnPx: number,
+  options: { fontSize: number; lines?: number },
+): string {
+  return ogClip(text, ogCapacityEm(columnPx, options.fontSize, options.lines ?? 2));
+}
+
+/**
+ * Largest display size at which `text` still fills at most `maxLines`, clipping
+ * to that size's capacity when even the smallest step overflows. Cards get
+ * their headline size from here rather than from hand-tuned per-template rules.
+ */
+export function ogFitDisplay(
+  text: string,
+  columnPx: number,
+  options: { maxLines?: number; sizes?: number[] } = {},
+): { size: number; text: string } {
+  const { maxLines = 2, sizes = [56, 46, 38, 32] } = options;
+  const clean = text.trim();
+  for (const size of sizes) {
+    const capacity = ogCapacityEm(columnPx, size, maxLines);
+    if (ogTextEm(clean) <= capacity) return { size, text: clean };
+  }
+  const size = sizes[sizes.length - 1]!;
+  return { size, text: ogClip(clean, ogCapacityEm(columnPx, size, maxLines)) };
+}
 
 /**
  * Absolute URL for a drive file. `width`/`height` request a re-encoded variant
@@ -107,12 +208,6 @@ export function ogPlainText(input: string | null | undefined): string {
     .replace(/[*_~`]/g, "")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-/** Truncates to a glyph budget, appending an ellipsis when it cut something. */
-export function ogTruncate(input: string, max: number): string {
-  const text = input.trim();
-  return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
 }
 
 /** Pinned to `zh-CN` so a render never depends on the server's locale. */

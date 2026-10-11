@@ -93,10 +93,13 @@ Cards are rendered at runtime by [nuxt-og-image](https://nuxtseo.com/og-image) w
 
 - Templates live in `app/components/og-image/*.takumi.vue`; each file is one card. `UniOgImage` (brand card with a title/eyebrow/description), `PostOgImage`, `MomentOgImage`, `PublisherOgImage`, `CollectionOgImage`.
 - `app/components/og-image/og-data.ts` holds the wire shapes plus the helpers the templates share. Cards fetch the public Solar Network API directly and never carry a session token, so a locked publisher degrades to a brand-only card instead of leaking its content.
+- Every card shares one grid, defined by `OG_FRAME` in `og-data.ts`: the brand lockup at the 72px margin, copy hanging from a fixed line below it, a single hairline ruling off the colophon, and — for cards with artwork — one square plate in the top-right corner. Don't invent per-template numbers; extend `OG_FRAME` instead.
+- The lockup is the site's own `~/assets/branding/compact.png`, imported by each template, so branding has a single source. The only other image a card may show is its plate (post/collection art, moment media, publisher portrait).
+- Display type is fitted by `ogFitDisplay()` and snippets clipped by `ogClip()` — both measure text in `em` so CJK and Latin fit the same column without hand-tuned per-card sizes.
 - A page opts in with `defineOgImage("<Name>", props)`. Props are reactive (`computed(...)`), and pages that pass no `title`/`description` inherit the page's `useHead` values.
 - Fonts are declared once in `nuxt.config.ts` under `fonts.families` and self-hosted from `public/fonts/`: Nunito weights 400–900 and a whole-file Noto Sans SC. The OG renderer only reads globally emitted `@font-face` rules, and whole-file CJK avoids pulling hundreds of sliced subsets per render.
 - `NUXT_OG_IMAGE_SECRET` signs the image URLs. Without it a new secret is minted per build, so every deploy invalidates what unfurlers cached; set it for anything but a single-instance setup.
-- Editing a `.takumi.vue` template does not hot-reload in `dev`; restart the dev server before re-rendering a card.
+- Card URLs carry a hash of the template, so a redeploy can't serve an unfurler an old design. In `dev` the renderer picks a file change up on the next request, but its component compile is cached — if a card still looks stale, restart the dev server. Rendered images live for `cacheMaxAgeSeconds` (3 days).
 
 ## Environment
 

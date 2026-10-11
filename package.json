@@ -20,10 +20,10 @@
     "@unlazy/nuxt": "^2.0.1",
     "@yeger/vue-masonry-wall": "^6.1.4",
     "better-auth": "^1.7.7",
-    "drizzle-orm": "^0.45.3",
+    "drizzle-orm": "^0.45.4",
     "lucide-vue-next": "^1.0.0",
     "markdown-it": "^14.3.2",
-    "nuxt": "^4.6.0",
+    "nuxt": "^4.6.1",
     "nuxt-og-image": "6.7.4",
     "nuxt-shiki": "0.3.2",
     "pg": "^8.23.1",
@@ -32,7 +32,7 @@
     "shiki": "^3.23.0",
     "unlazy": "^2.0.1",
     "vue": "^3.5.43",
-    "vue-router": "^5.3.1"
+    "vue-router": "^5.4.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.20",
