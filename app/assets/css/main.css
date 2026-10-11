@@ -99,10 +99,6 @@
     }
   }
 
-  html {
-    @apply overflow-y-auto overflow-x-clip;
-  }
-
   body {
     @apply bg-base-100 text-base-content antialiased;
   }
@@ -273,6 +269,23 @@
     --sk-radius: var(--radius-box);
     --sk-border: color-mix(in oklab, var(--color-base-300) 70%, transparent);
   }
+}
+
+/*
+  Root clip for the full-bleed heroes: `.cover-bleed` is `100vw` wide, and `100vw` is the viewport
+  *including* a classic scrollbar's gutter, while the page lays out against the viewport *minus* it.
+  The bleed is centered, so half the gutter hangs past the layout edge — which the body would carry
+  as a scrollbar-wide horizontal scroll. Clipping the x axis here discards that sliver.
+
+  Unlayered on purpose. DaisyUI declares `overflow` on `:root:not(span)` in `@layer base`, and
+  `:root:not()` outranks a bare `html` selector, so the same declaration inside `@layer base` loses
+  silently; its `var(--page-overflow)` is undefined until a DaisyUI modal opens, which is invalid at
+  computed-value time and resets the used overflow to `visible`. Unlayered rules outrank every
+  layer, so this declaration holds. `overflow-y` stays untouched — it belongs to DaisyUI's scroll
+  lock (and to `ImageLightbox`'s inline freeze) — and an unset root y axis still scrolls normally.
+*/
+html {
+  overflow-x: clip;
 }
 
 .shiki {
