@@ -156,17 +156,24 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 pt-1">
+        <div class="grid grid-cols-3 gap-2 pt-1">
           <NuxtLink
             :to="`/posts/${publisherName}`"
-            class="flex items-center justify-center gap-1.5 rounded-xl border border-base-300/50 bg-base-200/40 px-3 py-2 text-xs font-semibold transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+            class="flex items-center justify-center gap-1.5 rounded-xl border border-base-300/50 bg-base-200/40 px-2 py-2 text-xs font-semibold transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
           >
             <BookOpen class="h-3.5 w-3.5" aria-hidden="true" />
             文章
           </NuxtLink>
           <NuxtLink
+            :to="`/posts/${publisherName}/collections`"
+            class="flex items-center justify-center gap-1.5 rounded-xl border border-base-300/50 bg-base-200/40 px-2 py-2 text-xs font-semibold transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+          >
+            <Layers class="h-3.5 w-3.5" aria-hidden="true" />
+            合集
+          </NuxtLink>
+          <NuxtLink
             :to="`/moments/${publisherName}`"
-            class="flex items-center justify-center gap-1.5 rounded-xl border border-base-300/50 bg-base-200/40 px-3 py-2 text-xs font-semibold transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+            class="flex items-center justify-center gap-1.5 rounded-xl border border-base-300/50 bg-base-200/40 px-2 py-2 text-xs font-semibold transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
           >
             <MessageSquare class="h-3.5 w-3.5" aria-hidden="true" />
             动态
@@ -187,6 +194,7 @@ import {
   CalendarCheck,
   FileText,
   Flame,
+  Layers,
   Lock,
   MessageSquare,
   PenLine,

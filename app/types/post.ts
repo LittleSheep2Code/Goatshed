@@ -32,6 +32,24 @@ export interface PostTag {
 }
 
 /**
+ * A named grouping of a publisher's posts ("合集"), e.g. a devlog series.
+ * Posts are sorted by publish date descending; the upstream API does not
+ * support manual ordering. Wire shape: `/sphere/publishers/{name}/collections`.
+ */
+export interface PostCollection {
+  id: string;
+  slug: string;
+  name?: string | null;
+  description?: string | null;
+  publisherId: string;
+  publisher?: Publisher | null;
+  background?: MediaFile | null;
+  icon?: MediaFile | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+/**
  * Rich preview the Solar Network resolver stores on a post's meta when its
  * content links somewhere unfurlable (or holds a poll). Keys arrive camelCased
  * because `snFetch` normalises the wire payload.
@@ -82,6 +100,8 @@ export interface Post {
   isTruncated: boolean;
   publisher: Publisher;
   tags: PostTag[];
+  /** Collections of this post's own publisher that include it. */
+  publisherCollections?: PostCollection[] | null;
   createdAt: string;
   updatedAt: string;
 }

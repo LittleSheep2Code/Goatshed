@@ -16,6 +16,14 @@
         <p class="mt-2 text-sm text-base-content/75">
           按页浏览所选发布者的文章列表。
         </p>
+
+        <NuxtLink
+          :to="`/posts/${activePub}/collections`"
+          class="mt-4 inline-flex items-center gap-1.5 self-start rounded-full border border-base-300/60 bg-base-200/50 px-3.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
+        >
+          <Layers class="h-3.5 w-3.5" aria-hidden="true" />
+          按合集浏览
+        </NuxtLink>
       </div>
     </CoverHero>
 
@@ -77,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight } from "lucide-vue-next";
+import { ChevronLeft, ChevronRight, Layers } from "lucide-vue-next";
 import {
   isPublisherName,
   type PublisherName,

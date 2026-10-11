@@ -61,6 +61,21 @@
             {{ post.description }}
           </p>
 
+          <div
+            v-if="post.publisherCollections?.length"
+            class="flex flex-wrap items-center gap-2 pt-0.5"
+          >
+            <NuxtLink
+              v-for="collection in post.publisherCollections"
+              :key="collection.id"
+              :to="`/posts/${post.publisher.name}/collections/${collection.slug}`"
+              class="post-collection-chip"
+            >
+              <Layers class="h-3.5 w-3.5" aria-hidden="true" />
+              {{ collection.name?.trim() || collection.slug }}
+            </NuxtLink>
+          </div>
+
           <div class="flex flex-wrap items-center gap-x-3 gap-y-2 pt-0.5">
             <span
               v-for="tag in post.tags"
@@ -257,7 +272,7 @@
 </template>
 
 <script setup lang="ts">
-import { ExternalLink } from "lucide-vue-next";
+import { ExternalLink, Layers } from "lucide-vue-next";
 import type { MediaFile, Post } from "~/types/post";
 import type { Publisher } from "~/types/publisher";
 import { renderMarkdown } from "~/utils/markdown";
@@ -590,6 +605,26 @@ useHead(() => ({
 .post-tag {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   letter-spacing: 0.01em;
+}
+
+/* The collection a post belongs to reads as a pill, not a `#tag`: filled, and
+   carrying the layers glyph, so membership is separable from its tags at a glance. */
+.post-collection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--color-primary) 30%, transparent);
+  background-color: color-mix(in oklab, var(--color-primary) 10%, transparent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  transition: background-color 150ms ease-out;
+}
+
+.post-collection-chip:hover {
+  background-color: color-mix(in oklab, var(--color-primary) 18%, transparent);
 }
 
 .post-source-link {

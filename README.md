@@ -5,6 +5,7 @@ Goatshed is a personal blog built with Nuxt 4. It is first a blog project, but i
 ## What It Does
 
 - Renders blog posts and moments from Solar Network publishers.
+- Groups a publisher's posts into collections (合集) and reads one as a series.
 - Embeds a Solar post linked on its own line in an article through the SunkenLand `sk-post` widget.
 - Opens an article's inline images in a full-screen lightbox with keyboard, swipe and zoom navigation.
 - Uses server-side Nuxt API routes as a thin proxy over Solar Network APIs.
@@ -35,6 +36,7 @@ The app talks to Solar Network through `NUXT_PUBLIC_API_BASE_URL`, which default
 Server routes under `server/api` call Solar endpoints such as:
 
 - `/sphere/publishers/...`
+- `/sphere/publishers/{name}/collections...`
 - `/sphere/posts...`
 - `/stargate/accounts/...`
 - `/drive/files/...`
@@ -79,13 +81,17 @@ Some publishers are treated as locked in the server API layer. When that content
 - `app/middleware/auth.ts`: protects pages such as `/me`.
 - `server/api/auth/[...all].ts`: better-auth catch-all handler.
 - `server/utils/floating-api.ts`: Solar API fetch wrapper.
+- `server/utils/solarAccess.ts`: session bearer token plus the locked-publisher read gate the collection routes share.
+- `server/api/publishers/[name]/collections/*`: proxies the collection list, detail and post-list endpoints.
+- `app/pages/posts/[pub]/collections/*`: a publisher's collection list, and one collection's posts.
+- `app/components/CollectionCard.vue`: collection tile (background, icon, name, description).
 - `server/utils/lastfm.ts`: Last.fm snapshot (recent scrobbles, charts) for the about page's music section, cached for ten minutes.
 
 ## Open Graph Images
 
 Cards are rendered at runtime by [nuxt-og-image](https://nuxtseo.com/og-image) with the Takumi renderer (`@takumi-rs/core`, a native binding), 1200×630, and served from `/_og/d/...`.
 
-- Templates live in `app/components/og-image/*.takumi.vue`; each file is one card. `UniOgImage` (brand card with a title/eyebrow/description), `PostOgImage`, `MomentOgImage`, `PublisherOgImage`.
+- Templates live in `app/components/og-image/*.takumi.vue`; each file is one card. `UniOgImage` (brand card with a title/eyebrow/description), `PostOgImage`, `MomentOgImage`, `PublisherOgImage`, `CollectionOgImage`.
 - `app/components/og-image/og-data.ts` holds the wire shapes plus the helpers the templates share. Cards fetch the public Solar Network API directly and never carry a session token, so a locked publisher degrades to a brand-only card instead of leaking its content.
 - A page opts in with `defineOgImage("<Name>", props)`. Props are reactive (`computed(...)`), and pages that pass no `title`/`description` inherit the page's `useHead` values.
 - Fonts are declared once in `nuxt.config.ts` under `fonts.families` and self-hosted from `public/fonts/`: Nunito weights 400–900 and a whole-file Noto Sans SC. The OG renderer only reads globally emitted `@font-face` rules, and whole-file CJK avoids pulling hundreds of sliced subsets per render.

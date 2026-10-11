@@ -23,6 +23,20 @@ export interface OgPublisher {
   verification?: { title?: string | null } | null;
 }
 
+/**
+ * A publisher's post collection, from
+ * `/sphere/publishers/{pub}/collections/{slug}`. `name` is optional upstream,
+ * so a card falls back to the slug.
+ */
+export interface OgCollection {
+  slug?: string | null;
+  name?: string | null;
+  description?: string | null;
+  background?: OgDriveFile | null;
+  icon?: OgDriveFile | null;
+  publisher?: OgPublisher | null;
+}
+
 export interface OgPost {
   id: string;
   slug?: string | null;
@@ -152,6 +166,22 @@ export function ogFetchPost(
   return ogFetchSolar<OgPost>(
     apiBaseUrl,
     `/sphere/posts/${encodeURIComponent(pub)}/${encodeURIComponent(slug)}`,
+  );
+}
+
+/**
+ * A collection by its publisher and slug. The upstream endpoint is public, so
+ * a card never needs a token; a locked publisher simply comes back `null` and
+ * the card degrades to the brand-only variant.
+ */
+export function ogFetchCollection(
+  apiBaseUrl: string,
+  pub: string,
+  slug: string,
+): Promise<OgCollection | null> {
+  return ogFetchSolar<OgCollection>(
+    apiBaseUrl,
+    `/sphere/publishers/${encodeURIComponent(pub)}/collections/${encodeURIComponent(slug)}`,
   );
 }
 
