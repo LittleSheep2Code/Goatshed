@@ -52,6 +52,7 @@
 <script setup lang="ts">
 import { BadgeCheck } from "lucide-vue-next";
 import type { Publisher } from "~/types/publisher";
+import { DRIVE_WIDTH, driveFileUrl } from "~/utils/media";
 
 const props = defineProps<{
   publisherName: string;
@@ -74,17 +75,21 @@ const initials = computed(() => {
   return displayName.value.slice(0, 2).toUpperCase();
 });
 
-const publisherPictureUrl = computed(() => {
-  const pic = publisher.value?.picture;
-  if (!pic?.id) return null;
-  return pic.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`;
-});
+const publisherPictureUrl = computed(() =>
+  driveFileUrl(
+    publisher.value?.picture,
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.avatarLarge,
+  ),
+);
 
-const publisherBackgroundUrl = computed(() => {
-  const bg = publisher.value?.background;
-  if (!bg?.id) return null;
-  return bg.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(bg.id)}`;
-});
+const publisherBackgroundUrl = computed(() =>
+  driveFileUrl(
+    publisher.value?.background,
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.hero,
+  ),
+);
 
 const bannerStyle = computed(() => {
   const image = publisherBackgroundUrl.value

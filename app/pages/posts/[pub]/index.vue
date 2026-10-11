@@ -92,6 +92,7 @@ import {
 } from "~/constants/publishers";
 import type { Post } from "~/types/post";
 import type { Publisher } from "~/types/publisher";
+import { DRIVE_WIDTH, driveFileUrl } from "~/utils/media";
 
 const route = useRoute();
 const router = useRouter();
@@ -137,14 +138,13 @@ const { data: publishersData } = await useFetch<
   Record<string, Publisher | null>
 >("/api/publishers");
 
-const publisherBackgroundUrl = computed(() => {
-  const background = publishersData.value?.[activePub.value]?.background;
-  if (!background?.id) return null;
-  return (
-    background.url ||
-    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(background.id)}`
-  );
-});
+const publisherBackgroundUrl = computed(() =>
+  driveFileUrl(
+    publishersData.value?.[activePub.value]?.background,
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.hero,
+  ),
+);
 
 const publisherBackgroundBlurhash = computed(
   () => publishersData.value?.[activePub.value]?.background?.blurhash || null,

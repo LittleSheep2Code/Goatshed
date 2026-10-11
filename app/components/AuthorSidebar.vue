@@ -116,7 +116,7 @@ import {
 import { OWNER_PUBLISHER } from "~/constants/publishers";
 import type { Publisher, PublisherStats } from "~/types/publisher";
 import { renderMarkdown, withSoftBreaks } from "~/utils/markdown";
-import { driveFileUrl } from "~/utils/media";
+import { driveFileUrl, DRIVE_WIDTH } from "~/utils/media";
 import { formatCount } from "~/utils/number";
 
 /** One-line self-description, mirroring the /about hero. */
@@ -146,7 +146,11 @@ const displayName = computed(
 const initials = computed(() => displayName.value.slice(0, 2).toUpperCase());
 
 const pictureUrl = computed(() =>
-  driveFileUrl(owner.value?.picture, config.public.apiBaseUrl),
+  driveFileUrl(
+    owner.value?.picture,
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.profile,
+  ),
 );
 
 const pictureBlurhash = computed(

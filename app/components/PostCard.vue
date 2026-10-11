@@ -75,6 +75,7 @@
 <script setup lang="ts">
 import type { Post } from "~/types/post";
 import { getPostIdentifier } from "~/utils/post";
+import { DRIVE_WIDTH, driveFileUrl } from "~/utils/media";
 
 const props = defineProps<{
   post: Post;
@@ -115,9 +116,7 @@ const coverImage = computed(() => {
     props.post.picture || props.post.attachments?.[0] || props.post.background;
   if (!candidate?.id) return null;
   return {
-    src:
-      candidate.url ||
-      `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(candidate.id)}`,
+    src: driveFileUrl(candidate, config.public.apiBaseUrl, DRIVE_WIDTH.cover),
     alt: props.post.title || "文章配图",
     blurhash: candidate.blurhash || undefined,
     width: candidate.width || undefined,
@@ -129,14 +128,13 @@ const coverImage = computed(() => {
   };
 });
 
-const publisherPictureUrl = computed(() => {
-  const pic = props.post.publisher?.picture;
-  if (!pic?.id) return null;
-  return (
-    pic.url ||
-    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`
-  );
-});
+const publisherPictureUrl = computed(() =>
+  driveFileUrl(
+    props.post.publisher?.picture,
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.avatar,
+  ),
+);
 
 function onMove(event: MouseEvent) {
   const element = event.currentTarget as HTMLElement | null;

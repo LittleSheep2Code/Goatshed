@@ -16,8 +16,17 @@ export default defineNuxtConfig({
   ],
   shiki: {
     dynamic: true,
-    bundledLangs: ["cpp", "rust", "go", "python", "typescript", "javascript"],
-    bundledThemes: ["github-light", "github-dark", "ayu-light", "ayu-mirage"],
+    /*
+      Bundled languages are statically imported by the generated `shiki-options`
+      module, so every entry here becomes a client chunk the browser preloads on
+      every page. `CodeBlock` is the only client-side `<Shiki>` consumer and it
+      highlights one `cpp` snippet on the home page, so that is the whole set:
+      the six-language default pulled ~650 KB of grammars for pages that never
+      render code. Post bodies highlight through `utils/markdown.ts`, which loads
+      its grammars on demand and is unaffected by this list.
+    */
+    bundledLangs: ["cpp"],
+    bundledThemes: ["github-light", "github-dark"],
   },
   experimental: {
     viewTransition: true,
@@ -90,6 +99,27 @@ export default defineNuxtConfig({
         name: "Noto Sans SC",
         src: "/fonts/NotoSansSC-Bold.woff2",
         weight: 700,
+        style: "normal",
+        global: true,
+      },
+      /*
+        The about page's `--mono` stack. Self-hosted from the same Google
+        variable font the old `fonts.googleapis.com` stylesheet pointed at, which
+        shipped four families (and 345 KB of `@font-face` rules) to every page to
+        serve this one. Declared globally like Nunito, so the browser only
+        downloads it on the page that actually renders it.
+      */
+      {
+        name: "JetBrains Mono",
+        src: "/fonts/JetBrainsMono-Variable.woff2",
+        weight: 400,
+        style: "normal",
+        global: true,
+      },
+      {
+        name: "JetBrains Mono",
+        src: "/fonts/JetBrainsMono-Variable.woff2",
+        weight: 600,
         style: "normal",
         global: true,
       },
@@ -173,18 +203,6 @@ export default defineNuxtConfig({
         },
       ],
       link: [
-        { rel: "preconnect", href: "https://fonts.googleapis.com" },
-        {
-          rel: "preconnect",
-          href: "https://fonts.gstatic.com",
-          crossorigin: "",
-        },
-        {
-          rel: "stylesheet",
-          // Noto Sans SC is self-hosted (see `fonts` above) so the OG renderer
-          // gets whole-font files; it is deliberately not requested twice.
-          href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;500;600&display=swap",
-        },
         { rel: "icon", type: "image/png", href: "/favicon.png" },
         {
           rel: "apple-touch-icon",

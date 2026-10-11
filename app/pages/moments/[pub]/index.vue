@@ -138,6 +138,7 @@ import {
 import type { Post, PostListResponse } from "~/types/post";
 import type { Publisher } from "~/types/publisher";
 import { renderMarkdown, withSoftBreaks } from "~/utils/markdown";
+import { DRIVE_WIDTH, driveFileUrl } from "~/utils/media";
 
 /*
   The deck owns the scroll position itself — see the memory block at the bottom
@@ -193,14 +194,13 @@ defineOgImage("PublisherOgImage", {
   eyebrow: "日常",
 });
 
-const publisherBackgroundUrl = computed(() => {
-  const background = publishersData.value?.[activePub.value]?.background;
-  if (!background?.id) return null;
-  return (
-    background.url ||
-    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(background.id)}`
-  );
-});
+const publisherBackgroundUrl = computed(() =>
+  driveFileUrl(
+    publishersData.value?.[activePub.value]?.background,
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.hero,
+  ),
+);
 
 const publisherBackgroundBlurhash = computed(
   () => publishersData.value?.[activePub.value]?.background?.blurhash || null,
@@ -246,9 +246,7 @@ function postImages(post: Post): TimelineImage[] {
 
   if (post.picture?.id) {
     images.push({
-      src:
-        post.picture.url ||
-        `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(post.picture.id)}`,
+      src: driveFileUrl(post.picture, config.public.apiBaseUrl, DRIVE_WIDTH.cover)!,
       alt: post.title || "动态图片",
       blurhash: post.picture.blurhash ?? undefined,
       width: post.picture.width ?? undefined,
@@ -260,9 +258,7 @@ function postImages(post: Post): TimelineImage[] {
     for (const att of post.attachments) {
       if (att.id && att.mimeType?.startsWith("image/")) {
         images.push({
-          src:
-            att.url ||
-            `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(att.id)}`,
+          src: driveFileUrl(att, config.public.apiBaseUrl, DRIVE_WIDTH.cover)!,
           alt: att.name || post.title || "动态图片",
           blurhash: att.blurhash ?? undefined,
           width: att.width ?? undefined,
@@ -274,9 +270,11 @@ function postImages(post: Post): TimelineImage[] {
 
   if (images.length === 0 && post.background?.id) {
     images.push({
-      src:
-        post.background.url ||
-        `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(post.background.id)}`,
+      src: driveFileUrl(
+        post.background,
+        config.public.apiBaseUrl,
+        DRIVE_WIDTH.cover,
+      )!,
       alt: post.title || "动态图片",
       blurhash: post.background.blurhash ?? undefined,
       width: post.background.width ?? undefined,

@@ -43,7 +43,7 @@
 <script setup lang="ts">
 import { ChevronRight, Layers } from "lucide-vue-next";
 import type { MediaFile, PostCollection } from "~/types/post";
-import { driveFileUrl } from "~/utils/media";
+import { DRIVE_WIDTH, driveFileUrl } from "~/utils/media";
 
 const props = defineProps<{
   collection: PostCollection;
@@ -61,13 +61,17 @@ const title = computed(
 );
 
 const iconUrl = computed(() =>
-  driveFileUrl(props.collection.icon, config.public.apiBaseUrl),
+  driveFileUrl(
+    props.collection.icon,
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.profile,
+  ),
 );
 
 /** The collection's own artwork, or null to fall back to the blank plate. */
 const cover = computed(() => {
   const file = props.collection.background;
-  const src = driveFileUrl(file, config.public.apiBaseUrl);
+  const src = driveFileUrl(file, config.public.apiBaseUrl, DRIVE_WIDTH.cover);
   if (!file || !src) return null;
   return {
     src,

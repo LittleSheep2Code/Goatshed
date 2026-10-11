@@ -110,6 +110,7 @@ import { ArrowRight, Rss, Sparkles } from "lucide-vue-next";
 import { OWNER_PUBLISHER } from "~/constants/publishers";
 import type { Post } from "~/types/post";
 import type { Publisher } from "~/types/publisher";
+import { DRIVE_WIDTH, driveFileUrl } from "~/utils/media";
 
 const config = useRuntimeConfig();
 
@@ -117,48 +118,54 @@ const introCode = `while (活着) {
   吃饭(); 上学(); 编程(); 睡觉();
 }`;
 
-const { data: publishersData } = await useFetch<
-  Record<string, Publisher | null>
->("/api/publishers");
+const EMPTY_POST_PAGE = () => ({ posts: [] as Post[], total: 0 });
 
-const publisherBackgroundUrl = computed(() => {
-  const background = publishersData.value?.[OWNER_PUBLISHER]?.background;
-  if (!background?.id) return null;
-  return (
-    background.url ||
-    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(background.id)}`
-  );
-});
+/*
+  Every one of these three is an independent round trip to the API, which in turn
+  queries a remote database, so awaiting them one after another made the page's
+  time-to-first-byte the sum of three request latencies. Started together it is
+  the slowest of the three. `useFetch`/`useAsyncData` register during setup, so
+  building them as arguments here is the same as writing them out in sequence.
+*/
+const [
+  { data: publishersData },
+  { data: recentResponse, pending: loading, error },
+  { data: pinnedResponse },
+] = await Promise.all([
+  useFetch<Record<string, Publisher | null>>("/api/publishers"),
+  // Omitting `pub` lets the API aggregate every publisher the blog knows about.
+  useAsyncData(
+    "posts-home",
+    () =>
+      $fetch<{ posts: Post[]; total: number }>("/api/posts", {
+        query: { type: 1, take: 6, offset: 0 },
+      }),
+    { default: EMPTY_POST_PAGE },
+  ),
+  useAsyncData(
+    "pinned-home",
+    () =>
+      $fetch<{ posts: Post[]; total: number }>("/api/posts", {
+        query: { type: 1, take: 6, pinned: true },
+      }),
+    { default: EMPTY_POST_PAGE },
+  ),
+]);
+
+const publisherBackgroundUrl = computed(() =>
+  driveFileUrl(
+    publishersData.value?.[OWNER_PUBLISHER]?.background,
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.hero,
+  ),
+);
 
 const publisherBackgroundBlurhash = computed(
   () => publishersData.value?.[OWNER_PUBLISHER]?.background?.blurhash || null,
 );
 
-// Omitting `pub` lets the API aggregate every publisher the blog knows about.
-const {
-  data: recentResponse,
-  pending: loading,
-  error,
-} = await useAsyncData(
-  "posts-home",
-  () =>
-    $fetch<{ posts: Post[]; total: number }>("/api/posts", {
-      query: { type: 1, take: 6, offset: 0 },
-    }),
-  { default: () => ({ posts: [], total: 0 }) },
-);
-
 const recentPosts = computed(() => recentResponse.value?.posts ?? []);
 const total = computed(() => recentResponse.value?.total ?? 0);
-
-const { data: pinnedResponse } = await useAsyncData(
-  "pinned-home",
-  () =>
-    $fetch<{ posts: Post[]; total: number }>("/api/posts", {
-      query: { type: 1, take: 6, pinned: true },
-    }),
-  { default: () => ({ posts: [], total: 0 }) },
-);
 
 const pinnedPosts = computed(() => pinnedResponse.value?.posts ?? []);
 

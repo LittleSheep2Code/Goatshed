@@ -96,6 +96,7 @@
 <script setup lang="ts">
 import type { Post, PostEmbed } from "~/types/post";
 import { getPostIdentifier } from "~/utils/post";
+import { DRIVE_WIDTH, driveFileUrl } from "~/utils/media";
 import {
   Check,
   Eye,
@@ -138,14 +139,13 @@ const publisherName = computed(
   () => props.post.publisher?.nick || props.post.publisher?.name || "匿名",
 );
 
-const publisherPictureUrl = computed(() => {
-  const pic = props.post.publisher?.picture;
-  if (!pic?.id) return null;
-  return (
-    pic.url ||
-    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`
-  );
-});
+const publisherPictureUrl = computed(() =>
+  driveFileUrl(
+    props.post.publisher?.picture,
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.avatar,
+  ),
+);
 
 const embeds = computed<PostEmbed[]>(() =>
   (props.post.meta?.embeds ?? []).filter(

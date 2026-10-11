@@ -195,7 +195,7 @@ to="/store"
 </template>
 
 <script setup lang="ts">
-import BrandingCompact from "~/assets/branding/compact.png";
+import BrandingCompact from "~/assets/branding/compact-header.webp";
 
 import {
   Coffee,

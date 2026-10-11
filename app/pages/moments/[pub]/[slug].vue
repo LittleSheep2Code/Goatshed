@@ -216,6 +216,7 @@
 <script setup lang="ts">
 import type { Post } from "~/types/post";
 import { renderMarkdown, withSoftBreaks } from "~/utils/markdown";
+import { DRIVE_WIDTH, driveFileUrl } from "~/utils/media";
 import { getPostIdentifier } from "~/utils/post";
 import {
   ArrowLeft,
@@ -333,9 +334,7 @@ const postImages = computed(() => {
 
   function push(file: NonNullable<Post["picture"]>, alt: string) {
     images.push({
-      src:
-        file.url ||
-        `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(file.id)}`,
+      src: driveFileUrl(file, config.public.apiBaseUrl, DRIVE_WIDTH.hero)!,
       alt,
       blurhash: file.blurhash || undefined,
       width: file.width || undefined,
@@ -363,14 +362,13 @@ const postImages = computed(() => {
   return images;
 });
 
-const publisherPictureUrl = computed(() => {
-  const pic = post.value?.publisher?.picture;
-  if (!pic?.id) return null;
-  return (
-    pic.url ||
-    `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(pic.id)}`
-  );
-});
+const publisherPictureUrl = computed(() =>
+  driveFileUrl(
+    post.value?.publisher?.picture,
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.avatarLarge,
+  ),
+);
 
 const postOgImage = computed(() => {
   if (!post.value) return "https://littlesheep.me/og-image.png";

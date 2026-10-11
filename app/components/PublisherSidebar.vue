@@ -145,7 +145,7 @@
               class="block overflow-hidden rounded-lg border border-base-300/40"
             >
               <UnLazyImage
-                :src="file.url"
+                :src="file.src"
                 :alt="file.name || 'Publisher attachment'"
                 :blurhash="file.blurhash"
                 :width="file.width"
@@ -212,7 +212,7 @@ import {
 } from "~/constants/publishers";
 import { renderMarkdown, withSoftBreaks } from "~/utils/markdown";
 import { formatRelativeTime } from "~/utils/time";
-import { driveFileUrl } from "~/utils/media";
+import { DRIVE_WIDTH, driveFileUrl, withDriveWidth } from "~/utils/media";
 import { formatCount } from "~/utils/number";
 
 const props = defineProps<{
@@ -260,7 +260,11 @@ const initials = computed(() => {
 });
 
 const publisherPictureUrl = computed(() =>
-  driveFileUrl(publisher.value?.picture, config.public.apiBaseUrl),
+  driveFileUrl(
+    publisher.value?.picture,
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.profile,
+  ),
 );
 
 const publisherPictureBlurhash = computed(
@@ -277,7 +281,10 @@ const publisherAttachments = computed(() => {
             {
               id: file.id,
               name: file.name,
+              /** Full-size original, for opening the attachment. */
               url,
+              /** Thumbnail variant, for the 64px-tall grid tile. */
+              src: withDriveWidth(url, DRIVE_WIDTH.thumbnail),
               blurhash: file.blurhash || undefined,
               width: file.width || undefined,
               height: file.height || undefined,
@@ -319,7 +326,13 @@ function publisherLabel(name: PublisherName) {
 }
 
 function publisherAvatar(name: PublisherName) {
-  return driveFileUrl(publishersData.value?.[name]?.picture, config.public.apiBaseUrl) || "";
+  return (
+    driveFileUrl(
+      publishersData.value?.[name]?.picture,
+      config.public.apiBaseUrl,
+      DRIVE_WIDTH.avatar,
+    ) || ""
+  );
 }
 
 function selectPublisher(name: PublisherName) {

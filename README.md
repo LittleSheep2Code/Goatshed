@@ -27,7 +27,7 @@ Goatshed is a personal blog built with Nuxt 4. It is first a blog project, but i
 - Drizzle ORM (database)
 - PostgreSQL
 - nuxt-og-image with the Takumi renderer (Open Graph cards)
-- @nuxt/fonts (self-hosted Nunito + Noto Sans SC)
+- @nuxt/fonts (self-hosted Nunito, JetBrains Mono + Noto Sans SC)
 
 ## Solar Network Integration
 
@@ -86,6 +86,8 @@ Some publishers are treated as locked in the server API layer. When that content
 - `app/pages/posts/[pub]/collections/*`: a publisher's collection list, and one collection's posts.
 - `app/components/CollectionCard.vue`: collection tile (background, icon, name, description).
 - `server/utils/lastfm.ts`: Last.fm snapshot (recent scrobbles, charts) for the about page's music section, cached for ten minutes.
+- `app/utils/media.ts`: display URL for a drive file, plus the `DRIVE_WIDTH` buckets. The drive endpoint hands back the original upload unless a `?width=` derivative is asked for, so anything drawn smaller than full bleed must name a bucket — a card cover is otherwise a 1.2 MB 1920px JPEG. Omit the width only where the full-size original is the point (a lightbox slide, an `og:image`).
+- `app/composables/useReactions.ts` + `server/api/reactions.get.ts`: reaction counts for every card on a page arrive in one batched request, not one per card. A `ReactionBar` enqueues its post id; the queue flushes once per tick.
 
 ## Open Graph Images
 
@@ -97,7 +99,7 @@ Cards are rendered at runtime by [nuxt-og-image](https://nuxtseo.com/og-image) w
 - The lockup is the site's own `~/assets/branding/compact.png`, imported by each template, so branding has a single source. The only other image a card may show is its plate (post/collection art, moment media, publisher portrait).
 - Display type is fitted by `ogFitDisplay()` and snippets clipped by `ogClip()` — both measure text in `em` so CJK and Latin fit the same column without hand-tuned per-card sizes.
 - A page opts in with `defineOgImage("<Name>", props)`. Props are reactive (`computed(...)`), and pages that pass no `title`/`description` inherit the page's `useHead` values.
-- Fonts are declared once in `nuxt.config.ts` under `fonts.families` and self-hosted from `public/fonts/`: Nunito weights 400–900 and a whole-file Noto Sans SC. The OG renderer only reads globally emitted `@font-face` rules, and whole-file CJK avoids pulling hundreds of sliced subsets per render.
+- Fonts are declared once in `nuxt.config.ts` under `fonts.families` and self-hosted from `public/fonts/`: Nunito weights 400–900 (the site face), a whole-file Noto Sans SC, and a Latin JetBrains Mono for the about page's `--mono`. The OG renderer only reads globally emitted `@font-face` rules, and whole-file CJK avoids pulling hundreds of sliced subsets per render. Nothing is fetched from `fonts.googleapis.com`: the stylesheet that used to be linked site-wide carried four families as 345 KB of render-blocking `@font-face` rules, three of which no page referenced, and the fourth only ever rendered on `/about`.
 - `NUXT_OG_IMAGE_SECRET` signs the image URLs. Without it a new secret is minted per build, so every deploy invalidates what unfurlers cached; set it for anything but a single-instance setup.
 - Card URLs carry a hash of the template, so a redeploy can't serve an unfurler an old design. In `dev` the renderer picks a file change up on the next request, but its component compile is cached — if a card still looks stale, restart the dev server. Rendered images live for `cacheMaxAgeSeconds` (3 days).
 
@@ -128,3 +130,5 @@ bun run dev
 bun run build
 bun run preview
 ```
+
+`preview` serves text assets uncompressed. Production sits behind Cloudflare, which brotli-compresses both the document and the assets — so local transfer sizes overstate what a visitor downloads for anything script, style or JSON shaped. Images are the part that reaches the wire unchanged: a PNG or JPEG is the same size either way, which is why the display-size derivatives in `app/utils/media.ts` matter more than they look locally.

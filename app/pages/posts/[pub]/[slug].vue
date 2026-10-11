@@ -276,7 +276,7 @@ import { ExternalLink, Layers } from "lucide-vue-next";
 import type { MediaFile, Post } from "~/types/post";
 import type { Publisher } from "~/types/publisher";
 import { renderMarkdown } from "~/utils/markdown";
-import { driveFileUrl } from "~/utils/media";
+import { DRIVE_WIDTH, driveFileUrl } from "~/utils/media";
 import { getPostIdentifier } from "~/utils/post";
 import { extractToc, injectHeadingIds, type TocItem } from "~/utils/toc";
 
@@ -442,10 +442,18 @@ function postArtwork(target: Post | null | undefined): MediaFile | null {
 
 /** Cover for the prev / next card, shown in the corner its link points at. */
 const prevCover = computed(() =>
-  driveFileUrl(postArtwork(prevPost.value), config.public.apiBaseUrl),
+  driveFileUrl(
+    postArtwork(prevPost.value),
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.thumbnail,
+  ),
 );
 const nextCover = computed(() =>
-  driveFileUrl(postArtwork(nextPost.value), config.public.apiBaseUrl),
+  driveFileUrl(
+    postArtwork(nextPost.value),
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.thumbnail,
+  ),
 );
 
 /**
@@ -464,7 +472,11 @@ const prevDate = computed(() => navDate(prevPost.value));
 const nextDate = computed(() => navDate(nextPost.value));
 
 const postPictureUrl = computed(() =>
-  driveFileUrl(postArtwork(post.value), config.public.apiBaseUrl),
+  driveFileUrl(
+    postArtwork(post.value),
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.hero,
+  ),
 );
 
 const publisherBackgroundUrl = computed(() =>
@@ -472,6 +484,7 @@ const publisherBackgroundUrl = computed(() =>
     publishersData.value?.[activePub.value]?.background ??
       post.value?.publisher?.background,
     config.public.apiBaseUrl,
+    DRIVE_WIDTH.hero,
   ),
 );
 
@@ -488,7 +501,11 @@ const coverBlurhash = computed(() => {
 });
 
 const publisherPictureUrl = computed(() =>
-  driveFileUrl(post.value?.publisher?.picture, config.public.apiBaseUrl),
+  driveFileUrl(
+    post.value?.publisher?.picture,
+    config.public.apiBaseUrl,
+    DRIVE_WIDTH.avatarLarge,
+  ),
 );
 
 const postOgImage = computed(

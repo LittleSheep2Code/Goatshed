@@ -9,10 +9,21 @@
 </template>
 
 <script setup lang="ts">
+const config = useRuntimeConfig();
+
 useHead({
   htmlAttrs: {
     lang: "zh-CN",
   },
+  link: [
+    /*
+      Artwork is fetched straight from the drive API, and every page's LCP element
+      is one of those images, so the DNS + TLS handshake should not wait for the
+      first `<img>` to be parsed. Plain preconnect rather than CORS: these are
+      `<img>` requests, which are not cross-origin fetches.
+    */
+    { rel: "preconnect", href: config.public.apiBaseUrl },
+  ],
 });
 </script>
 

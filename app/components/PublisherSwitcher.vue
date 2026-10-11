@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 import { Lock } from "lucide-vue-next";
+import { DRIVE_WIDTH, driveFileUrl } from "~/utils/media";
 import {
   PUBLISHER_META,
   type PublisherName,
@@ -68,9 +69,13 @@ function publisherLabel(name: PublisherName) {
 }
 
 function publisherAvatar(name: PublisherName) {
-  const picture = publisherMap[name]?.picture;
-  if (!picture?.id) return "";
-  return picture.url || `${config.public.apiBaseUrl}/drive/files/${encodeURIComponent(picture.id)}`;
+  return (
+    driveFileUrl(
+      publisherMap[name]?.picture,
+      config.public.apiBaseUrl,
+      DRIVE_WIDTH.avatar,
+    ) || ""
+  );
 }
 
 function onPublisherClick(name: PublisherName) {

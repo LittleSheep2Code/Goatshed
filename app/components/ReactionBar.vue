@@ -78,6 +78,7 @@
 
 <script setup lang="ts">
 import type { ReactionSummary } from "~/types/comment";
+import type { ReactionState } from "~/composables/useReactions";
 import { REACTIONS, reactionStickerUrl, type ReactionMeta } from "~/utils/reactions";
 import { SmilePlus } from "lucide-vue-next";
 import {
@@ -99,8 +100,16 @@ const props = withDefaults(
 
 const { authenticated } = useAuth();
 
-const reactions = ref<ReactionSummary[]>([]);
-const total = ref(0);
+/*
+  Counts come from the page-wide batch rather than a request per card, and a card
+  that mounts later joins the next batch instead of fetching on its own.
+*/
+const { state: reactionsState, apply, invalidate } = useReactions(
+  () => props.postId,
+);
+
+const reactions = computed(() => reactionsState.value?.reactions ?? []);
+
 const toggling = ref(false);
 const pickerOpen = ref(false);
 const showAll = ref(false);
@@ -145,18 +154,6 @@ function onStickerError(symbol: string) {
   missingStickers.value = new Set(missingStickers.value).add(symbol);
 }
 
-async function fetchReactions() {
-  try {
-    const data = await $fetch<{ reactions: ReactionSummary[]; total: number }>(
-      `/api/posts/${props.postId}/reactions`,
-    );
-    reactions.value = data.reactions;
-    total.value = data.total;
-  } catch (e) {
-    console.error("Failed to fetch reactions:", e);
-  }
-}
-
 async function toggleReaction(reaction: ReactionSummary) {
   if (!authenticated.value || toggling.value) return;
   toggling.value = true;
@@ -172,17 +169,16 @@ async function toggleReaction(reaction: ReactionSummary) {
 
 async function addReaction(symbol: string) {
   try {
-    const data = await $fetch<{ reactions: ReactionSummary[]; total: number }>(
+    const data = await $fetch<ReactionState>(
       `/api/posts/${props.postId}/reactions`,
       { method: "POST", body: { symbol } },
     );
-    reactions.value = data.reactions;
-    total.value = data.total;
+    apply(data);
     pickerOpen.value = false;
   } catch (e: unknown) {
     const err = e as { statusCode?: number };
     if (err.statusCode === 409) {
-      await fetchReactions();
+      invalidate();
     } else if (err.statusCode !== 401 && err.statusCode !== 403) {
       console.error("Failed to add reaction:", e);
     }
@@ -191,18 +187,13 @@ async function addReaction(symbol: string) {
 
 async function removeReaction(symbol: string) {
   try {
-    const data = await $fetch<{ reactions: ReactionSummary[]; total: number }>(
+    const data = await $fetch<ReactionState>(
       `/api/posts/${props.postId}/reactions/${symbol}`,
       { method: "DELETE" },
     );
-    reactions.value = data.reactions;
-    total.value = data.total;
+    apply(data);
   } catch (e) {
     console.error("Failed to remove reaction:", e);
   }
 }
-
-onMounted(() => {
-  fetchReactions();
-});
 </script>
