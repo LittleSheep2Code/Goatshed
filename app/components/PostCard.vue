@@ -1,33 +1,17 @@
 <template>
-  <article
-    class="post-tile min-w-0"
-    :class="{
-      'post-tile-with-cover': !!coverImage,
-      'post-tile-reverse': reversed,
-    }"
-    :style="{ viewTransitionName: `post-${post.id}` }"
-    @mousemove="onMove"
-  >
+  <article class="post-tile min-w-0" :class="{
+    'post-tile-with-cover': !!coverImage,
+    'post-tile-reverse': reversed,
+  }" :style="{ viewTransitionName: `post-${post.id}` }" @mousemove="onMove">
     <NuxtLink v-if="coverImage" :to="postUrl" class="post-tile-cover">
-      <UnLazyImage
-        :src="coverImage.src"
-        :alt="coverImage.alt"
-        :blurhash="coverImage.blurhash"
-        :width="coverImage.width"
-        :height="coverImage.height"
-        :placeholder-ratio="coverImage.ratio"
-      />
+      <UnLazyImage :src="coverImage.src" :alt="coverImage.alt" :blurhash="coverImage.blurhash" :width="coverImage.width"
+        :height="coverImage.height" :placeholder-ratio="coverImage.ratio" />
     </NuxtLink>
 
     <div class="post-tile-body relative z-10 flex min-w-0 flex-col gap-3">
       <div class="inline-flex items-center gap-1.5 text-xs text-base-content/70">
-        <img
-          v-if="publisherPictureUrl"
-          :src="publisherPictureUrl"
-          :alt="post.publisher.name"
-          class="h-4 w-4 rounded-full object-cover"
-          loading="lazy"
-        />
+        <img v-if="publisherPictureUrl" :src="publisherPictureUrl" :alt="post.publisher.name"
+          class="h-4 w-4 rounded-full object-cover" loading="lazy" />
         <span class="opacity-70">{{
           post.publisher.nick || post.publisher.name
         }}</span>
@@ -44,11 +28,7 @@
       </p>
 
       <div v-if="post.tags.length" class="flex flex-wrap gap-1">
-        <span
-          v-for="tag in post.tags.slice(0, 4)"
-          :key="tag.id"
-          class="badge badge-ghost badge-sm"
-        >
+        <span v-for="tag in post.tags.slice(0, 4)" :key="tag.id" class="badge badge-ghost badge-sm">
           #{{ tag.slug }}
         </span>
       </div>
@@ -63,9 +43,7 @@
             <span aria-hidden="true">·</span>
             <span>{{ post.viewsUnique }} 次阅读</span>
           </div>
-          <NuxtLink :to="postUrl" class="link link-primary shrink-0"
-            >阅读全文</NuxtLink
-          >
+          <NuxtLink :to="postUrl" class="link link-primary shrink-0">阅读全文</NuxtLink>
         </div>
       </div>
     </div>
@@ -112,8 +90,10 @@ const excerpt = computed(() => {
 });
 
 const coverImage = computed(() => {
+  const thumbnailId = props.post.meta?.thumbnail;
+  const thumbnail = props.post.attachments?.find((e) => e.id == thumbnailId);
   const candidate =
-    props.post.picture || props.post.attachments?.[0] || props.post.background;
+    thumbnail || props.post.picture || props.post.attachments?.[0] || props.post.background;
   if (!candidate?.id) return null;
   return {
     src: driveFileUrl(candidate, config.public.apiBaseUrl, DRIVE_WIDTH.cover),
@@ -149,8 +129,7 @@ function onMove(event: MouseEvent) {
 .post-tile-cover {
   display: block;
   overflow: hidden;
-  border-bottom: 1px solid
-    color-mix(in oklab, var(--color-base-300) 45%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--color-base-300) 45%, transparent);
 }
 
 .post-tile-cover img {
@@ -185,8 +164,7 @@ function onMove(event: MouseEvent) {
     /* Drives the tile height at 16:9, but stretches to fill when the body is taller. */
     aspect-ratio: 16 / 9;
     border-bottom: 0;
-    border-right: 1px solid
-      color-mix(in oklab, var(--color-base-300) 45%, transparent);
+    border-right: 1px solid color-mix(in oklab, var(--color-base-300) 45%, transparent);
   }
 
   /* Fill the stretched cover box; crops the sides only when the body outgrows 16:9. */
@@ -200,8 +178,7 @@ function onMove(event: MouseEvent) {
 
   .post-tile-reverse .post-tile-cover {
     border-right: 0;
-    border-left: 1px solid
-      color-mix(in oklab, var(--color-base-300) 45%, transparent);
+    border-left: 1px solid color-mix(in oklab, var(--color-base-300) 45%, transparent);
   }
 
   .post-tile-with-cover .post-tile-body {

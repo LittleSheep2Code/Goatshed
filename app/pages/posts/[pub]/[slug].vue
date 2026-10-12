@@ -435,8 +435,10 @@ const nextPostIdentifier = computed(() =>
 
 /** The artwork a post carries, in the order the hero and the nav cards pick it. */
 function postArtwork(target: Post | null | undefined): MediaFile | null {
+  const thumbnailId = target?.meta?.thumbnail;
+  const thumbnail = target?.attachments?.find((e) => e.id == thumbnailId);
   return (
-    target?.picture || target?.attachments?.[0] || target?.background || null
+    thumbnail || target?.picture || target?.attachments?.[0] || target?.background || null
   );
 }
 
